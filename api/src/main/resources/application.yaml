@@ -9,6 +9,8 @@ spring:
   web:
     resources:
       add-mappings: false
+logging:
+  config: classpath:log4j2-${spring.profiles.active}.yaml
 ---
 spring:
   config:

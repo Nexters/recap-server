@@ -43,7 +43,14 @@ subprojects {
         }
     }
 
+    configurations {
+        all {
+            exclude("org.springframework.boot", "spring-boot-starter-logging")
+        }
+    }
+
     dependencies {
+        implementation(rootProject.libs.kotlin.logging)
         implementation(rootProject.libs.kotlin.reflect)
         testImplementation(rootProject.libs.bundles.test)
     }
