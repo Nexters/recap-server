@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: recap-batch
+  main:
+    banner-mode: off
+  profiles:
+    include:
+    - core
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
