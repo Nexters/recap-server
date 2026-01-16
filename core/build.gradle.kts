@@ -11,6 +11,8 @@ allOpen {
 dependencies {
     implementation(libs.spring.data.jpa)
     runtimeOnly(libs.mysql.connector)
+
+    testFixturesImplementation(libs.bundles.test)
 }
 
 tasks {
