@@ -4,149 +4,150 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
-permissions:
-  contents: read
-  pull-requests: write
-
 jobs:
-  review:
-    # Draft PR만 제외하고 모든 PR에 실행
-    if: github.event.pull_request.draft == false
-
+  code-review:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
         with:
-          fetch-depth: 0 
+          fetch-depth: 0
 
-      - name: Install dependencies
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install GoogleGenerativeAI
+        run: npm install @google/generative-ai
+
+      - name: Get git diff for PR
         run: |
-          python -m pip install --upgrade pip
-          pip install requests 
+          git fetch origin "${{ github.event.pull_request.base.ref }}"
+          git fetch origin "${{ github.event.pull_request.head.ref }}"
+          git diff "origin/${{ github.event.pull_request.base.ref }}"..."origin/${{ github.event.pull_request.head.ref }}" > diff.txt
 
-      - name: Get PR diff
-        run: |
-          git fetch origin ${{ github.base_ref }}
-          git diff origin/${{ github.base_ref }} > diff.txt
-
-      - name: Run Gemini Code Review
+      - name: Run Gemini Review
+        uses: actions/github-script@v7
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: |
-          python << 'EOF'
-          import os
-          import requests
+        with:
+          script: |
+            const fs = require("fs");
+            const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-          # 1. diff 로드 (인코딩 명시 필수 ###)
-          try:
-              with open("diff.txt", "r", encoding="utf-8") as f:
-                  diff = f.read()
-          except UnicodeDecodeError:
-              # 혹시 모를 인코딩 에러 방지
-              with open("diff.txt", "r", encoding="latin-1") as f:
-                  diff = f.read()
+            // 1. Diff 읽기
+            let diff_output;
+            try {
+              diff_output = fs.readFileSync("diff.txt", "utf8");
+            } catch (error) { return; }
 
-          # 내용이 너무 길면 자르기
-          diff = diff[:12000]
+            if (diff_output.length > 20000) {
+              diff_output = diff_output.substring(0, 20000) + "\n...(truncated)";
+            }
 
-          prompt = f"""
-          당신은 경험 많은 시니어 소프트웨어 엔지니어입니다.
-          아래 GitHub Pull Request의 변경사항에 대해 코드 리뷰를 수행해주세요.
-          
-          반드시 다음 리뷰 지침을 따르세요.
+            // 2. Gemini 초기화
+            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-          [언어]
-          - 모든 리뷰는 명확하고 간결한 한국어로 작성하세요.
-          - 존댓말을 사용하되, 불필요하게 장황하지 않게 작성하세요.
-          
-          [리뷰 관점]
-          - 정확성(correctness), 성능(performance), 유지보수성(maintainability)에 집중하세요.
-          - 리뷰는 파일 단위가 아니라, 전체 변경사항을 통합적으로 평가하세요.
-          - 변경되지 않은 기존 코드에 대해서는 언급하지 마세요.
-          
-          [중점적으로 확인할 사항]
-          - 실제로 문제가 될 수 있는 버그
-          - 성능 저하 가능성
-          - 보안상 위험 요소
-          - 이번 변경으로 인해 연관된 다른 코드나 모듈에 미칠 수 있는 부작용
-          
-          [무시할 사항]
-          - 사소한 스타일 문제 (띄어쓰기, 포맷, 취향 차이 등)
-          - 개인적인 코드 취향이나 주관적인 선호
-          - 이미 이번 PR에서 명확히 개선된 부분에 대한 반복 지적
-          
-          [개선 제안 방식]
-          - 주요 이슈가 있는 경우에만 언급하세요.
-          - 각 이슈에 대해:
-            1) 문제가 되는 이유를 간단히 설명하고
-            2) 실질적인 개선 방향을 제시하세요.
-          - 필요한 경우에만 짧고 관련성 있는 코드 예시를 포함하세요.
-          - 이미 잘 개선된 부분이 있다면 긍정적으로 언급하세요.
-          
-          [출력 형식]
-          - 전체 리뷰는 간결하게 유지하세요.
-          - 아래 형식을 최대한 따르세요.
+            // 제미나이 모델 : gemini-flash-latest
+            const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
-          ---
-          ### 🤖 Gemini Code Review
+            // 제미나이 프롬프트
+            const prompt = `
+            Role: Senior Backend Software Engineer
+            Task: Review the provided git diff in **Korean**.
 
-          **개선된 사항:**
-          - (있을 경우에만 간단히 작성)
+            [Review Guidelines]
+            1. **Analyze**: Review the code **file-by-file**, understanding the logic changes.
+            2. **Focus**: Logic bugs, security risks, performance, and code structure (SRP).
+            3. **Ignore**: Minor styling/formatting issues (indentation, spacing).
 
-          **주요 이슈:**
-            1. (중요한 이슈가 있을 경우에만)
-            - 설명:
-            - 제안:
+            [Conciseness & Length Control] - **IMPORTANT**
+            1. **No Filler**: Do not write unnecessary introductions or filler words. Get straight to the point.
+            2. **Adaptive Length**: 
+               - For **complex/critical** changes: You may explain in detail.
+               - For **trivial/minor** changes: Keep the review extremely short (1-2 sentences). **Do not fill up space just to reach a limit.**
+            3. **Maximum Constraint**: Keep the entire review concise and efficient to read.
 
-          **연관 영향:**
-            - (변경된 코드가 다른 파일/모듈에 미칠 수 있는 영향이 있을 경우)
+            [Output Format - Please follow strictly]
 
-          **전반적인 의견:**
-            - (1~2문장 요약)
-          ---
+            ### ✅ 변경 사항 요약
+            - (Briefly summarize changes in 1-3 bullet points.)
 
-          중요:
-          - 지적할 중요한 문제가 없다면, 불필요한 비판을 만들지 말고
-            전반적으로 안정적이라는 의견만 간단히 작성하세요.
+            ### 🚨 치명적인 이슈 (Critical Issues)
+            - **IMPORTANT**: Only include this section if there are **actual bugs, security risks, or fatal performance issues**.
+            - **If there are NO critical issues, DO NOT write this section header.**
+            - Format:
+              - 🛑 **[File/Class Name]**
+                - **Problem**: (Explain the bug/risk)
+                - **Fix**: (Proposed solution)
 
-          아래는 이번 Pull Request의 변경사항(diff)입니다.
+            ### ✏️ 파일별 상세 리뷰
+            - Provide feedback for changed files.
+            - **Skip** unchanged or trivial files if there is nothing meaningful to say.
+            - **Format**:
+              #### \`File Name / Class Name\`
+              - 📍 **Review**: (Logic analysis. Keep it short for simple changes.)
+              - ✨ **Improvement**: (Only if necessary)
 
-          {diff}
-          """
-          
-          url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
-          params = {"key": os.environ["GEMINI_API_KEY"]}
-          headers = {"Content-Type": "application/json"}
-          body = {
-              "contents": [
-                  {
-                      "parts": [{"text": prompt}]
+            ---
+            
+            [Git Diff Data]
+            ${diff_output}
+            `;
+
+            // 3. 재시도 로직 (429 Too Many Requests 대응)
+            async function generateWithRetry(retryCount = 0) {
+              try {
+                const result = await model.generateContent(prompt);
+                const response = await result.response;
+                return response.text();
+              } catch (error) {
+                if (error.message.includes("429") || error.message.includes("Too Many Requests")) {
+                  if (retryCount < 2) {
+                    console.log(`Rate limit hit. Waiting 15 seconds before retry`);
+                    await new Promise(resolve => setTimeout(resolve, 15000)); // 15초 대기
+                    return generateWithRetry(retryCount + 1);
                   }
-              ]
-          }
+                }
+                throw error;
+              }
+            }
 
-          response = requests.post(url, headers=headers, params=params, json=body)
-          response.raise_for_status()
+            // txt파일로 저장
+            try {
+              const text = await generateWithRetry();
+            
+              const finalComment = `
+              ## 🤖 Gemini Code Review
+            
+              ${text}
+              `;
+              fs.writeFileSync("review_result.txt", finalComment);
 
-          review = response.json()["candidates"][0]["content"]["parts"][0]["text"]
+            } catch (error) {
+              console.error("Final Error:", error);
+              // 실패 시 에러 원인 댓글에 남김
+              fs.writeFileSync("review_result.txt", `❌ Review Failed: ${error.message}`);
+            }
 
-          # 결과 저장 (인코딩 명시 필수 ###)
-          with open("review.txt", "w", encoding="utf-8") as f:
-              f.write(review)
-          EOF
-
-      - name: Comment on PR
+      - name: Comment on Pull Request
         uses: actions/github-script@v7
         with:
           script: |
-            const fs = require('fs');
-            const review = fs.readFileSync('review.txt', 'utf8');
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
+            const fs = require("fs");
+            let body;
+            try {
+              body = fs.readFileSync("review_result.txt", "utf8");
+            } catch (e) { return; }
+
+            await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: review
+              issue_number: context.issue.number,
+              body: body
             });
