@@ -1,0 +1,14 @@
+configuration:
+  name: dev
+  status: info
+  appenders:
+    console:
+      name: console
+      target: SYSTEM_OUT
+      patternLayout:
+        pattern: "%clr{%d{yyyy-MM-dd HH:mm:ss.SSS}}{faint} %clr{[%p]} %clr{%c{1.}}{cyan}%clr{:}{faint}%equals{ [%X{traceId}]}{ []}{} %m%n%xwEx"
+  loggers:
+    root:
+      level: info
+      appenderRef:
+      - ref: console

@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: recap-api
+  main:
+    banner-mode: off
+  profiles:
+    include:
+    - core
+  web:
+    resources:
+      add-mappings: false
+logging:
+  config: classpath:log4j2-${spring.profiles.active}.yaml
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
