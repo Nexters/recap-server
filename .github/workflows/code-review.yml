@@ -1,0 +1,152 @@
+name: Gemini Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    # Draft PR만 제외하고 모든 PR에 실행
+    if: github.event.pull_request.draft == false
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests 
+
+      - name: Get PR diff
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          git diff origin/${{ github.base_ref }} > diff.txt
+
+      - name: Run Gemini Code Review
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python << 'EOF'
+          import os
+          import requests
+
+          # 1. diff 로드 (인코딩 명시 필수 ###)
+          try:
+              with open("diff.txt", "r", encoding="utf-8") as f:
+                  diff = f.read()
+          except UnicodeDecodeError:
+              # 혹시 모를 인코딩 에러 방지
+              with open("diff.txt", "r", encoding="latin-1") as f:
+                  diff = f.read()
+
+          # 내용이 너무 길면 자르기
+          diff = diff[:12000]
+
+          prompt = f"""
+          당신은 경험 많은 시니어 소프트웨어 엔지니어입니다.
+          아래 GitHub Pull Request의 변경사항에 대해 코드 리뷰를 수행해주세요.
+          
+          반드시 다음 리뷰 지침을 따르세요.
+
+          [언어]
+          - 모든 리뷰는 명확하고 간결한 한국어로 작성하세요.
+          - 존댓말을 사용하되, 불필요하게 장황하지 않게 작성하세요.
+          
+          [리뷰 관점]
+          - 정확성(correctness), 성능(performance), 유지보수성(maintainability)에 집중하세요.
+          - 리뷰는 파일 단위가 아니라, 전체 변경사항을 통합적으로 평가하세요.
+          - 변경되지 않은 기존 코드에 대해서는 언급하지 마세요.
+          
+          [중점적으로 확인할 사항]
+          - 실제로 문제가 될 수 있는 버그
+          - 성능 저하 가능성
+          - 보안상 위험 요소
+          - 이번 변경으로 인해 연관된 다른 코드나 모듈에 미칠 수 있는 부작용
+          
+          [무시할 사항]
+          - 사소한 스타일 문제 (띄어쓰기, 포맷, 취향 차이 등)
+          - 개인적인 코드 취향이나 주관적인 선호
+          - 이미 이번 PR에서 명확히 개선된 부분에 대한 반복 지적
+          
+          [개선 제안 방식]
+          - 주요 이슈가 있는 경우에만 언급하세요.
+          - 각 이슈에 대해:
+            1) 문제가 되는 이유를 간단히 설명하고
+            2) 실질적인 개선 방향을 제시하세요.
+          - 필요한 경우에만 짧고 관련성 있는 코드 예시를 포함하세요.
+          - 이미 잘 개선된 부분이 있다면 긍정적으로 언급하세요.
+          
+          [출력 형식]
+          - 전체 리뷰는 간결하게 유지하세요.
+          - 아래 형식을 최대한 따르세요.
+
+          ---
+          ### 🤖 Gemini Code Review
+
+          **개선된 사항:**
+          - (있을 경우에만 간단히 작성)
+
+          **주요 이슈:**
+            1. (중요한 이슈가 있을 경우에만)
+            - 설명:
+            - 제안:
+
+          **연관 영향:**
+            - (변경된 코드가 다른 파일/모듈에 미칠 수 있는 영향이 있을 경우)
+
+          **전반적인 의견:**
+            - (1~2문장 요약)
+          ---
+
+          중요:
+          - 지적할 중요한 문제가 없다면, 불필요한 비판을 만들지 말고
+            전반적으로 안정적이라는 의견만 간단히 작성하세요.
+
+          아래는 이번 Pull Request의 변경사항(diff)입니다.
+
+          {diff}
+          """
+          
+          url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+          params = {"key": os.environ["GEMINI_API_KEY"]}
+          headers = {"Content-Type": "application/json"}
+          body = {
+              "contents": [
+                  {
+                      "parts": [{"text": prompt}]
+                  }
+              ]
+          }
+
+          response = requests.post(url, headers=headers, params=params, json=body)
+          response.raise_for_status()
+
+          review = response.json()["candidates"][0]["content"]["parts"][0]["text"]
+
+          # 결과 저장 (인코딩 명시 필수 ###)
+          with open("review.txt", "w", encoding="utf-8") as f:
+              f.write(review)
+          EOF
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const review = fs.readFileSync('review.txt', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: review
+            });
