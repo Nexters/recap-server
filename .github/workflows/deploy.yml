@@ -1,0 +1,117 @@
+name: Deploy
+
+on:
+  workflow_call:
+    secrets:
+      SERVER_HOST:
+        required: true
+      SERVER_PASSWORD:
+        required: true
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      batch: ${{ steps.filter.outputs.batch }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api:
+              - 'api/**'
+              - 'core/**'
+              - 'build.gradle.kts'
+              - 'settings.gradle.kts'
+              - 'gradle/**'
+              - 'Dockerfile'
+              - 'docker-compose.yml'
+            batch:
+              - 'batch/**'
+              - 'core/**'
+              - 'build.gradle.kts'
+              - 'settings.gradle.kts'
+              - 'gradle/**'
+              - 'Dockerfile'
+              - 'docker-compose.yml'
+
+  deploy-api:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: root
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: "api,batch,core,gradle,gradlew,build.gradle.kts,settings.gradle.kts,Dockerfile,docker-compose.yml"
+          target: "~/recap"
+          strip_components: 0
+          overwrite: true
+
+      - name: Deploy API
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: root
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            cd ~/recap
+            docker build --target api -t recap-api:latest .
+            docker-compose up -d api
+
+            for i in $(seq 1 30); do
+              if curl -sf http://localhost:8080/actuator/health > /dev/null; then
+                echo "API is healthy"
+                exit 0
+              fi
+              echo "Waiting for API... ($i/30)"
+              sleep 10
+            done
+            echo "API health check failed"
+            exit 1
+
+  deploy-batch:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.batch == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: root
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: "api,batch,core,gradle,gradlew,build.gradle.kts,settings.gradle.kts,Dockerfile,docker-compose.yml"
+          target: "~/recap"
+          strip_components: 0
+          overwrite: true
+
+      - name: Deploy Batch
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: root
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            cd ~/recap
+            docker build --target batch -t recap-batch:latest .
+            docker-compose up -d batch
+
+            sleep 10
+            if docker ps --filter "name=recap-batch" --filter "status=running" | grep -q recap-batch; then
+              echo "Batch container is running"
+            else
+              echo "Batch container failed to start"
+              docker logs recap-batch
+              exit 1
+            fi
