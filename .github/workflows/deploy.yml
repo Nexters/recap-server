@@ -1,6 +1,16 @@
 name: Deploy
 
 on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+        default: dev
   workflow_call:
     inputs:
       environment:
@@ -48,8 +58,10 @@ jobs:
             CHANGED_FILES=$(git ls-files)
           fi
 
-          API_CHANGED=$(echo "$CHANGED_FILES" | grep -cE "^(api|core)/.*\.(kt|java|gradle)(\.kts)?$|docker-compose\.yml|Dockerfile" || echo "0")
-          BATCH_CHANGED=$(echo "$CHANGED_FILES" | grep -cE "^(batch|core)/.*\.(kt|java|gradle)(\.kts)?$|docker-compose\.yml|Dockerfile" || echo "0")
+          API_CHANGED=$(echo "$CHANGED_FILES" | grep -cE "^(api|core)/.*\.(kt|java|gradle)(\.kts)?$|docker-compose\.yml|Dockerfile" || true)
+          BATCH_CHANGED=$(echo "$CHANGED_FILES" | grep -cE "^(batch|core)/.*\.(kt|java|gradle)(\.kts)?$|docker-compose\.yml|Dockerfile" || true)
+          API_CHANGED=${API_CHANGED:-0}
+          BATCH_CHANGED=${BATCH_CHANGED:-0}
 
           echo "api_changed=$API_CHANGED" >> $GITHUB_OUTPUT
           echo "batch_changed=$BATCH_CHANGED" >> $GITHUB_OUTPUT
@@ -122,18 +134,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Create .env
+      - name: Setup and copy files
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          ENV_CONTENT: ${{ secrets.ENV_FILE_CONTENT }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: root
           password: ${{ secrets.SERVER_PASSWORD }}
+          envs: ENV_CONTENT
           script: |
             mkdir -p ~/recap
-            cat > ~/recap/.env << 'ENVEOF'
-            ${{ secrets.ENV_FILE_CONTENT }}
-            ENVEOF
+            printf '%s\n' "$ENV_CONTENT" > ~/recap/.env
             chmod 600 ~/recap/.env
+
+      - name: Copy docker-compose.yml
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: root
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: "docker-compose.yml"
+          target: "~/recap"
+          overwrite: true
 
       - name: Deploy services
         uses: appleboy/ssh-action@v1.0.3
