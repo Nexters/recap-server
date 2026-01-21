@@ -123,23 +123,17 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Create .env
-        run: |
-          echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
-          chmod 600 .env
-
-      - name: Copy files
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: root
           password: ${{ secrets.SERVER_PASSWORD }}
-          source: "docker-compose.yml,.env"
-          target: "~/recap"
-          overwrite: true
-
-      - name: Cleanup
-        if: always()
-        run: rm -f .env
+          script: |
+            mkdir -p ~/recap
+            cat > ~/recap/.env << 'ENVEOF'
+            ${{ secrets.ENV_FILE_CONTENT }}
+            ENVEOF
+            chmod 600 ~/recap/.env
 
       - name: Deploy services
         uses: appleboy/ssh-action@v1.0.3
