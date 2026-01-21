@@ -1,0 +1,32 @@
+# Git
+.git
+.gitignore
+.gitattributes
+.github
+
+# IDE
+.idea
+.vscode
+*.iml
+*.iws
+*.ipr
+
+# Build outputs
+build/
+**/build/
+.gradle/
+out/
+bin/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+docs/
+
+.editorconfig
