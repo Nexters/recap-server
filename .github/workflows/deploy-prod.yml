@@ -3,10 +3,17 @@ name: Deploy to Prod
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   deploy:
     uses: ./.github/workflows/deploy.yml
+    with:
+      environment: prod
     secrets:
       SERVER_HOST: ${{ secrets.PROD_SERVER_HOST }}
       SERVER_PASSWORD: ${{ secrets.PROD_SERVER_PASSWORD }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      ENV_FILE_CONTENT: ${{ secrets.PROD_ENV_FILE_CONTENT }}

@@ -2,116 +2,225 @@ name: Deploy
 
 on:
   workflow_call:
+    inputs:
+      environment:
+        description: 'Deployment environment (dev/prod)'
+        required: true
+        type: string
     secrets:
       SERVER_HOST:
         required: true
       SERVER_PASSWORD:
         required: true
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
+      DISCORD_WEBHOOK:
+        required: true
+      ENV_FILE_CONTENT:
+        required: true
+
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
 
 jobs:
-  detect-changes:
+  build-and-push:
+    name: Build & Push
     runs-on: ubuntu-latest
     outputs:
-      api: ${{ steps.filter.outputs.api }}
-      batch: ${{ steps.filter.outputs.batch }}
+      sha: ${{ steps.sha.outputs.short }}
+      api_changed: ${{ steps.changes.outputs.api_changed }}
+      batch_changed: ${{ steps.changes.outputs.batch_changed }}
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: dorny/paths-filter@v3
-        id: filter
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          filters: |
-            api:
-              - 'api/**'
-              - 'core/**'
-              - 'build.gradle.kts'
-              - 'settings.gradle.kts'
-              - 'gradle/**'
-              - 'Dockerfile'
-              - 'docker-compose.yml'
-            batch:
-              - 'batch/**'
-              - 'core/**'
-              - 'build.gradle.kts'
-              - 'settings.gradle.kts'
-              - 'gradle/**'
-              - 'Dockerfile'
-              - 'docker-compose.yml'
+          fetch-depth: 2
 
-  deploy-api:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.api == 'true'
+      - name: Detect changes
+        id: changes
+        run: |
+          if git rev-parse HEAD~1 >/dev/null 2>&1; then
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          else
+            CHANGED_FILES=$(git ls-files)
+          fi
+
+          API_CHANGED=$(echo "$CHANGED_FILES" | grep -cE "^(api|core)/.*\.(kt|java|gradle)(\.kts)?$|docker-compose\.yml|Dockerfile" || echo "0")
+          BATCH_CHANGED=$(echo "$CHANGED_FILES" | grep -cE "^(batch|core)/.*\.(kt|java|gradle)(\.kts)?$|docker-compose\.yml|Dockerfile" || echo "0")
+
+          echo "api_changed=$API_CHANGED" >> $GITHUB_OUTPUT
+          echo "batch_changed=$BATCH_CHANGED" >> $GITHUB_OUTPUT
+          echo "API: $API_CHANGED, Batch: $BATCH_CHANGED changes"
+
+      - name: Login to Docker Hub
+        if: steps.changes.outputs.api_changed > 0 || steps.changes.outputs.batch_changed > 0
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        if: steps.changes.outputs.api_changed > 0 || steps.changes.outputs.batch_changed > 0
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract commit SHA
+        id: sha
+        run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Build and push API
+        if: steps.changes.outputs.api_changed > 0
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: api
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/recap-api:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/recap-api:${{ steps.sha.outputs.short }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Batch
+        if: steps.changes.outputs.batch_changed > 0
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: batch
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/recap-batch:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/recap-batch:${{ steps.sha.outputs.short }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Discord - Build
+        if: always()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          status: ${{ job.status }}
+          title: "🔨 [${{ inputs.environment }}] Build"
+          description: |
+            **Status:** ${{ job.status == 'success' && '✅' || '❌' }}
+            **Branch:** `${{ github.ref_name }}`
+            **Commit:** `${{ steps.sha.outputs.short }}`
+            **Built:** ${{ steps.changes.outputs.api_changed > 0 && '🔹API ' || '' }}${{ steps.changes.outputs.batch_changed > 0 && '🔹Batch' || '' }}
+          color: ${{ job.status == 'success' && '0x57F287' || '0xED4245' }}
+
+  deploy:
+    name: Deploy
+    needs: build-and-push
+    if: needs.build-and-push.outputs.api_changed > 0 || needs.build-and-push.outputs.batch_changed > 0
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SHA: ${{ needs.build-and-push.outputs.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Copy files to server
+      - name: Create .env
+        run: |
+          echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
+          chmod 600 .env
+
+      - name: Copy files
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: root
           password: ${{ secrets.SERVER_PASSWORD }}
-          source: "api,batch,core,gradle,gradlew,build.gradle.kts,settings.gradle.kts,Dockerfile,docker-compose.yml"
+          source: "docker-compose.yml,.env"
           target: "~/recap"
-          strip_components: 0
           overwrite: true
 
-      - name: Deploy API
+      - name: Cleanup
+        if: always()
+        run: rm -f .env
+
+      - name: Deploy services
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          SHA: ${{ needs.build-and-push.outputs.sha }}
+          API_CHANGED: ${{ needs.build-and-push.outputs.api_changed }}
+          BATCH_CHANGED: ${{ needs.build-and-push.outputs.batch_changed }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: root
           password: ${{ secrets.SERVER_PASSWORD }}
+          envs: DOCKER_USER,SHA,API_CHANGED,BATCH_CHANGED
           script: |
+            set -e
             cd ~/recap
-            docker build --target api -t recap-api:latest .
-            docker-compose up -d api
 
-            for i in $(seq 1 30); do
-              if curl -sf http://localhost:8080/actuator/health > /dev/null; then
-                echo "API is healthy"
-                exit 0
-              fi
-              echo "Waiting for API... ($i/30)"
-              sleep 10
-            done
-            echo "API health check failed"
-            exit 1
+            # Deploy API if changed
+            if [ "$API_CHANGED" -gt 0 ]; then
+              echo "=== Deploying API ==="
+              docker pull ${DOCKER_USER}/recap-api:${SHA}
+              docker images recap-api:latest -q | grep -q . && docker tag recap-api:latest recap-api:previous || true
+              docker tag ${DOCKER_USER}/recap-api:${SHA} recap-api:latest
+              docker-compose up -d api
 
-  deploy-batch:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.batch == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Copy files to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: root
-          password: ${{ secrets.SERVER_PASSWORD }}
-          source: "api,batch,core,gradle,gradlew,build.gradle.kts,settings.gradle.kts,Dockerfile,docker-compose.yml"
-          target: "~/recap"
-          strip_components: 0
-          overwrite: true
-
-      - name: Deploy Batch
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: root
-          password: ${{ secrets.SERVER_PASSWORD }}
-          script: |
-            cd ~/recap
-            docker build --target batch -t recap-batch:latest .
-            docker-compose up -d batch
-
-            sleep 10
-            if docker ps --filter "name=recap-batch" --filter "status=running" | grep -q recap-batch; then
-              echo "Batch container is running"
-            else
-              echo "Batch container failed to start"
-              docker logs recap-batch
-              exit 1
+              # Health check
+              for i in $(seq 1 12); do
+                if curl -sf http://localhost:8080/actuator/health | grep -q '"status":"UP"'; then
+                  echo "✅ API healthy after $((i * 10))s"
+                  break
+                fi
+                [ $i -eq 12 ] && {
+                  echo "❌ API health check failed"
+                  docker logs recap-api --tail 50
+                  docker images recap-api:previous -q | grep -q . && {
+                    docker tag recap-api:previous recap-api:latest
+                    docker-compose up -d api
+                    echo "⚠️ Rolled back API"
+                  }
+                  exit 1
+                }
+                sleep 10
+              done
             fi
+
+            # Deploy Batch if changed
+            if [ "$BATCH_CHANGED" -gt 0 ]; then
+              echo "=== Deploying Batch ==="
+              docker pull ${DOCKER_USER}/recap-batch:${SHA}
+              docker images recap-batch:latest -q | grep -q . && docker tag recap-batch:latest recap-batch:previous || true
+              docker tag ${DOCKER_USER}/recap-batch:${SHA} recap-batch:latest
+              docker-compose up -d batch
+
+              # Health check
+              sleep 10
+              if ! docker ps --filter "name=recap-batch" --filter "status=running" | grep -q recap-batch; then
+                echo "❌ Batch failed to start"
+                docker logs recap-batch --tail 50
+                docker images recap-batch:previous -q | grep -q . && {
+                  docker tag recap-batch:previous recap-batch:latest
+                  docker-compose up -d batch
+                  echo "⚠️ Rolled back Batch"
+                }
+                exit 1
+              fi
+              echo "✅ Batch running"
+            fi
+
+            # Cleanup
+            docker image prune -f --filter "until=24h" || true
+            echo "✅ Deployment complete"
+
+      - name: Discord - Deploy
+        if: always()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          status: ${{ job.status }}
+          title: "🚀 [${{ inputs.environment }}] Deploy"
+          description: |
+            **Status:** ${{ job.status == 'success' && '✅ Success' || '❌ Failed' }}
+            **Branch:** `${{ github.ref_name }}`
+            **Commit:** `${{ needs.build-and-push.outputs.sha }}`
+          color: ${{ job.status == 'success' && '0x57F287' || '0xED4245' }}
