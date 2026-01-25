@@ -15,10 +15,12 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 @RestControllerAdvice(basePackages = ["com.recap.api"])
 class GlobalExceptionHandler {
-    companion object {
-        private const val INTERNAL_SERVER_ERROR_CODE = "INTERNAL_SERVER_ERROR"
-        private const val INTERNAL_SERVER_ERROR_MESSAGE = "서버 오류가 발생했습니다."
-        private val logger = getLogger()
+    private companion object {
+        const val INTERNAL_SERVER_ERROR_CODE = "INTERNAL_SERVER_ERROR"
+        const val INTERNAL_SERVER_ERROR_MESSAGE = "서버 오류가 발생했습니다."
+        const val INVALID_JSON_MESSAGE = "JSON 형식이 올바르지 않습니다."
+        const val EXCEPTION_SUFFIX = "_EXCEPTION"
+        val logger = getLogger()
     }
 
     @ExceptionHandler(ServerException::class)
@@ -32,7 +34,7 @@ class GlobalExceptionHandler {
                     .run {
                         replace(Regex("([a-z])([A-Z])"), "$1_$2")
                             .uppercase()
-                            .removeSuffix("_EXCEPTION")
+                            .removeSuffix(EXCEPTION_SUFFIX)
                     }
             val response =
                 ErrorResponse(
@@ -51,9 +53,8 @@ class GlobalExceptionHandler {
             InvalidRequestException(
                 message =
                     exception.bindingResult
-                        .allErrors
-                        .mapNotNull { it.defaultMessage }
-                        .joinToString(", ")
+                        .fieldErrors
+                        .joinToString(", ") { "${it.field}: ${it.defaultMessage}" }
             )
         )
 
@@ -63,13 +64,16 @@ class GlobalExceptionHandler {
             InvalidRequestException(
                 message =
                     exception.constraintViolations
-                        .joinToString(", ") { "${it.propertyPath.last()} ${it.message}" }
+                        .joinToString(", ") { "${it.propertyPath.last()}: ${it.message}" }
             )
         )
 
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handle(exception: HttpMessageNotReadableException): ResponseEntity<ErrorResponse> =
+        handle(InvalidRequestException(INVALID_JSON_MESSAGE))
+
     @ExceptionHandler(
         HttpRequestMethodNotSupportedException::class,
-        HttpMessageNotReadableException::class,
         MethodArgumentTypeMismatchException::class
     )
     fun handle(): ResponseEntity<ErrorResponse> = handle(InvalidRequestException())
