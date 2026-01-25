@@ -82,6 +82,9 @@ mysql-connector = { group = "com.mysql", name = "mysql-connector-j", version.ref
 restdocs-api-spec = { group = "com.epages", name = "restdocs-api-spec", version.ref = "restdocs-api-spec" }
 restdocs-api-spec-webtestclient = { group = "com.epages", name = "restdocs-api-spec-webtestclient", version.ref = "restdocs-api-spec" }
 
+# Hibernate
+hypersistence-utils = { group = "io.hypersistence", name = "hypersistence-utils-hibernate-63", version = "3.14.1" }
+
 [bundles]
 test = [
     "kotest",
