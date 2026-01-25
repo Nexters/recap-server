@@ -11,6 +11,7 @@ allOpen {
 dependencies {
     implementation(libs.spring.data.jpa)
     implementation(libs.hypersistence.utils)
+    implementation(libs.bundles.jwt)
     runtimeOnly(libs.mysql.connector)
 
     testFixturesImplementation(libs.bundles.test)
