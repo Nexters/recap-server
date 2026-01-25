@@ -27,7 +27,7 @@ class AuthServiceTest : BehaviorSpec() {
             val user = createUser()
             val getOAuthUserResponse = createGetOAuthUserResponse()
 
-            every { userRepository.findBySocialId(user.socialId) } returns user
+            every { userRepository.findBySocialIdAndProvider(user.socialId, user.provider) } returns user
             every { userRepository.save(user) } returns user
             every { oAuthClient.provider } returns command.provider
             every { oAuthClient.getOAuthUserByToken(command.oAuthToken) } returns getOAuthUserResponse

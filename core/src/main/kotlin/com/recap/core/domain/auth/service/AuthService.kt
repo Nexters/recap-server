@@ -26,7 +26,7 @@ class AuthService(
                     .getOAuthUserByToken(oAuthToken)
             val user =
                 userRepository
-                    .findBySocialId(getOAuthUserResponse.id)
+                    .findBySocialIdAndProvider(getOAuthUserResponse.id, provider)
                     ?.apply { email = getOAuthUserResponse.email }
                     ?: User(
                         socialId = getOAuthUserResponse.id,

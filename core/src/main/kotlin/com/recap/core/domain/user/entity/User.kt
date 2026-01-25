@@ -5,11 +5,11 @@ import io.hypersistence.utils.hibernate.id.Tsid
 import jakarta.persistence.*
 
 @Entity
-data class User(
+@Table(uniqueConstraints = [UniqueConstraint(columnNames = ["provider", "social_id"])])
+class User(
     @Id
     @Tsid
     val id: Long? = null,
-    @Column(unique = true)
     val socialId: String,
     var email: String,
     @Enumerated(EnumType.STRING)
