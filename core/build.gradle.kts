@@ -9,6 +9,7 @@ allOpen {
 }
 
 dependencies {
+    implementation(libs.spring.web)
     implementation(libs.spring.data.jpa)
     implementation(libs.hypersistence.utils)
     implementation(libs.bundles.jwt)
