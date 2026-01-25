@@ -19,6 +19,48 @@ spring:
       hibernate:
         format_sql: true
     show-sql: true
+jwt:
+  public-key: |
+    -----BEGIN PUBLIC KEY-----
+    MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsKNXAtj/BVRAGlwo5gDl
+    t31dyMrN+Pfi7cZM0DR5BdxjVBO1auNDYgVKc4JjKf2p0Yn94RksigV34utn8ZR2
+    L2dE+zpv0mP39QMA5Rqkjz9T6kTyVuCwm+jhdeQiMfn+uQchXE0zK0menPGqQa0G
+    pz2F2KeA6eF8vhnaSOUy3wdYGazaX+l/+tzxmEpecjqyOkMZkSEySgpMm3MnFbUi
+    6mWTddRH/AJbqcQxJOIabTY2/E9eondC++ahguRgP7G56lGRzbPpvLhYjnAN3gRE
+    f0jm8QqyBRG/n8/mMwXf/vLMjoI+8/lrqMe5YTJMBEVM1k5crlzxitpCT6D6K9h+
+    ZQIDAQAB
+    -----END PUBLIC KEY-----
+  private-key: |
+    -----BEGIN PRIVATE KEY-----
+    MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCwo1cC2P8FVEAa
+    XCjmAOW3fV3Iys349+LtxkzQNHkF3GNUE7Vq40NiBUpzgmMp/anRif3hGSyKBXfi
+    62fxlHYvZ0T7Om/SY/f1AwDlGqSPP1PqRPJW4LCb6OF15CIx+f65ByFcTTMrSZ6c
+    8apBrQanPYXYp4Dp4Xy+GdpI5TLfB1gZrNpf6X/63PGYSl5yOrI6QxmRITJKCkyb
+    cycVtSLqZZN11Ef8AlupxDEk4hptNjb8T16id0L75qGC5GA/sbnqUZHNs+m8uFiO
+    cA3eBER/SObxCrIFEb+fz+YzBd/+8syOgj7z+Wuox7lhMkwERUzWTlyuXPGK2kJP
+    oPor2H5lAgMBAAECggEAD9GtCPUAj8xeCk5PHlwdtotccw9Ql3exw8wi1HGilgcJ
+    AT5bnLU6M2TYaFRYx6mvQ/QI/9gGkFzRggnFjxHV7MRhneM7oPqxeeiZM6tpaefI
+    vt4KWwP35Rqb2HhEJLgoGw97qh3C06Fd+l29OvEBO8iLfF3x8mAukQLVNPqLzgPf
+    BIGKFVMEgkcoVE/b5nDO3MRqSHtruEw4XJMWzo2MaXQIJf6bRNfVuSdXWLrtZT3g
+    nG8Eto80RC3zGo638icyLlj8ShQzyD37DCd5kENMgC9JN/aY7/nXIlqRphNRqklf
+    Mpt1jNsgLIjSHx8TrgyV/5b7dTCshj7AnoC700mHoQKBgQDYeXjVE11UymCNqTs9
+    F1n4FZkTQqQ8pHkqRszB93JmI18DK3uQJNzihWsu476uEUxaVeWFxHAFQDAx1GqN
+    wT9JO9zp669T1Pi8uyw1n0ovSwVoBGu3w7rApqtCD7ZeSYtFDJJdifhyUyOYJvtR
+    wFp8evvRwzFVYtzSO29CizJCxQKBgQDQ49F2vgYpinX5Vbb7TslsHqeaCA8wK+N5
+    8dZj00c4ecKi6e48thzd6LWWEeOYUVilH2xyZXPHdaHbwO8FeiI2sMgtOodExNUW
+    ombkeuywZQw/e7F8iVbyk9VbIJ5d7VHq7wyma0WdexCcGXXkovggPqqzpkg/BrV8
+    f6bIRwiHIQKBgAp21MB4DyrqHYC7jYGGf3LemGe18Pp9eN3yTjOSIpWNYCpnD7II
+    FiVdDbFWkQEZFPfI7y9oL4IReELwYbY4gTapDiTAn9kNkniNE7YD3TIsDjbY/9wC
+    OiTV6bFn0Qj9xR2xXeHnqXrdSfsw5zUsdzNNPp8FMH1QKhx/gwFUeTmBAoGANZ4k
+    h+wivMrzmTptK3h/ryb3MkxbSawaSZTPyPPUViS61wJgymicZEF1Sr3ww4otzMSS
+    G5L68vm4wCV3tNoyqgMafrGFQxua7qJk8sSyuFxXlnvzhNnj3YQgwbFPtSBTZJBT
+    mOv0BIYwL0FBx5wlQHGVc2N9K+BW+UvyzXmeMMECgYBiq6oQG4JNB1UnaprOVbI2
+    i50cznROitI6kC24Txs7kNXRAbr7LvyCKsuudT00MvkOgKmQ+pOesjucSOCf1e1y
+    cF8m4/PCXfXnHguDT9anZyyPZVdV7qQ/+YsyfxR5kP5MNbUGay/gXinIoXVYkix6
+    kzdsOViUGDSX+N4rfcWGuw==
+    -----END PRIVATE KEY-----
+  access-token-expiration: 24h
+  refresh-token-expiration: 7d
 ---
 spring:
   config:
@@ -43,3 +85,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
+jwt:
+  public-key: ${RSA_PUBLIC_KEY}
+  private-key: ${RSA_PRIVATE_KEY}
+  access-token-expiration: ${ACCESS_TOKEN_EXPIRATION}
+  refresh-token-expiration: ${REFRESH_TOKEN_EXPIRATION}
