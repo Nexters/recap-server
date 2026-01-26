@@ -25,11 +25,10 @@ class AuthControllerTest : ControllerTest() {
     init {
         describe("login()은") {
             val uri = "/api/v1/auth/login"
+            val request = createLoginRequest()
+            val result = createLoginResult()
 
             context("유효한 OAuth2 토큰이 주어진 경우") {
-                val result = createLoginResult()
-                val request = createLoginRequest()
-
                 every { authService.login(request.toCommand()) } returns result
 
                 it("상태 코드 200과 LoginResponse를 반환한다.") {
@@ -49,9 +48,6 @@ class AuthControllerTest : ControllerTest() {
             }
 
             context("유효하지 않은 OAuth2 토큰이 주어진 경우") {
-                val result = createLoginResult()
-                val request = createLoginRequest()
-
                 every { authService.login(request.toCommand()) } throws InvalidOAuthTokenException()
 
                 it("상태 코드 401과 ErrorResponse를 반환한다.") {

@@ -45,10 +45,9 @@ class AuthServiceTest : BehaviorSpec() {
             val command = createLoginCommand()
 
             every { oAuthClient.provider } returns command.provider
-            every { oAuthClient.getOAuthUserByToken(any()) } throws InvalidOAuthTokenException()
+            every { oAuthClient.getOAuthUserByToken(command.oAuthToken) } throws InvalidOAuthTokenException()
 
             When("로그인을 시도하면") {
-
                 Then("예외가 발생한다.") {
                     shouldThrow<InvalidOAuthTokenException> { authService.login(command) }
                 }
