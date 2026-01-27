@@ -5,7 +5,8 @@ spring:
     banner-mode: off
   profiles:
     include:
-    - core
+    - auth
+    - db
   web:
     resources:
       add-mappings: false

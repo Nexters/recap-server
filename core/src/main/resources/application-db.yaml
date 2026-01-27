@@ -1,0 +1,49 @@
+spring:
+  jpa:
+    open-in-view: false
+datasource:
+  main:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
+datasource:
+  main:
+    jdbc-url: jdbc:mysql://localhost:3306/recap
+    username: root
+    password: root
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  jpa:
+    hibernate:
+      ddl-auto: update
+datasource:
+  main:
+    jdbc-url: ${MAIN_DB_URL}
+    username: ${MAIN_DB_USERNAME}
+    password: ${MAIN_DB_PASSWORD}
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  jpa:
+    hibernate:
+      ddl-auto: none
+datasource:
+  main:
+    jdbc-url: ${MAIN_DB_URL}
+    username: ${MAIN_DB_USERNAME}
+    password: ${MAIN_DB_PASSWORD}
