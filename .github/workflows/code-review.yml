@@ -2,7 +2,8 @@ name: Gemini Code Review
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened]
+  workflow_dispatch:
 
 jobs:
   code-review:
