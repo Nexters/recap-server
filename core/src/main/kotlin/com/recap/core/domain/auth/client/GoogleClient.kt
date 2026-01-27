@@ -15,6 +15,8 @@ class GoogleClient(
 ) : OAuthClient(provider = Provider.GOOGLE) {
     private companion object {
         const val USERINFO_ENDPOINT = "https://openidconnect.googleapis.com/v1/userinfo"
+        const val ID_FIELD = "sub"
+        const val EMAIL_FIELD = "email"
     }
 
     override fun getOAuthUserByToken(token: String): GetOAuthUserResponse =
@@ -27,8 +29,8 @@ class GoogleClient(
             .requiredBody<Map<String, *>>()
             .run {
                 GetOAuthUserResponse(
-                    id = get("sub") as String,
-                    email = get("email") as String
+                    id = get(ID_FIELD) as String,
+                    email = get(EMAIL_FIELD) as String
                 )
             }
 }
