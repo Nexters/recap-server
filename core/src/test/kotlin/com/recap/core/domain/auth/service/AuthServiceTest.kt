@@ -2,8 +2,11 @@ package com.recap.core.domain.auth.service
 
 import com.recap.core.domain.auth.client.GoogleClient
 import com.recap.core.domain.auth.exception.InvalidOAuthTokenException
+import com.recap.core.domain.user.entity.User
 import com.recap.core.domain.user.repository.UserRepository
 import com.recap.core.fixture.*
+import com.recap.core.global.jwt.JwtProvider
+import com.recap.core.global.properties.JwtProperties
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -13,6 +16,18 @@ import io.mockk.mockk
 class AuthServiceTest : BehaviorSpec() {
     private val userRepository = mockk<UserRepository>()
     private val oAuthClient = mockk<GoogleClient>()
+    val jwtProvider =
+        mockk<JwtProvider>()
+            .apply {
+                every { createToken(any(), any<User>()) } returns TOKEN
+            }
+    val jwtProperties =
+        mockk<JwtProperties>()
+            .apply {
+                every { accessTokenExpiration } returns EXPIRATION
+                every { refreshTokenExpiration } returns EXPIRATION
+            }
+
     private val authService =
         AuthService(
             userRepository = userRepository,
