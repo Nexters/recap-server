@@ -46,7 +46,7 @@ tasks {
 
 openapi3 {
     title = "Recap API"
-    description = "Imja API Documentation"
+    description = "Recap API Documentation"
     version = "v1"
     format = "yaml"
     outputFileNamePrefix = "api"
