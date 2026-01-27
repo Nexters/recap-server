@@ -3,7 +3,6 @@ package com.recap.core.global.jwt
 import com.recap.core.domain.user.entity.User
 import com.recap.core.global.properties.JwtProperties
 import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.Jwts.SIG
 import org.springframework.stereotype.Component
 import java.time.Duration
 import java.util.*
@@ -42,14 +41,14 @@ class JwtProvider(
             .expiration(Date(now.time + expiration.toMillis()))
             .issuer(TOKEN_ISSUER)
             .claims(payload)
-            .signWith(jwtProperties.privateKey, SIG.RS512)
+            .signWith(jwtProperties.secretKey)
             .compact()
     }
 
     fun getPayload(token: String): Map<String, *> =
         Jwts
             .parser()
-            .verifyWith(jwtProperties.publicKey)
+            .verifyWith(jwtProperties.secretKey)
             .build()
             .parseSignedClaims(token)
             .payload
