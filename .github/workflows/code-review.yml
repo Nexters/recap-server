@@ -3,6 +3,7 @@ name: Gemini Code Review
 on:
   pull_request:
     types: [opened]
+  workflow_dispatch:
 
 jobs:
   code-review:
