@@ -1,0 +1,15 @@
+jwt:
+  access-token-expiration: 24h
+  refresh-token-expiration: 7d
+  secret-key: cXAqNEgg7F1R8WlFmfoKUxjeYCME+yP5Y5LrNl46KgFkgRpFqlQ8XYI0nQFi6BXnL1LW1LnAwA2cPdFbsDOzzA==
+---
+spring:
+  config:
+    activate:
+      on-profile:
+      - dev
+      - prod
+jwt:
+  access-token-expiration: ${ACCESS_TOKEN_EXPIRATION}
+  refresh-token-expiration: ${REFRESH_TOKEN_EXPIRATION}
+  secret-key: ${SECRET_KEY}

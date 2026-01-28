@@ -5,10 +5,16 @@ spring:
     banner-mode: off
   profiles:
     include:
-    - core
+    - auth
+    - db
   web:
     resources:
       add-mappings: false
+server:
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
 logging:
   config: classpath:log4j2-${spring.profiles.active}.yaml
 ---

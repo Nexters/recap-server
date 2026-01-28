@@ -10,6 +10,7 @@ dependencies {
     implementation(libs.spring.security)
     implementation(libs.spring.validation)
     implementation(libs.spring.log4j2)
+    implementation(libs.bundles.jwt)
     implementation(libs.bundles.jackson)
 
     testImplementation(testFixtures(project(":core")))
@@ -45,7 +46,7 @@ tasks {
 
 openapi3 {
     title = "Recap API"
-    description = "Imja API Documentation"
+    description = "Recap API Documentation"
     version = "v1"
     format = "yaml"
     outputFileNamePrefix = "api"

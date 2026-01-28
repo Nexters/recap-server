@@ -15,11 +15,11 @@ class SecurityExceptionHandler(
     private val objectMapper: ObjectMapper
 ) : AuthenticationEntryPoint,
     AccessDeniedHandler {
-    companion object {
-        private const val UNAUTHENTICATED_CODE = "UNAUTHENTICATED"
-        private const val UNAUTHENTICATED_MESSAGE = "인증되지 않은 사용자입니다."
-        private const val UNAUTHORIZED_CODE = "UNAUTHORIZED"
-        private const val UNAUTHORIZED_MESSAGE = "인가되지 않은 사용자입니다."
+    private companion object {
+        const val UNAUTHENTICATED_CODE = "UNAUTHENTICATED"
+        const val UNAUTHENTICATED_MESSAGE = "인증되지 않은 사용자입니다."
+        const val UNAUTHORIZED_CODE = "UNAUTHORIZED"
+        const val UNAUTHORIZED_MESSAGE = "인가되지 않은 사용자입니다."
     }
 
     override fun commence(
