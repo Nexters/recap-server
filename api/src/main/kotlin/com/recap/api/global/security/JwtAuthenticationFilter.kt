@@ -25,7 +25,7 @@ class JwtAuthenticationFilter(
         request
             .getHeader(HttpHeaders.AUTHORIZATION)
             ?.run {
-                runCatching { jwtProvider.getPayload(getBearerToken()) }
+                runCatching { jwtProvider.extractPayload(getBearerToken()) }
                     .onSuccess { SecurityContextHolder.getContext().authentication = RecapAuthentication.from(it) }
                     .onFailure { if (it !is JwtException) throw it }
             }

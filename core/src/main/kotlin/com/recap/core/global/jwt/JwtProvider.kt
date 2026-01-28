@@ -45,7 +45,7 @@ class JwtProvider(
             .compact()
     }
 
-    fun getPayload(token: String): Map<String, *> =
+    fun extractPayload(token: String): Map<String, *> =
         Jwts
             .parser()
             .verifyWith(jwtProperties.secretKey)
