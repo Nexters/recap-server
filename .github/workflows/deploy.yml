@@ -53,19 +53,27 @@ jobs:
         id: changes
         run: |
           if git rev-parse HEAD~1 >/dev/null 2>&1; then
-            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
           else
-            CHANGED_FILES=$(git ls-files)
+          CHANGED_FILES=$(git ls-files)
           fi
 
-          API_CHANGED=$(echo "$CHANGED_FILES" | grep -cE "^(api|core)/.*\.(kt|java|gradle)(\.kts)?$|docker-compose\.yml|Dockerfile" || true)
-          BATCH_CHANGED=$(echo "$CHANGED_FILES" | grep -cE "^(batch|core)/.*\.(kt|java|gradle)(\.kts)?$|docker-compose\.yml|Dockerfile" || true)
-          API_CHANGED=${API_CHANGED:-0}
-          BATCH_CHANGED=${BATCH_CHANGED:-0}
+          API_CODE_CHANGED=$(echo "$CHANGED_FILES" | grep -cE "^(api|core)/.*\.(kt|java|gradle)(\.kts)?$" || true)
+          BATCH_CODE_CHANGED=$(echo "$CHANGED_FILES" | grep -cE "^(batch|core)/.*\.(kt|java|gradle)(\.kts)?$" || true)
+          COMPOSE_CHANGED=$(echo "$CHANGED_FILES" | grep -c "docker-compose\.yml" || true)
+
+          # 코드 변경 또는 compose 변경 시 배포
+          API_CHANGED=$((API_CODE_CHANGED + COMPOSE_CHANGED))
+          BATCH_CHANGED=$((BATCH_CODE_CHANGED + COMPOSE_CHANGED))
+
+          # 빌드는 코드 변경 시에만
+          BUILD_API=$API_CODE_CHANGED
+          BUILD_BATCH=$BATCH_CODE_CHANGED
 
           echo "api_changed=$API_CHANGED" >> $GITHUB_OUTPUT
           echo "batch_changed=$BATCH_CHANGED" >> $GITHUB_OUTPUT
-          echo "API: $API_CHANGED, Batch: $BATCH_CHANGED changes"
+          echo "build_api=$BUILD_API" >> $GITHUB_OUTPUT
+          echo "build_batch=$BUILD_BATCH" >> $GITHUB_OUTPUT
 
       - name: Login to Docker Hub
         if: steps.changes.outputs.api_changed > 0 || steps.changes.outputs.batch_changed > 0
@@ -83,7 +91,7 @@ jobs:
         run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Build and push API
-        if: steps.changes.outputs.api_changed > 0
+        if: steps.changes.outputs.build_api > 0
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -96,7 +104,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push Batch
-        if: steps.changes.outputs.batch_changed > 0
+        if: steps.changes.outputs.build_batch > 0
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -180,6 +188,9 @@ jobs:
               docker pull ${DOCKER_USER}/recap-api:${SHA}
               docker images recap-api:latest -q | grep -q . && docker tag recap-api:latest recap-api:previous || true
               docker tag ${DOCKER_USER}/recap-api:${SHA} recap-api:latest
+
+              docker-compose stop api
+              docker-compose rm -f api
               docker-compose up -d api
 
               # Health check
@@ -208,6 +219,9 @@ jobs:
               docker pull ${DOCKER_USER}/recap-batch:${SHA}
               docker images recap-batch:latest -q | grep -q . && docker tag recap-batch:latest recap-batch:previous || true
               docker tag ${DOCKER_USER}/recap-batch:${SHA} recap-batch:latest
+
+              docker-compose stop batch
+              docker-compose rm -f batch
               docker-compose up -d batch
 
               # Health check
