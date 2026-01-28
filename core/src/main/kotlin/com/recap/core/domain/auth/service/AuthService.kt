@@ -3,6 +3,8 @@ package com.recap.core.domain.auth.service
 import com.recap.core.domain.auth.client.OAuthClient
 import com.recap.core.domain.auth.dto.command.LoginCommand
 import com.recap.core.domain.auth.dto.result.LoginResult
+import com.recap.core.domain.auth.entity.RefreshToken
+import com.recap.core.domain.auth.repository.RefreshTokenRepository
 import com.recap.core.domain.user.entity.User
 import com.recap.core.domain.user.repository.UserRepository
 import com.recap.core.global.jwt.JwtProvider
@@ -13,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class AuthService(
     private val userRepository: UserRepository,
+    private val refreshTokenRepository: RefreshTokenRepository,
     private val oAuthClients: List<OAuthClient>,
     private val jwtProvider: JwtProvider,
     private val jwtProperties: JwtProperties
@@ -37,7 +40,18 @@ class AuthService(
             userRepository.save(user)
 
             val accessToken = jwtProvider.createToken(jwtProperties.accessTokenExpiration, user)
-            val refreshToken = jwtProvider.createToken(jwtProperties.refreshTokenExpiration, user)
+            val refreshToken =
+                jwtProvider
+                    .createToken(jwtProperties.refreshTokenExpiration, user)
+                    .also {
+                        refreshTokenRepository.save(
+                            RefreshToken(
+                                userId = user.id!!,
+                                content = it,
+                                expiration = jwtProperties.refreshTokenExpiration
+                            )
+                        )
+                    }
 
             LoginResult(
                 accessToken = accessToken,
