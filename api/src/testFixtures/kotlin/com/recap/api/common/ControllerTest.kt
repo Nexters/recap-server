@@ -11,7 +11,9 @@ import org.springframework.test.web.servlet.client.MockMvcWebTestClient
 import org.springframework.web.context.WebApplicationContext
 
 @AutoConfigureRestDocs
-abstract class ControllerTest : DescribeSpec() {
+abstract class ControllerTest(
+    private val version: Int = 1
+) : DescribeSpec() {
     @Autowired
     private lateinit var webApplicationContext: WebApplicationContext
 
@@ -22,6 +24,7 @@ abstract class ControllerTest : DescribeSpec() {
         MockMvcWebTestClient
             .bindToApplicationContext(webApplicationContext)
             .configureClient()
+            .baseUrl("/api/v$version")
             .filter(WebTestClientRestDocumentation.documentationConfiguration(restDocumentationContextProvider))
             .build()
     }
