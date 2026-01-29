@@ -59,8 +59,14 @@ class AuthService(
             val userId = jwtProvider.extractUserId(refreshToken)
 
             refreshTokenRepository
-                .findByUserId(userId)
-                ?.apply { if (content != refreshToken) throw InvalidAuthenticationException() }
+                .findByIdOrNull(userId)
+                ?.apply {
+                    if (content != refreshToken) {
+                        refreshTokenRepository.deleteById(userId)
+
+                        throw InvalidAuthenticationException()
+                    }
+                }
                 ?: throw RefreshTokenNotFoundException()
 
             val user = userRepository.findByIdOrNull(userId) ?: throw UserNotFoundException()

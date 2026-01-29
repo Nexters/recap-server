@@ -14,9 +14,7 @@ import com.recap.core.global.properties.JwtProperties
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.slot
+import io.mockk.*
 import org.springframework.data.repository.findByIdOrNull
 
 class AuthServiceTest : BehaviorSpec() {
@@ -128,7 +126,7 @@ class AuthServiceTest : BehaviorSpec() {
             every { refreshTokenRepository.save(any()) } returns refreshToken
 
             And("리프레시 토큰이 로그인 시점에 발급된 리프레시 토큰과 같은 경우") {
-                every { refreshTokenRepository.findByUserId(any()) } returns refreshToken
+                every { refreshTokenRepository.findByIdOrNull(any()) } returns refreshToken
 
                 When("토큰 리프레시를 시도하면") {
                     val result = authService.refresh(command)
@@ -142,12 +140,14 @@ class AuthServiceTest : BehaviorSpec() {
             And("리프레시 토큰이 로그인 시점에 발급된 리프레시 토큰과 다른 경우") {
                 val storedRefreshToken = "dsadadasdsdsdsdsdsdsadsadads"
 
-                every { refreshTokenRepository.findByUserId(any()) } returns
+                every { refreshTokenRepository.findByIdOrNull(any()) } returns
                     createRefreshToken(content = storedRefreshToken)
+                every { refreshTokenRepository.deleteById(any()) } just runs
 
                 When("토큰 리프레시를 시도하면") {
-                    Then("예외가 발생한다.") {
+                    Then("저장된 리프레시 토큰이 삭제되고 예외가 발생한다.") {
                         shouldThrow<InvalidAuthenticationException> { authService.refresh(command) }
+                        verify { refreshTokenRepository.deleteById(any()) }
                     }
                 }
             }
@@ -158,7 +158,7 @@ class AuthServiceTest : BehaviorSpec() {
             val refreshToken = createRefreshToken()
 
             every { userRepository.findByIdOrNull(any()) } returns null
-            every { refreshTokenRepository.findByUserId(any()) } returns refreshToken
+            every { refreshTokenRepository.findByIdOrNull(any()) } returns refreshToken
 
             When("토큰 리프레시를 시도하면") {
                 Then("예외가 발생한다.") {
@@ -172,7 +172,7 @@ class AuthServiceTest : BehaviorSpec() {
             val user = createUser()
 
             every { userRepository.findByIdOrNull(any()) } returns user
-            every { refreshTokenRepository.findByUserId(any()) } returns null
+            every { refreshTokenRepository.findByIdOrNull(any()) } returns null
 
             When("토큰 리프레시를 시도하면") {
                 Then("예외가 발생한다.") {
