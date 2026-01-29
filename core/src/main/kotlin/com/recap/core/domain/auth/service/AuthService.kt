@@ -14,9 +14,9 @@ import com.recap.core.domain.user.exception.UserNotFoundException
 import com.recap.core.domain.user.repository.UserRepository
 import com.recap.core.global.jwt.JwtProvider
 import com.recap.core.global.properties.JwtProperties
+import jakarta.transaction.Transactional
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 
 @Service
 class AuthService(
@@ -53,7 +53,6 @@ class AuthService(
             )
         }
 
-    @Transactional(readOnly = true)
     fun refresh(command: RefreshCommand): RefreshResult =
         with(command) {
             val userId = jwtProvider.extractUserId(refreshToken)
