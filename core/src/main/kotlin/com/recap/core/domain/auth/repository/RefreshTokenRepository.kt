@@ -5,4 +5,6 @@ import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface RefreshTokenRepository : CrudRepository<RefreshToken, Long>
+interface RefreshTokenRepository : CrudRepository<RefreshToken, Long> {
+    fun findByUserId(userId: Long): RefreshToken?
+}

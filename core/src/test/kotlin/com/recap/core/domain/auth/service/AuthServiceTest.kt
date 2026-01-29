@@ -1,9 +1,12 @@
 package com.recap.core.domain.auth.service
 
 import com.recap.core.domain.auth.client.OAuthClient
+import com.recap.core.domain.auth.exception.InvalidAuthenticationException
 import com.recap.core.domain.auth.exception.InvalidOAuthTokenException
+import com.recap.core.domain.auth.exception.RefreshTokenNotFoundException
 import com.recap.core.domain.auth.repository.RefreshTokenRepository
 import com.recap.core.domain.user.entity.User
+import com.recap.core.domain.user.exception.UserNotFoundException
 import com.recap.core.domain.user.repository.UserRepository
 import com.recap.core.fixture.*
 import com.recap.core.global.jwt.JwtProvider
@@ -14,6 +17,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import org.springframework.data.repository.findByIdOrNull
 
 class AuthServiceTest : BehaviorSpec() {
     private val userRepository = mockk<UserRepository>()
@@ -23,6 +27,7 @@ class AuthServiceTest : BehaviorSpec() {
         mockk<JwtProvider>()
             .apply {
                 every { createToken(any(), any<User>()) } returns TOKEN
+                every { extractUserId(any()) } returns ID
             }
     private val jwtProperties =
         mockk<JwtProperties>()
@@ -110,6 +115,80 @@ class AuthServiceTest : BehaviorSpec() {
             When("로그인을 시도하면") {
                 Then("예외가 발생한다.") {
                     shouldThrow<InvalidOAuthTokenException> { authService.login(command) }
+                }
+            }
+        }
+
+        Given("사용자가 유효한 리프레시 토큰을 가지고 있고") {
+            val command = createRefreshCommand()
+            val user = createUser()
+            val refreshToken = createRefreshToken()
+
+            every { userRepository.findByIdOrNull(any()) } returns user
+            every { refreshTokenRepository.save(any()) } returns refreshToken
+
+            And("리프레시 토큰이 로그인 시점에 발급된 리프레시 토큰과 같은 경우") {
+                every { refreshTokenRepository.findByUserId(any()) } returns refreshToken
+
+                When("토큰 리프레시를 시도하면") {
+                    val result = authService.refresh(command)
+
+                    Then("리프레시 토큰이 재발급된다.") {
+                        result shouldBe createRefreshResult()
+                    }
+                }
+            }
+
+            And("리프레시 토큰이 로그인 시점에 발급된 리프레시 토큰과 다른 경우") {
+                val storedRefreshToken = "dsadadasdsdsdsdsdsdsadsadads"
+
+                every { refreshTokenRepository.findByUserId(any()) } returns
+                    createRefreshToken(content = storedRefreshToken)
+
+                When("토큰 리프레시를 시도하면") {
+                    Then("예외가 발생한다.") {
+                        shouldThrow<InvalidAuthenticationException> { authService.refresh(command) }
+                    }
+                }
+            }
+        }
+
+        Given("탈퇴한 사용자가 유효한 리프레시 토큰을 가진 경우") {
+            val command = createRefreshCommand()
+            val refreshToken = createRefreshToken()
+
+            every { userRepository.findByIdOrNull(any()) } returns null
+            every { refreshTokenRepository.findByUserId(any()) } returns refreshToken
+
+            When("토큰 리프레시를 시도하면") {
+                Then("예외가 발생한다.") {
+                    shouldThrow<UserNotFoundException> { authService.refresh(command) }
+                }
+            }
+        }
+
+        Given("로그아웃한 사용자가 유효한 리프레시 토큰을 가진 경우") {
+            val command = createRefreshCommand()
+            val user = createUser()
+
+            every { userRepository.findByIdOrNull(any()) } returns user
+            every { refreshTokenRepository.findByUserId(any()) } returns null
+
+            When("토큰 리프레시를 시도하면") {
+                Then("예외가 발생한다.") {
+                    shouldThrow<RefreshTokenNotFoundException> { authService.refresh(command) }
+                }
+            }
+        }
+
+        Given("사용자가 유효하지 않은 리프레시 토큰을 가진 경우") {
+            val command = createRefreshCommand()
+
+            every { jwtProvider.extractUserId(any()) } throws InvalidAuthenticationException()
+
+            When("토큰 리프레시를 시도하면") {
+                Then("예외가 발생한다.") {
+                    shouldThrow<InvalidAuthenticationException> { authService.refresh(command) }
                 }
             }
         }

@@ -1,7 +1,9 @@
 package com.recap.api.snippet
 
 import com.recap.api.domain.auth.dto.request.LoginRequest
+import com.recap.api.domain.auth.dto.request.RefreshRequest
 import com.recap.api.domain.auth.dto.response.LoginResponse
+import com.recap.api.domain.auth.dto.response.RefreshResponse
 import com.recap.api.util.desc
 import com.recap.api.util.fieldsOf
 
@@ -11,8 +13,19 @@ val loginRequestFields =
         LoginRequest::provider desc "OAuth2 제공자"
     )
 
+val refreshRequestFields =
+    fieldsOf(
+        RefreshRequest::refreshToken desc "리프레시 토큰"
+    )
+
 val loginResponseFields =
     fieldsOf(
         LoginResponse::accessToken desc "액세스 토큰",
         LoginResponse::refreshToken desc "리프레시 토큰"
+    )
+
+val refreshResponseFields =
+    fieldsOf(
+        RefreshResponse::accessToken desc "액세스 토큰",
+        RefreshResponse::refreshToken desc "리프레시 토큰"
     )

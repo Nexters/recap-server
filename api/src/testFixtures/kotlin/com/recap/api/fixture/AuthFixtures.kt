@@ -1,6 +1,7 @@
 package com.recap.api.fixture
 
 import com.recap.api.domain.auth.dto.request.LoginRequest
+import com.recap.api.domain.auth.dto.request.RefreshRequest
 import com.recap.core.domain.user.entity.Provider
 import com.recap.core.fixture.PROVIDER
 import com.recap.core.fixture.TOKEN
@@ -13,3 +14,5 @@ fun createLoginRequest(
         oAuthToken = oAuthToken,
         provider = provider
     )
+
+fun createRefreshRequest(refreshToken: String = TOKEN): RefreshRequest = RefreshRequest(refreshToken = refreshToken)

@@ -1,7 +1,9 @@
 package com.recap.core.global.jwt
 
+import com.recap.core.domain.auth.exception.InvalidAuthenticationException
 import com.recap.core.domain.user.entity.User
 import com.recap.core.global.properties.JwtProperties
+import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
 import org.springframework.stereotype.Component
 import java.time.Duration
@@ -27,6 +29,15 @@ class JwtProvider(
                     ::roles.name to roles.joinToString(",")
                 )
             )
+        }
+
+    fun extractUserId(token: String): Long =
+        try {
+            extractPayload(token)
+                .run { get(User::id.name) as String }
+                .toLong()
+        } catch (exception: JwtException) {
+            throw InvalidAuthenticationException()
         }
 
     fun createToken(
