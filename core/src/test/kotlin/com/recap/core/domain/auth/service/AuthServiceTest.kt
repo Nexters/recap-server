@@ -88,9 +88,10 @@ class AuthServiceTest : BehaviorSpec() {
             val user = createUser()
             val refreshToken = createRefreshToken()
             val getOAuthUserResponse = createGetOAuthUserResponse()
+            val userSlot = slot<User>()
 
             every { userRepository.findBySocialIdAndProvider(any(), any()) } returns null
-            every { userRepository.save(any()) } returns user
+            every { userRepository.save(capture(userSlot)) } returns user
             every { refreshTokenRepository.save(any()) } returns refreshToken
             every { oAuthClient.provider } returns command.provider
             every { oAuthClient.getOAuthUserByToken(any()) } returns getOAuthUserResponse
@@ -99,6 +100,7 @@ class AuthServiceTest : BehaviorSpec() {
                 val result = authService.login(command)
 
                 Then("회원가입과 함께 로그인 처리가 된다.") {
+                    userSlot.captured.id shouldBe null
                     result shouldBe createLoginResult()
                 }
             }
