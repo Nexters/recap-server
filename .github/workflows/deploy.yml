@@ -133,7 +133,8 @@ jobs:
   deploy:
     name: Deploy
     needs: build-and-push
-    if: needs.build-and-push.outputs.api_changed > 0 || needs.build-and-push.outputs.batch_changed > 0
+    #if: needs.build-and-push.outputs.api_changed > 0 || needs.build-and-push.outputs.batch_changed > 0
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -189,9 +190,7 @@ jobs:
             docker images retoday-api:latest -q | grep -q . && docker tag retoday-api:latest retoday-api:previous || true
             docker tag ${DOCKER_USER}/retoday-api:${SHA} retoday-api:latest
 
-            docker-compose stop api
-            docker-compose rm -f api
-            docker-compose up -d api
+            docker compose up -d --force-recreate api
 
             # Health check
             for i in $(seq 1 12); do
@@ -204,7 +203,7 @@ jobs:
                 docker logs retoday-api --tail 50
                 docker images retoday-api:previous -q | grep -q . && {
                   docker tag retoday-api:previous retoday-api:latest
-                  docker-compose up -d api
+                  docker compose up -d api
                   echo "⚠️ Rolled back API"
                 }
                 exit 1
@@ -220,9 +219,7 @@ jobs:
             docker images retoday-batch:latest -q | grep -q . && docker tag retoday-batch:latest retoday-batch:previous || true
             docker tag ${DOCKER_USER}/retoday-batch:${SHA} retoday-batch:latest
 
-            docker-compose stop batch
-            docker-compose rm -f batch
-            docker-compose up -d batch
+            docker compose up -d --force-recreate batch
 
             # Health check
             sleep 10
@@ -231,7 +228,7 @@ jobs:
               docker logs retoday-batch --tail 50
               docker images retoday-batch:previous -q | grep -q . && {
                 docker tag retoday-batch:previous retoday-batch:latest
-                docker-compose up -d batch
+                docker compose up -d batch
                 echo "⚠️ Rolled back Batch"
               }
               exit 1
