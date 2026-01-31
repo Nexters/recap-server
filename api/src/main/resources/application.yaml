@@ -35,13 +35,14 @@ spring:
   config:
     activate:
       on-profile: local
+web:
+  uri: http://localhost:3000
 ---
 spring:
   config:
     activate:
-      on-profile: dev
----
-spring:
-  config:
-    activate:
-      on-profile: prod
+      on-profile:
+      - dev
+      - prod
+web:
+  uri: ${WEB_URI}
