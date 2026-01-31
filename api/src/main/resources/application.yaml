@@ -1,6 +1,6 @@
 spring:
   application:
-    name: recap-api
+    name: retoday-api
   main:
     banner-mode: off
   profiles:

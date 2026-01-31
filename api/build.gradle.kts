@@ -45,8 +45,8 @@ tasks {
 }
 
 openapi3 {
-    title = "Recap API"
-    description = "Recap API Documentation"
+    title = "retoday API"
+    description = "retoday API Documentation"
     version = "v1"
     format = "yaml"
     outputFileNamePrefix = "api"

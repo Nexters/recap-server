@@ -1,6 +1,6 @@
 spring:
   application:
-    name: recap-batch
+    name: retoday-batch
   main:
     banner-mode: off
   profiles:
