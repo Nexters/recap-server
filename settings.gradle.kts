@@ -1,3 +1,3 @@
-rootProject.name = "recap"
+rootProject.name = "retoday"
 
 include("api", "batch", "core")

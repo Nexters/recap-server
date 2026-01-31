@@ -1,4 +1,4 @@
-package com.recap.batch
+package com.retoday.batch
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication

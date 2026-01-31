@@ -11,7 +11,7 @@ plugins {
 }
 
 allprojects {
-    group = "com.recap"
+    group = "com.retoday"
     version = "0.0.1"
 
     repositories {

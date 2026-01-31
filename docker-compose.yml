@@ -1,10 +1,10 @@
 services:
   db:
     image: mysql:8.0
-    container_name: recap-db
+    container_name: retoday-db
     environment:
     - MYSQL_ROOT_PASSWORD=${MAIN_DB_PASSWORD}
-    - MYSQL_DATABASE=${MAIN_DB_NAME:-recap}
+    - MYSQL_DATABASE=${MAIN_DB_NAME:-retoday}
     volumes:
     - mysql-data:/var/lib/mysql
     ports:
@@ -18,8 +18,8 @@ services:
       start_period: 30s
 
   api:
-    image: recap-api:latest
-    container_name: recap-api
+    image: retoday-api:latest
+    container_name: retoday-api
     ports:
     - "8080:8080"
     environment:
@@ -38,8 +38,8 @@ services:
       start_period: 30s
 
   batch:
-    image: recap-batch:latest
-    container_name: recap-batch
+    image: retoday-batch:latest
+    container_name: retoday-batch
     environment:
     - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
     env_file:

@@ -18,7 +18,7 @@ spring:
     show-sql: true
 datasource:
   main:
-    jdbc-url: jdbc:mysql://localhost:3306/recap
+    jdbc-url: jdbc:mysql://localhost:3306/retoday
     username: root
     password: root
 ---
