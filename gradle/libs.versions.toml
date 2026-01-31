@@ -57,6 +57,7 @@ spring-log4j2 = { group = "org.springframework.boot", name = "spring-boot-starte
 spring-test = { group = "org.springframework.boot", name = "spring-boot-starter-test" }
 spring-restdocs-webtestclient = { group = "org.springframework.restdocs", name = "spring-restdocs-webtestclient" }
 spring-batch = { group = "org.springframework.boot", name = "spring-boot-starter-batch" }
+spring-actuator = { group = "org.springframework.boot", name = "spring-boot-starter-actuator" }
 
 # JWT
 jjwt-api = { group = "io.jsonwebtoken", name = "jjwt-api", version.ref = "jwt" }
