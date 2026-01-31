@@ -1,8 +1,12 @@
 package com.recap.core.domain.auth.service
 
-import com.recap.core.domain.auth.client.GoogleClient
+import com.recap.core.domain.auth.client.OAuthClient
+import com.recap.core.domain.auth.exception.InvalidAuthenticationException
 import com.recap.core.domain.auth.exception.InvalidOAuthTokenException
+import com.recap.core.domain.auth.exception.RefreshTokenNotFoundException
+import com.recap.core.domain.auth.repository.RefreshTokenRepository
 import com.recap.core.domain.user.entity.User
+import com.recap.core.domain.user.exception.UserNotFoundException
 import com.recap.core.domain.user.repository.UserRepository
 import com.recap.core.fixture.*
 import com.recap.core.global.jwt.JwtProvider
@@ -10,47 +14,93 @@ import com.recap.core.global.properties.JwtProperties
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
+import io.mockk.*
+import org.springframework.data.repository.findByIdOrNull
 
 class AuthServiceTest : BehaviorSpec() {
     private val userRepository = mockk<UserRepository>()
-    private val oAuthClient = mockk<GoogleClient>()
-    val jwtProvider =
+    private val refreshTokenRepository = mockk<RefreshTokenRepository>()
+    private val oAuthClient = mockk<OAuthClient>()
+    private val jwtProvider =
         mockk<JwtProvider>()
             .apply {
                 every { createToken(any(), any<User>()) } returns TOKEN
+                every { extractUserId(any()) } returns ID
             }
-    val jwtProperties =
+    private val jwtProperties =
         mockk<JwtProperties>()
             .apply {
                 every { accessTokenExpiration } returns EXPIRATION
                 every { refreshTokenExpiration } returns EXPIRATION
             }
-
     private val authService =
         AuthService(
             userRepository = userRepository,
+            refreshTokenRepository = refreshTokenRepository,
             oAuthClients = listOf(oAuthClient),
             jwtProvider = jwtProvider,
             jwtProperties = jwtProperties
         )
 
     init {
-        Given("사용자가 유효한 OAuth2 토큰을 가진 경우") {
+        Given("가입한 사용자가 유효한 OAuth2 토큰을 가지고 있고") {
             val command = createLoginCommand()
             val user = createUser()
-            val getOAuthUserResponse = createGetOAuthUserResponse()
+            val refreshToken = createRefreshToken()
+            val userSlot = slot<User>()
 
-            every { userRepository.findBySocialIdAndProvider(user.socialId, user.provider) } returns user
-            every { userRepository.save(user) } returns user
+            every { userRepository.findBySocialIdAndProvider(any(), any()) } returns user
+            every { userRepository.save(capture(userSlot)) } returns user
+            every { refreshTokenRepository.save(any()) } returns refreshToken
             every { oAuthClient.provider } returns command.provider
-            every { oAuthClient.getOAuthUserByToken(command.oAuthToken) } returns getOAuthUserResponse
+
+            And("소셜 이메일이 사용자 이메일과 같은 경우") {
+                every { oAuthClient.getOAuthUserByToken(any()) } returns createGetOAuthUserResponse()
+
+                When("로그인을 시도하면") {
+                    val result = authService.login(command)
+
+                    Then("로그인 처리가 된다.") {
+                        result shouldBe createLoginResult()
+                    }
+                }
+            }
+
+            And("소셜 이메일이 사용자 이메일과 다른 경우") {
+                val changedEmail = "1117mg@github.com"
+
+                every { oAuthClient.getOAuthUserByToken(any()) } returns
+                    createGetOAuthUserResponse(email = changedEmail)
+
+                When("로그인을 시도하면") {
+                    val result = authService.login(command)
+
+                    Then("사용자 이메일이 변경되고 로그인 처리가 된다.") {
+                        userSlot.captured.email shouldBe changedEmail
+                        result shouldBe createLoginResult()
+                    }
+                }
+            }
+        }
+
+        Given("가입하지 않은 사용자가 유효한 OAuth2 토큰을 가지고 있는 경우") {
+            val command = createLoginCommand()
+            val user = createUser()
+            val refreshToken = createRefreshToken()
+            val getOAuthUserResponse = createGetOAuthUserResponse()
+            val userSlot = slot<User>()
+
+            every { userRepository.findBySocialIdAndProvider(any(), any()) } returns null
+            every { userRepository.save(capture(userSlot)) } returns user
+            every { refreshTokenRepository.save(any()) } returns refreshToken
+            every { oAuthClient.provider } returns command.provider
+            every { oAuthClient.getOAuthUserByToken(any()) } returns getOAuthUserResponse
 
             When("로그인을 시도하면") {
                 val result = authService.login(command)
 
-                Then("로그인 처리가 된다.") {
+                Then("회원가입과 함께 로그인 처리가 된다.") {
+                    userSlot.captured.id shouldBe null
                     result shouldBe createLoginResult()
                 }
             }
@@ -60,11 +110,87 @@ class AuthServiceTest : BehaviorSpec() {
             val command = createLoginCommand()
 
             every { oAuthClient.provider } returns command.provider
-            every { oAuthClient.getOAuthUserByToken(command.oAuthToken) } throws InvalidOAuthTokenException()
+            every { oAuthClient.getOAuthUserByToken(any()) } throws InvalidOAuthTokenException()
 
             When("로그인을 시도하면") {
                 Then("예외가 발생한다.") {
                     shouldThrow<InvalidOAuthTokenException> { authService.login(command) }
+                }
+            }
+        }
+
+        Given("사용자가 유효한 리프레시 토큰을 가지고 있고") {
+            val command = createRefreshCommand()
+            val user = createUser()
+            val refreshToken = createRefreshToken()
+
+            every { userRepository.findByIdOrNull(any()) } returns user
+            every { refreshTokenRepository.save(any()) } returns refreshToken
+
+            And("리프레시 토큰이 로그인 시점에 발급된 리프레시 토큰과 같은 경우") {
+                every { refreshTokenRepository.findByIdOrNull(any()) } returns refreshToken
+
+                When("토큰 리프레시를 시도하면") {
+                    val result = authService.refresh(command)
+
+                    Then("리프레시 토큰이 재발급된다.") {
+                        result shouldBe createRefreshResult()
+                    }
+                }
+            }
+
+            And("리프레시 토큰이 로그인 시점에 발급된 리프레시 토큰과 다른 경우") {
+                val storedRefreshToken = "dsadadasdsdsdsdsdsdsadsadads"
+
+                every { refreshTokenRepository.findByIdOrNull(any()) } returns
+                    createRefreshToken(content = storedRefreshToken)
+                every { refreshTokenRepository.deleteById(any()) } just runs
+
+                When("토큰 리프레시를 시도하면") {
+                    Then("저장된 리프레시 토큰이 삭제되고 예외가 발생한다.") {
+                        shouldThrow<InvalidAuthenticationException> { authService.refresh(command) }
+                        verify { refreshTokenRepository.deleteById(any()) }
+                    }
+                }
+            }
+        }
+
+        Given("탈퇴한 사용자가 유효한 리프레시 토큰을 가진 경우") {
+            val command = createRefreshCommand()
+            val refreshToken = createRefreshToken()
+
+            every { userRepository.findByIdOrNull(any()) } returns null
+            every { refreshTokenRepository.findByIdOrNull(any()) } returns refreshToken
+
+            When("토큰 리프레시를 시도하면") {
+                Then("예외가 발생한다.") {
+                    shouldThrow<UserNotFoundException> { authService.refresh(command) }
+                }
+            }
+        }
+
+        Given("로그아웃한 사용자가 유효한 리프레시 토큰을 가진 경우") {
+            val command = createRefreshCommand()
+            val user = createUser()
+
+            every { userRepository.findByIdOrNull(any()) } returns user
+            every { refreshTokenRepository.findByIdOrNull(any()) } returns null
+
+            When("토큰 리프레시를 시도하면") {
+                Then("예외가 발생한다.") {
+                    shouldThrow<RefreshTokenNotFoundException> { authService.refresh(command) }
+                }
+            }
+        }
+
+        Given("사용자가 유효하지 않은 리프레시 토큰을 가진 경우") {
+            val command = createRefreshCommand()
+
+            every { jwtProvider.extractUserId(any()) } throws InvalidAuthenticationException()
+
+            When("토큰 리프레시를 시도하면") {
+                Then("예외가 발생한다.") {
+                    shouldThrow<InvalidAuthenticationException> { authService.refresh(command) }
                 }
             }
         }

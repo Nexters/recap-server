@@ -1,7 +1,9 @@
 package com.recap.api.domain.auth.controller
 
 import com.recap.api.domain.auth.dto.request.LoginRequest
+import com.recap.api.domain.auth.dto.request.RefreshRequest
 import com.recap.api.domain.auth.dto.response.LoginResponse
+import com.recap.api.domain.auth.dto.response.RefreshResponse
 import com.recap.core.domain.auth.service.AuthService
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PostMapping
@@ -16,11 +18,21 @@ class AuthController(
 ) {
     @PostMapping("/login")
     fun login(
-        @RequestBody
         @Valid
+        @RequestBody
         request: LoginRequest
     ): LoginResponse =
         authService
             .login(request.toCommand())
             .let { LoginResponse.from(it) }
+
+    @PostMapping("/refresh")
+    fun refresh(
+        @Valid
+        @RequestBody
+        request: RefreshRequest
+    ): RefreshResponse =
+        authService
+            .refresh(request.toCommand())
+            .let { RefreshResponse.from(it) }
 }
