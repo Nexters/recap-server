@@ -33,16 +33,6 @@ class JwtAuthenticationFilter(
         filterChain.doFilter(request, response)
     }
 
-    override fun shouldNotFilter(request: HttpServletRequest): Boolean {
-        val path = request.requestURI
-
-        return path.contains("swagger-ui") ||
-            path.contains("v3/api-docs") ||
-            path.startsWith("/api/v1/auth") ||
-            path.startsWith("/docs") ||
-            path == "/swagger-ui.html"
-    }
-
     private fun String.getBearerToken(): String =
         if (startsWith(AUTHORIZATION_HEADER_PREFIX)) {
             removePrefix(AUTHORIZATION_HEADER_PREFIX)
