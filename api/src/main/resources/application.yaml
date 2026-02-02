@@ -15,6 +15,19 @@ server:
     encoding:
       charset: UTF-8
       force: true
+management:
+  endpoints:
+    access:
+      default: none
+    web:
+      exposure:
+        include: health
+    jmx:
+      exposure:
+        exclude: '*'
+  endpoint:
+    health:
+      access: read_only
 logging:
   config: classpath:log4j2-${spring.profiles.active}.yaml
 ---
@@ -22,6 +35,8 @@ spring:
   config:
     activate:
       on-profile: local
+web:
+  uri: http://localhost:3000
 ---
 spring:
   config:
@@ -32,7 +47,6 @@ spring:
   config:
     activate:
       on-profile: prod
-
 springdoc:
   default-consumes-media-type: application/json
   default-produces-media-type: application/json

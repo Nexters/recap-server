@@ -41,49 +41,17 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       sha: ${{ steps.sha.outputs.short }}
-      api_changed: ${{ steps.changes.outputs.api_changed }}
-      batch_changed: ${{ steps.changes.outputs.batch_changed }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 2
-
-    - name: Detect changes
-      id: changes
-      run: |
-        if git rev-parse HEAD~1 >/dev/null 2>&1; then
-        CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
-        else
-        CHANGED_FILES=$(git ls-files)
-        fi
-
-        API_CODE_CHANGED=$(echo "$CHANGED_FILES" | grep -cE "^(api|core)/.*\.(kt|java|gradle)(\.kts)?$" || true)
-        BATCH_CODE_CHANGED=$(echo "$CHANGED_FILES" | grep -cE "^(batch|core)/.*\.(kt|java|gradle)(\.kts)?$" || true)
-        COMPOSE_CHANGED=$(echo "$CHANGED_FILES" | grep -c "docker-compose\.yml" || true)
-
-        # 코드 변경 또는 compose 변경 시 배포
-        API_CHANGED=$((API_CODE_CHANGED + COMPOSE_CHANGED))
-        BATCH_CHANGED=$((BATCH_CODE_CHANGED + COMPOSE_CHANGED))
-
-        # 빌드는 코드 변경 시에만
-        BUILD_API=$API_CODE_CHANGED
-        BUILD_BATCH=$BATCH_CODE_CHANGED
-
-        echo "api_changed=$API_CHANGED" >> $GITHUB_OUTPUT
-        echo "batch_changed=$BATCH_CHANGED" >> $GITHUB_OUTPUT
-        echo "build_api=$BUILD_API" >> $GITHUB_OUTPUT
-        echo "build_batch=$BUILD_BATCH" >> $GITHUB_OUTPUT
 
     - name: Login to Docker Hub
-      if: steps.changes.outputs.api_changed > 0 || steps.changes.outputs.batch_changed > 0
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     - name: Set up Docker Buildx
-      if: steps.changes.outputs.api_changed > 0 || steps.changes.outputs.batch_changed > 0
       uses: docker/setup-buildx-action@v3
 
     - name: Extract commit SHA
@@ -91,7 +59,6 @@ jobs:
       run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
     - name: Build and push API
-      if: steps.changes.outputs.build_api > 0
       uses: docker/build-push-action@v5
       with:
         context: .
@@ -104,7 +71,6 @@ jobs:
         cache-to: type=gha,mode=max
 
     - name: Build and push Batch
-      if: steps.changes.outputs.build_batch > 0
       uses: docker/build-push-action@v5
       with:
         context: .
@@ -127,13 +93,12 @@ jobs:
           **Status:** ${{ job.status == 'success' && '✅' || '❌' }}
           **Branch:** `${{ github.ref_name }}`
           **Commit:** `${{ steps.sha.outputs.short }}`
-          **Built:** ${{ steps.changes.outputs.api_changed > 0 && '🔹API ' || '' }}${{ steps.changes.outputs.batch_changed > 0 && '🔹Batch' || '' }}
+          **Built:** 🔹API 🔹Batch
         color: ${{ job.status == 'success' && '0x57F287' || '0xED4245' }}
 
   deploy:
     name: Deploy
     needs: build-and-push
-    #if: needs.build-and-push.outputs.api_changed > 0 || needs.build-and-push.outputs.batch_changed > 0
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -172,19 +137,15 @@ jobs:
       env:
         DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
         SHA: ${{ needs.build-and-push.outputs.sha }}
-        API_CHANGED: ${{ needs.build-and-push.outputs.api_changed }}
-        BATCH_CHANGED: ${{ needs.build-and-push.outputs.batch_changed }}
       with:
         host: ${{ secrets.SERVER_HOST }}
         username: root
         password: ${{ secrets.SERVER_PASSWORD }}
-        envs: DOCKER_USER,SHA,API_CHANGED,BATCH_CHANGED
+        envs: DOCKER_USER,SHA
         script: |
           set -e
           cd ~/retoday
 
-          # Deploy API if changed
-          if [ "$API_CHANGED" -gt 0 ]; then
             echo "=== Deploying API ==="
             docker pull ${DOCKER_USER}/retoday-api:${SHA}
             docker images retoday-api:latest -q | grep -q . && docker tag retoday-api:latest retoday-api:previous || true
@@ -210,10 +171,7 @@ jobs:
               }
               sleep 10
             done
-          fi
 
-          # Deploy Batch if changed
-          if [ "$BATCH_CHANGED" -gt 0 ]; then
             echo "=== Deploying Batch ==="
             docker pull ${DOCKER_USER}/retoday-batch:${SHA}
             docker images retoday-batch:latest -q | grep -q . && docker tag retoday-batch:latest retoday-batch:previous || true
@@ -234,7 +192,6 @@ jobs:
               exit 1
             fi
             echo "✅ Batch running"
-          fi
 
           # Cleanup
           docker image prune -f --filter "until=24h" || true

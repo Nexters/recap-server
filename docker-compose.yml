@@ -1,5 +1,5 @@
 services:
-  db:
+  mysql:
     image: mysql:8.0
     container_name: retoday-db
     environment:
@@ -16,7 +16,21 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
-
+  redis:
+    image: redis:alpine
+    container_name: retoday-redis
+    command: [ "redis-server" ]
+    volumes:
+    - redis-data:/data
+    ports:
+    - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
   api:
     image: retoday-api:latest
     container_name: retoday-api
@@ -27,7 +41,9 @@ services:
     env_file:
     - .env
     depends_on:
-      db:
+      mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
@@ -36,7 +52,6 @@ services:
       timeout: 5s
       retries: 30
       start_period: 30s
-
   batch:
     image: retoday-batch:latest
     container_name: retoday-batch
@@ -45,9 +60,9 @@ services:
     env_file:
     - .env
     depends_on:
-      db:
+      mysql:
         condition: service_healthy
     restart: unless-stopped
-
 volumes:
   mysql-data:
+  redis-data:
