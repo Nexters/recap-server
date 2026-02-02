@@ -20,6 +20,7 @@ mysql = "8.2.0"
 
 # OpenAPI
 restdocs-api-spec = "0.19.4"
+springdoc-openapi = "2.8.9"
 
 [plugins]
 
@@ -82,6 +83,7 @@ mysql-connector = { group = "com.mysql", name = "mysql-connector-j", version.ref
 # OpenAPI
 restdocs-api-spec = { group = "com.epages", name = "restdocs-api-spec", version.ref = "restdocs-api-spec" }
 restdocs-api-spec-webtestclient = { group = "com.epages", name = "restdocs-api-spec-webtestclient", version.ref = "restdocs-api-spec" }
+springdoc-openapi = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc-openapi" }
 
 # Hibernate
 hypersistence-utils = { group = "io.hypersistence", name = "hypersistence-utils-hibernate-63", version = "3.14.1" }

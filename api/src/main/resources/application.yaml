@@ -9,7 +9,7 @@ spring:
     - db
   web:
     resources:
-      add-mappings: false
+      add-mappings: true
 server:
   servlet:
     encoding:
@@ -32,3 +32,17 @@ spring:
   config:
     activate:
       on-profile: prod
+
+springdoc:
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+  swagger-ui:
+    path: /swagger-ui.html
+    disable-swagger-default-url: true
+    display-request-duration: true
+    groups-order: desc
+    operations-sorter: method
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  show-actuator: false
