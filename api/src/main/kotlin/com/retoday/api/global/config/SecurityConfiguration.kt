@@ -26,6 +26,7 @@ class SecurityConfiguration {
             csrf { it.disable() }
             formLogin { it.disable() }
             logout { it.disable() }
+            httpBasic { it.disable() }
             sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             exceptionHandling {
                 it
@@ -36,7 +37,7 @@ class SecurityConfiguration {
                 it
                     .requestMatchers("/api/v1/admin/**")
                     .hasRole(Role.ADMIN.name)
-                    .requestMatchers("/api/v1/auth/**")
+                    .requestMatchers("/api/v1/auth/**", "/actuator/**")
                     .permitAll()
                     .anyRequest()
                     .authenticated()
