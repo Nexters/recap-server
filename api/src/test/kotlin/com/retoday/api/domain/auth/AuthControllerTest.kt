@@ -145,7 +145,7 @@ class AuthControllerTest : ControllerTest() {
                     .uri("/auth/logout")
                     .withAuthentication()
 
-            context("로그인한 사용자인 경우") {
+            context("유효한 요청이 주어진 경우") {
                 every { authService.logout(any()) } just runs
 
                 it("상태 코드 200을 반환한다.") {
@@ -157,7 +157,7 @@ class AuthControllerTest : ControllerTest() {
                 }
             }
 
-            context("로그아웃한 사용자인 경우") {
+            context("로그아웃한 사용자의 요청이 주어진 경우") {
                 every { authService.logout(any()) } throws RefreshTokenNotFoundException()
 
                 it("상태 코드 404와 ErrorResponse를 반환한다.") {
