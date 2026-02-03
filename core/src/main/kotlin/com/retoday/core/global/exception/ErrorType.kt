@@ -11,8 +11,8 @@ enum class ErrorType(
     UNAUTHORIZED("인가되지 않은 사용자입니다.", 403),
 
     // Auth
-    INVALID_AUTHENTICATION_TOKEN("유효하지 않은 인증 토큰입니다.", 400),
-    INVALID_OAUTH_TOKEN("유효하지 않은 OAuth2 토큰입니다.", 400),
+    INVALID_AUTHENTICATION_TOKEN("유효하지 않은 인증 토큰입니다.", 401),
+    INVALID_OAUTH_TOKEN("유효하지 않은 OAuth2 토큰입니다.", 401),
     REFRESH_TOKEN_NOT_FOUND("존재하지 않는 리프레시 토큰입니다.", 404),
 
     // User
