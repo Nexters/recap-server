@@ -21,7 +21,7 @@ class SecurityExceptionHandler(
         exception: AuthenticationException
     ) {
         with(response) {
-            status = ErrorType.UNAUTHENTICATED.status
+            status = ErrorType.UNAUTHENTICATED.status.value()
             writeError(ErrorResponse.from(ErrorType.UNAUTHENTICATED))
         }
     }
@@ -32,7 +32,7 @@ class SecurityExceptionHandler(
         exception: AccessDeniedException
     ) {
         with(response) {
-            status = ErrorType.UNAUTHORIZED.status
+            status = ErrorType.UNAUTHORIZED.status.value()
             writeError(ErrorResponse.from(ErrorType.UNAUTHORIZED))
         }
     }
