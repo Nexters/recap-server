@@ -16,6 +16,16 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 class SecurityConfiguration {
+    private companion object {
+        const val ADMIN_ENDPOINT_PREFIX = "/api/v1/admin"
+        val PERMITTED_AUTH_ENDPOINTS =
+            arrayOf(
+                "/api/v1/auth/login",
+                "/api/v1/auth/refresh"
+            )
+        val PERMITTED_ACTUATOR_ENDPOINTS = arrayOf("/actuator/health")
+    }
+
     @Bean
     fun securityFilterChain(
         http: HttpSecurity,
@@ -35,10 +45,12 @@ class SecurityConfiguration {
             }
             authorizeHttpRequests {
                 it
-                    .requestMatchers("/api/v1/admin/**")
+                    .requestMatchers("$ADMIN_ENDPOINT_PREFIX/**")
                     .hasRole(Role.ADMIN.name)
-                    .requestMatchers("/api/v1/auth/**", "/actuator/**")
-                    .permitAll()
+                    .requestMatchers(
+                        *PERMITTED_AUTH_ENDPOINTS,
+                        *PERMITTED_ACTUATOR_ENDPOINTS
+                    ).permitAll()
                     .anyRequest()
                     .authenticated()
             }

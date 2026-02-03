@@ -4,6 +4,7 @@ import com.retoday.api.domain.auth.dto.request.LoginRequest
 import com.retoday.api.domain.auth.dto.request.RefreshRequest
 import com.retoday.api.domain.auth.dto.response.LoginResponse
 import com.retoday.api.domain.auth.dto.response.RefreshResponse
+import com.retoday.api.global.annotation.AuthenticationId
 import com.retoday.core.domain.auth.service.AuthService
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PostMapping
@@ -35,4 +36,12 @@ class AuthController(
         authService
             .refresh(request.toCommand())
             .let { RefreshResponse.from(it) }
+
+    @PostMapping("/logout")
+    fun logout(
+        @AuthenticationId
+        userId: Long
+    ) {
+        authService.logout(userId)
+    }
 }
