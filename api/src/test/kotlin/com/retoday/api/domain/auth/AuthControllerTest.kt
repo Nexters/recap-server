@@ -8,10 +8,7 @@ import com.retoday.api.domain.auth.dto.response.RefreshResponse
 import com.retoday.api.fixture.createLoginRequest
 import com.retoday.api.fixture.createRefreshRequest
 import com.retoday.api.snippet.*
-import com.retoday.api.util.document
-import com.retoday.api.util.expectBody
-import com.retoday.api.util.expectError
-import com.retoday.api.util.expectStatus
+import com.retoday.api.util.*
 import com.retoday.core.domain.auth.exception.InvalidAuthenticationException
 import com.retoday.core.domain.auth.exception.InvalidOAuthTokenException
 import com.retoday.core.domain.auth.exception.RefreshTokenNotFoundException
@@ -20,7 +17,10 @@ import com.retoday.core.domain.user.exception.UserNotFoundException
 import com.retoday.core.fixture.createLoginResult
 import com.retoday.core.fixture.createRefreshResult
 import io.mockk.every
+import io.mockk.just
+import io.mockk.runs
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.test.web.reactive.server.expectBody
 
 @WebMvcTest(AuthController::class)
 class AuthControllerTest : ControllerTest() {
@@ -132,6 +132,40 @@ class AuthControllerTest : ControllerTest() {
                         .expectError()
                         .document("토큰 리프레시 실패(404 - 2)") {
                             requestBody(refreshRequestFields)
+                            responseBody(errorResponseFields)
+                        }
+                }
+            }
+        }
+
+        describe("logout()은") {
+            val request =
+                webClient
+                    .post()
+                    .uri("/auth/logout")
+                    .withAuthentication()
+
+            context("로그인한 사용자인 경우") {
+                every { authService.logout(any()) } just runs
+
+                it("상태 코드 200을 반환한다.") {
+                    request
+                        .exchange()
+                        .expectStatus(200)
+                        .expectBody<Void>()
+                        .document("로그아웃 성공(200)")
+                }
+            }
+
+            context("로그아웃한 사용자인 경우") {
+                every { authService.logout(any()) } throws RefreshTokenNotFoundException()
+
+                it("상태 코드 404와 ErrorResponse를 반환한다.") {
+                    request
+                        .exchange()
+                        .expectStatus(404)
+                        .expectError()
+                        .document("로그아웃 실패(404)") {
                             responseBody(errorResponseFields)
                         }
                 }

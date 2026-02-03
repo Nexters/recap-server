@@ -77,6 +77,13 @@ class AuthService(
             )
         }
 
+    fun logout(userId: Long) {
+        refreshTokenRepository
+            .findByIdOrNull(userId)
+            ?.let { refreshTokenRepository.delete(it) }
+            ?: throw RefreshTokenNotFoundException()
+    }
+
     private fun User.createTokens(): Pair<String, String> {
         val accessToken = jwtProvider.createToken(jwtProperties.accessTokenExpiration, this)
         val refreshToken =
