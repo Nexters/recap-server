@@ -1,6 +1,16 @@
 package com.retoday.core.global.exception
 
+import org.springframework.http.HttpStatus
+
 abstract class ServerException(
-    val status: Int,
-    override val message: String
-) : RuntimeException(message)
+    override val message: String,
+    val code: String,
+    val status: HttpStatus
+) : RuntimeException(message) {
+    constructor(errorType: ErrorType) :
+        this(
+            message = errorType.message,
+            code = errorType.code,
+            status = errorType.status
+        )
+}
