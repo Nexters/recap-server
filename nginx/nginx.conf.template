@@ -35,7 +35,7 @@ http {
 
     server {
         listen      80;
-        server_name api.re-today.com dev.re-today.com;
+        server_name ${DOMAIN};
         limit_conn  conn 100;
 
         location = /actuator/health {
@@ -57,7 +57,7 @@ http {
 
     server {
         listen      443 ssl;
-        server_name api.re-today.com dev.re-today.com;
+        server_name ${DOMAIN};
         http2 on;
 
         ssl_certificate           /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
