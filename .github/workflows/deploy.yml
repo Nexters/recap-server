@@ -124,7 +124,7 @@ jobs:
         host: ${{ secrets.SERVER_HOST }}
         username: root
         password: ${{ secrets.SERVER_PASSWORD }}
-        source: "docker-compose.yml,nginx/nginx.conf,nginx/proxy.conf"
+        source: "docker-compose.yml,nginx/nginx.conf.template,nginx/proxy.conf"
         target: "~/retoday"
         overwrite: true
 
@@ -212,7 +212,7 @@ jobs:
         host: ${{ secrets.SERVER_HOST }}
         username: root
         password: ${{ secrets.SERVER_PASSWORD }}
-        source: "docker-compose.yml,nginx/nginx.conf,nginx/proxy.conf"
+        source: "docker-compose.yml,nginx/nginx.conf.template,nginx/proxy.conf"
         target: "~/retoday"
         overwrite: true
 
