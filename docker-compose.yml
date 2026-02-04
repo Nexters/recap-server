@@ -76,6 +76,7 @@ services:
     - ./nginx/proxy.conf:/etc/nginx/proxy.conf:ro
     - ./nginx/upstream.conf:/etc/nginx/upstream.conf
     - ${NGINX_CERT_DIR}:/etc/nginx/certs:ro
+    - /var/www/certbot:/var/www/certbot:ro
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "wget", "-qO-", "http://localhost/actuator/health" ]
