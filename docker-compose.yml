@@ -1,3 +1,20 @@
+x-api-common: &api-common
+  image: retoday-api:latest
+  env_file:
+    - .env
+  depends_on:
+    mysql:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  restart: unless-stopped
+  healthcheck:
+    test: [ "CMD", "curl", "-sf", "http://localhost:8080/actuator/health" ]
+    interval: 5s
+    timeout: 3s
+    retries: 20
+    start_period: 45s
+
 services:
   mysql:
     image: mysql:8.0
@@ -16,10 +33,11 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+
   redis:
     image: redis:alpine
     container_name: retoday-redis
-    command: [ "redis-server" ]
+    command: ["redis-server", "--appendonly", "yes"]
     volumes:
     - redis-data:/data
     ports:
@@ -31,38 +49,52 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+
   api:
-    image: retoday-api:latest
+    <<: *api-common
     container_name: retoday-api
+    profiles: ["dev"]
+
+  api-blue:
+    <<: *api-common
+    container_name: retoday-api-blue
+    profiles: ["prod"]
+
+  api-green:
+    <<: *api-common
+    container_name: retoday-api-green
+    profiles: ["prod"]
+
+  nginx:
+    image: nginx:alpine
+    container_name: retoday-nginx
     ports:
-    - "8080:8080"
-    environment:
-    - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
-    env_file:
-    - .env
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+    - "80:80"
+    - "443:443"
+    volumes:
+    - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    - ./nginx/proxy.conf:/etc/nginx/proxy.conf:ro
+    - ./nginx/upstream.conf:/etc/nginx/upstream.conf
+    - ${NGINX_CERT_DIR}:/etc/nginx/certs:ro
+    - /var/www/certbot:/var/www/certbot:ro
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "-sf", "http://localhost:8080/actuator/health" ]
+      test: [ "CMD", "wget", "-qO-", "http://localhost/actuator/health" ]
       interval: 10s
       timeout: 5s
-      retries: 30
+      retries: 10
       start_period: 30s
+
   batch:
     image: retoday-batch:latest
     container_name: retoday-batch
-    environment:
-    - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
     env_file:
     - .env
     depends_on:
       mysql:
         condition: service_healthy
     restart: unless-stopped
+
 volumes:
   mysql-data:
   redis-data:
