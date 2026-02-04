@@ -45,6 +45,13 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
+    - name: Setup JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 21
+        cache: gradle
+
     - name: Login to Docker Hub
       uses: docker/login-action@v3
       with:
@@ -57,6 +64,9 @@ jobs:
     - name: Extract commit SHA
       id: sha
       run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+    - name: Run tests
+      run: ./gradlew :api:test --no-daemon --info
 
     - name: Build and push API
       uses: docker/build-push-action@v5
