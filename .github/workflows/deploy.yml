@@ -146,20 +146,20 @@ jobs:
           docker tag ${DOCKER_USER}/retoday-api:${SHA} retoday-api:latest
           COMPOSE_PROFILES=dev docker compose up -d --force-recreate api
 
-          for i in {1..20}; do
-            docker exec retoday-api curl -sf http://localhost:8080/actuator/health 2>/dev/null | grep -q '"status":"UP"' && break
-            [ $i -le 10 ] && sleep 3 || sleep 10
-            if [ $i -eq 20 ]; then
+          docker compose up -d --force-recreate nginx
+          sleep 3
+
+          for i in {1..30}; do
+            curl -sf http://localhost/actuator/health 2>/dev/null | grep -q '"status":"UP"' && break
+            [ $i -le 15 ] && sleep 3 || sleep 10
+            if [ $i -eq 30 ]; then
+              echo "❌ Health check failed"
               docker logs retoday-api --tail 30
+              docker logs retoday-nginx --tail 20
               exit 1
             fi
           done
           echo "✅ API healthy"
-
-          docker compose up -d --force-recreate nginx
-          sleep 5
-          curl -sf http://localhost/actuator/health | grep -q '"status":"UP"' || { docker logs retoday-nginx --tail 20; exit 1; }
-          echo "✅ Nginx healthy"
 
           docker pull ${DOCKER_USER}/retoday-batch:${SHA}
           docker tag ${DOCKER_USER}/retoday-batch:${SHA} retoday-batch:latest
@@ -266,11 +266,31 @@ jobs:
 
           sleep 3
           if ! curl -sf http://localhost/actuator/health | grep -q '"status":"UP"'; then
-            echo "❌ Rollback"
+            echo "❌ Rollback: switching back to api-$CURRENT"
             docker compose start api-$CURRENT
-            sleep 3
+            for i in {1..20}; do
+              docker exec retoday-api-$CURRENT curl -sf http://localhost:8080/actuator/health 2>/dev/null | grep -q '"status":"UP"' && break
+              [ $i -le 10 ] && sleep 3 || sleep 10
+              if [ $i -eq 20 ]; then
+                echo "❌ Rollback failed: api-$CURRENT not healthy"
+                docker logs retoday-api-$CURRENT --tail 30
+                exit 1
+              fi
+            done
+            echo "✅ api-$CURRENT healthy"
+
             sed -i "s/api-$TARGET/api-$CURRENT/" nginx/upstream.conf
+            docker exec retoday-nginx nginx -t || { echo "❌ Nginx config invalid"; exit 1; }
             docker exec retoday-nginx nginx -s reload
+
+            sleep 3
+            if ! curl -sf http://localhost/actuator/health | grep -q '"status":"UP"'; then
+              echo "❌ Rollback verification failed"
+              docker logs retoday-nginx --tail 20
+              exit 1
+            fi
+            echo "✅ Rollback successful: api-$CURRENT serving traffic"
+
             docker compose stop api-$TARGET
             exit 1
           fi
