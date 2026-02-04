@@ -9,7 +9,14 @@ spring:
     - db
   web:
     resources:
-      add-mappings: false
+      add-mappings: true
+springdoc:
+  swagger-ui:
+    url: /docs/api.yaml
+    path: /swagger-ui.html
+    disable-swagger-default-url: true
+  api-docs:
+    enabled: true
 server:
   servlet:
     encoding:
@@ -41,8 +48,18 @@ web:
 spring:
   config:
     activate:
-      on-profile:
-      - dev
-      - prod
-web:
-  uri: ${WEB_URI}
+      on-profile: dev
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  web:
+    resources:
+      add-mappings: false
+
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false

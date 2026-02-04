@@ -13,6 +13,7 @@ dependencies {
     implementation(libs.spring.log4j2)
     implementation(libs.bundles.jwt)
     implementation(libs.bundles.jackson)
+    implementation(libs.springdoc.openapi)
 
     testImplementation(testFixtures(project(":core")))
     testImplementation(libs.bundles.spring.test)
