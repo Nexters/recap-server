@@ -68,13 +68,11 @@ services:
   nginx:
     image: nginx:alpine
     container_name: retoday-nginx
-    environment:
-      - DOMAIN=${DOMAIN}
     ports:
     - "80:80"
     - "443:443"
     volumes:
-    - ./nginx/nginx.conf.template:/etc/nginx/templates/nginx.conf.template:ro
+    - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     - ./nginx/proxy.conf:/etc/nginx/proxy.conf:ro
     - ./nginx/upstream.conf:/etc/nginx/upstream.conf
     - /etc/letsencrypt:/etc/letsencrypt:ro

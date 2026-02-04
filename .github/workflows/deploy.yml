@@ -133,14 +133,18 @@ jobs:
       env:
         DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
         SHA: ${{ needs.build-and-push.outputs.sha }}
+        DOMAIN: dev.re-today.com
       with:
         host: ${{ secrets.SERVER_HOST }}
         username: root
         password: ${{ secrets.SERVER_PASSWORD }}
-        envs: DOCKER_USER,SHA
+        envs: DOCKER_USER,SHA,DOMAIN
         script: |
           set -e
           cd ~/retoday
+
+          export DOMAIN="${DOMAIN}"
+          envsubst '${DOMAIN}' < nginx/nginx.conf.template > nginx/nginx.conf
 
           docker pull ${DOCKER_USER}/retoday-api:${SHA}
           docker tag ${DOCKER_USER}/retoday-api:${SHA} retoday-api:latest
@@ -221,14 +225,18 @@ jobs:
       env:
         DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
         SHA: ${{ needs.build-and-push.outputs.sha }}
+        DOMAIN: api.re-today.com
       with:
         host: ${{ secrets.SERVER_HOST }}
         username: root
         password: ${{ secrets.SERVER_PASSWORD }}
-        envs: DOCKER_USER,SHA
+        envs: DOCKER_USER,SHA,DOMAIN
         script: |
           set -e
           cd ~/retoday
+
+          export DOMAIN="${DOMAIN}"
+          envsubst '${DOMAIN}' < nginx/nginx.conf.template > nginx/nginx.conf
 
           # 활성 컨테이너 확인
           if grep -q "api-blue" nginx/upstream.conf; then
