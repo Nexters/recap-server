@@ -153,8 +153,10 @@ jobs:
           set -e
           cd ~/retoday
 
+          [ -d nginx/nginx.conf ] && rm -rf nginx/nginx.conf
           export DOMAIN="${DOMAIN}"
           envsubst '${DOMAIN}' < nginx/nginx.conf.template > nginx/nginx.conf
+          [ -f nginx/nginx.conf ] && [ -s nginx/nginx.conf ] || { echo "❌ Failed to create nginx.conf"; exit 1; }
 
           docker pull ${DOCKER_USER}/retoday-api:${SHA}
           docker tag ${DOCKER_USER}/retoday-api:${SHA} retoday-api:latest
@@ -245,8 +247,10 @@ jobs:
           set -e
           cd ~/retoday
 
+          [ -d nginx/nginx.conf ] && rm -rf nginx/nginx.conf
           export DOMAIN="${DOMAIN}"
           envsubst '${DOMAIN}' < nginx/nginx.conf.template > nginx/nginx.conf
+          [ -f nginx/nginx.conf ] && [ -s nginx/nginx.conf ] || { echo "❌ Failed to create nginx.conf"; exit 1; }
 
           # 활성 컨테이너 확인
           if grep -q "api-blue" nginx/upstream.conf; then
