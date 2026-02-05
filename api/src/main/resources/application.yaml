@@ -49,6 +49,8 @@ spring:
   config:
     activate:
       on-profile: dev
+web:
+  uri: ${WEB_URI}
 ---
 spring:
   config:
