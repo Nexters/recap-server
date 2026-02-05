@@ -9,7 +9,7 @@ import com.retoday.core.domain.auth.entity.RefreshToken
 import com.retoday.core.domain.user.entity.Provider
 import java.time.Duration
 
-const val TOKEN = "asddaadaddadsdasdasadsads"
+const val TOKEN = "eyJhbGciOiJub25lIn0.eyJpZCI6MSwiaWF0IjoxNTE2MjM5MDIyfQ."
 val EXPIRATION = Duration.ofHours(1)!!
 
 fun createRefreshToken(
