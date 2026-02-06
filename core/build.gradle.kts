@@ -13,6 +13,7 @@ dependencies {
     implementation(libs.spring.data.jpa)
     implementation(libs.spring.data.redis)
     implementation(libs.hypersistence.utils)
+    implementation(libs.bundles.jdsl)
     implementation(libs.bundles.jwt)
     runtimeOnly(libs.mysql.connector)
 
