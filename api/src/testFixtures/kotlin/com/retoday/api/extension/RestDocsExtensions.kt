@@ -1,4 +1,4 @@
-package com.retoday.api.util
+package com.retoday.api.extension
 
 import com.epages.restdocs.apispec.WebTestClientRestDocumentationWrapper
 import org.springframework.restdocs.operation.preprocess.Preprocessors
@@ -14,7 +14,7 @@ infix fun String.desc(description: String): Field = this to description
 
 infix fun <T> KProperty<T>.desc(description: String): Field = name to description
 
-fun fieldsOf(vararg fields: Field): List<Field> = fields.asList()
+internal fun fieldsOf(vararg fields: Field): List<Field> = fields.asList()
 
 fun listFieldsOf(
     listField: Field,

@@ -1,4 +1,4 @@
-package com.retoday.core.global.util
+package com.retoday.core.global.extension
 
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging

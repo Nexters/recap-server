@@ -1,4 +1,4 @@
-package com.retoday.api.util
+package com.retoday.api.extension
 
 import com.retoday.api.fixture.createRetodayAuthentication
 import com.retoday.api.global.dto.ErrorResponse
