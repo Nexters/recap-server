@@ -1,8 +1,6 @@
 package com.retoday.api.common
 
-import io.kotest.core.extensions.Extension
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.extensions.spring.SpringExtension
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs
 import org.springframework.restdocs.RestDocumentationContextProvider
@@ -28,6 +26,4 @@ abstract class ControllerTest(
             .filter(WebTestClientRestDocumentation.documentationConfiguration(restDocumentationContextProvider))
             .build()
     }
-
-    override fun extensions(): List<Extension> = listOf(SpringExtension)
 }

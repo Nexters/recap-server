@@ -19,6 +19,7 @@ dependencies {
     runtimeOnly(libs.mysql.connector)
 
     testFixturesImplementation(libs.bundles.test)
+    testFixturesImplementation(libs.bundles.spring.test)
 }
 
 tasks {
