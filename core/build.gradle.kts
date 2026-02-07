@@ -18,6 +18,10 @@ dependencies {
     implementation(libs.bundles.jwt)
     runtimeOnly(libs.mysql.connector)
 
+    testImplementation(libs.spring.test)
+    testImplementation(libs.h2)
+    testFixturesImplementation(libs.spring.data.jpa)
+    testFixturesImplementation(libs.jdsl.jpa)
     testFixturesImplementation(libs.bundles.test)
     testFixturesImplementation(libs.bundles.spring.test)
 }
