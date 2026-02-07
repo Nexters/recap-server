@@ -14,7 +14,7 @@ infix fun String.desc(description: String): Field = this to description
 
 infix fun <T> KProperty<T>.desc(description: String): Field = name to description
 
-internal fun fieldsOf(vararg fields: Field): List<Field> = fields.asList()
+fun fieldsOf(vararg fields: Field): List<Field> = fields.asList()
 
 fun listFieldsOf(
     listField: Field,
