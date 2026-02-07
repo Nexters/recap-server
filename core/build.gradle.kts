@@ -12,6 +12,7 @@ dependencies {
     implementation(libs.spring.web)
     implementation(libs.spring.data.jpa)
     implementation(libs.spring.data.redis)
+    implementation(libs.spring.log4j2)
     implementation(libs.hypersistence.utils)
     implementation(libs.bundles.jdsl)
     implementation(libs.bundles.jwt)
