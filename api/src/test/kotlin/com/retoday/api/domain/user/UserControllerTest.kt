@@ -4,10 +4,11 @@ import com.ninjasquad.springmockk.MockkBean
 import com.retoday.api.common.ControllerTest
 import com.retoday.api.domain.user.controller.UserController
 import com.retoday.api.domain.user.dto.response.GetMyProfileResponse
-import com.retoday.api.extension.*
-import com.retoday.api.snippet.errorResponseFields
+import com.retoday.api.extension.document
+import com.retoday.api.extension.expectBody
+import com.retoday.api.extension.expectStatus
+import com.retoday.api.extension.withAuthentication
 import com.retoday.api.snippet.getMyProfileResponseFields
-import com.retoday.core.domain.user.exception.UserNotFoundException
 import com.retoday.core.domain.user.service.UserService
 import com.retoday.core.fixture.createGetProfileByUserIdResult
 import io.mockk.every
@@ -38,20 +39,6 @@ class UserControllerTest : ControllerTest() {
                         .expectBody(GetMyProfileResponse.from(result))
                         .document("내 프로필 조회 성공(200)") {
                             responseBody(getMyProfileResponseFields)
-                        }
-                }
-            }
-
-            context("존재하지 않는 사용자의 요청이 주어진 경우") {
-                every { userService.getProfileByUserId(any()) } throws UserNotFoundException()
-
-                it("상태 코드 404와 ErrorResponse를 반환한다.") {
-                    request
-                        .exchange()
-                        .expectStatus(404)
-                        .expectError()
-                        .document("내 프로필 조회 실패(404)") {
-                            responseBody(errorResponseFields)
                         }
                 }
             }

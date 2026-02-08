@@ -3,9 +3,9 @@ package com.retoday.core.domain.user.repository
 import com.retoday.core.common.RepositoryTest
 import com.retoday.core.domain.user.entity.Profile
 import com.retoday.core.domain.user.entity.User
-import com.retoday.core.domain.user.entity.UserExcludedWebsite
-import com.retoday.core.domain.website.entity.Website
-import com.retoday.core.fixture.*
+import com.retoday.core.fixture.createProfile
+import com.retoday.core.fixture.createProfileWithEmail
+import com.retoday.core.fixture.createUser
 import io.kotest.core.test.TestCase
 import io.kotest.matchers.equality.shouldBeEqualToComparingFields
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -16,8 +16,6 @@ class CustomProfileRepositoryTest : RepositoryTest() {
     private lateinit var profileRepository: ProfileRepository
     private lateinit var user: User
     private lateinit var profile: Profile
-    private lateinit var website: Website
-    private lateinit var userExcludedWebsite: UserExcludedWebsite
 
     override suspend fun beforeEach(testCase: TestCase) {
         user =
@@ -26,29 +24,15 @@ class CustomProfileRepositoryTest : RepositoryTest() {
         profile =
             createProfile(id = null, userId = user.id!!)
                 .save()
-        website =
-            createWebsite(id = null)
-                .save()
-        userExcludedWebsite =
-            createUserExcludedWebsite(
-                id = null,
-                userId = user.id!!,
-                websiteId = website.id!!
-            ).save()
     }
 
     init {
-        "findByUserIdWithEmailAndExcludedDomains()" {
-            val projection = profileRepository.findByUserIdWithEmailAndExcludedDomains(user.id!!)
+        "findByUserIdWithEmail()" {
+            val profileWithEmail = profileRepository.findByUserIdWithEmail(user.id!!)
 
-            projection
+            profileWithEmail
                 .shouldNotBeNull()
-                .shouldBeEqualToComparingFields(
-                    createProfileWithEmailAndExcludedDomains(
-                        profile = profile,
-                        excludedDomains = listOf(website.domain)
-                    )
-                )
+                .shouldBeEqualToComparingFields(createProfileWithEmail(profile = profile))
         }
     }
 }

@@ -1,7 +1,7 @@
 package com.retoday.core.domain.user.repository
 
-import com.retoday.core.domain.user.dto.projection.ProfileWithEmailAndExcludedDomains
+import com.retoday.core.domain.user.dto.projection.ProfileWithEmail
 
 interface CustomProfileRepository {
-    fun findByUserIdWithEmailAndExcludedDomains(userId: Long): ProfileWithEmailAndExcludedDomains?
+    fun findByUserIdWithEmail(userId: Long): ProfileWithEmail?
 }

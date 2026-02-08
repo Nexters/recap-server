@@ -1,6 +1,6 @@
 package com.retoday.core.fixture
 
-import com.retoday.core.domain.user.dto.projection.ProfileWithEmailAndExcludedDomains
+import com.retoday.core.domain.user.dto.projection.ProfileWithEmail
 import com.retoday.core.domain.user.dto.result.GetProfileByUserIdResult
 import com.retoday.core.domain.user.entity.*
 import java.time.LocalTime
@@ -63,15 +63,13 @@ fun createUserExcludedWebsite(
         websiteId = websiteId
     )
 
-fun createProfileWithEmailAndExcludedDomains(
+fun createProfileWithEmail(
     profile: Profile = createProfile(),
-    email: String = EMAIL,
-    excludedDomains: List<String> = listOf(DOMAIN)
-): ProfileWithEmailAndExcludedDomains =
-    ProfileWithEmailAndExcludedDomains(
+    email: String = EMAIL
+): ProfileWithEmail =
+    ProfileWithEmail(
         profile = profile,
-        email = email,
-        excludedDomains = excludedDomains
+        email = email
     )
 
 fun createGetProfileByUserIdResult(
