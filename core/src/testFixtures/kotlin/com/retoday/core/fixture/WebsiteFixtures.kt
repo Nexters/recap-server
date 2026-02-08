@@ -2,7 +2,7 @@ package com.retoday.core.fixture
 
 import com.retoday.core.domain.website.entity.Website
 
-const val DOMAIN = "retoday.com"
+const val DOMAIN = "re-today.com"
 
 fun createWebsite(
     id: Long? = ID,

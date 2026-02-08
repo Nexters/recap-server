@@ -6,7 +6,7 @@ import com.retoday.core.domain.user.entity.*
 import java.time.LocalTime
 
 const val SOCIAL_ID = "1232342423"
-const val EMAIL = "earlgrey02@retoday.com"
+const val EMAIL = "earlgrey02@re-today.com"
 val PROVIDER = Provider.GOOGLE
 val ROLES = setOf(Role.MEMBER)
 const val IS_ACTIVE = true

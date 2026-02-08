@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired
 
 class CustomWebsiteRepositoryTest : RepositoryTest() {
     private companion object {
-        val DOMAINS = listOf("retoday.com", "github.com", "google.com")
+        val DOMAINS = listOf("re-today.com", "github.com", "google.com")
     }
 
     @Autowired

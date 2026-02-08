@@ -67,7 +67,7 @@ class AuthServiceTest : BehaviorSpec() {
             }
 
             And("소셜 이메일이 사용자 이메일과 다른 경우") {
-                val changedEmail = "1117mg@github.com"
+                val changedEmail = "1117mg@re-today.com"
 
                 every { oAuthClient.getOAuthUserByToken(any()) } returns
                     createGetOAuthUserResponse(email = changedEmail)
