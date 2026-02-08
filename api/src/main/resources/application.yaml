@@ -35,6 +35,8 @@ management:
   endpoint:
     health:
       access: read_only
+logging:
+  config: classpath:log4j2-${spring.profiles.active}.yaml
 ---
 spring:
   config:
