@@ -1,4 +1,4 @@
-package com.retoday.api.util
+package com.retoday.api.extension
 
 import com.epages.restdocs.apispec.WebTestClientRestDocumentationWrapper
 import org.springframework.restdocs.operation.preprocess.Preprocessors

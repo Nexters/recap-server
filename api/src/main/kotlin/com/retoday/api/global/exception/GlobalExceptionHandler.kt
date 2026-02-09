@@ -3,7 +3,7 @@ package com.retoday.api.global.exception
 import com.retoday.api.global.dto.ErrorResponse
 import com.retoday.core.global.exception.ErrorType
 import com.retoday.core.global.exception.ServerException
-import com.retoday.core.global.util.getLogger
+import com.retoday.core.global.extension.getLogger
 import jakarta.validation.ConstraintViolationException
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException

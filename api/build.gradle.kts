@@ -10,7 +10,6 @@ dependencies {
     implementation(libs.spring.security)
     implementation(libs.spring.validation)
     implementation(libs.spring.actuator)
-    implementation(libs.spring.log4j2)
     implementation(libs.bundles.jwt)
     implementation(libs.bundles.jackson)
     implementation(libs.springdoc.openapi)

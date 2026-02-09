@@ -1,0 +1,17 @@
+package com.retoday.api.snippet
+
+import com.retoday.api.domain.user.dto.response.GetMyProfileResponse
+import com.retoday.api.extension.desc
+import com.retoday.api.extension.fieldsOf
+
+val getMyProfileResponseFields =
+    fieldsOf(
+        GetMyProfileResponse::id desc "식별자",
+        GetMyProfileResponse::email desc "이메일",
+        GetMyProfileResponse::firstName desc "이름",
+        GetMyProfileResponse::lastName desc "성",
+        GetMyProfileResponse::imageUrl desc "프로필 이미지 URL",
+        GetMyProfileResponse::timeZone desc "타임존",
+        GetMyProfileResponse::recapPeriod desc "리캡 생성 주기",
+        GetMyProfileResponse::excludedDomains desc "예외 도메인 리스트"
+    )

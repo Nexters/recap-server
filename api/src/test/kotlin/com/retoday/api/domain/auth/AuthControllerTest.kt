@@ -5,10 +5,10 @@ import com.retoday.api.common.ControllerTest
 import com.retoday.api.domain.auth.controller.AuthController
 import com.retoday.api.domain.auth.dto.response.LoginResponse
 import com.retoday.api.domain.auth.dto.response.RefreshResponse
+import com.retoday.api.extension.*
 import com.retoday.api.fixture.createLoginRequest
 import com.retoday.api.fixture.createRefreshRequest
 import com.retoday.api.snippet.*
-import com.retoday.api.util.*
 import com.retoday.core.domain.auth.exception.InvalidAuthenticationException
 import com.retoday.core.domain.auth.exception.InvalidOAuthTokenException
 import com.retoday.core.domain.auth.exception.RefreshTokenNotFoundException
