@@ -17,6 +17,9 @@ class GoogleClient(
         const val USERINFO_ENDPOINT = "https://openidconnect.googleapis.com/v1/userinfo"
         const val ID_FIELD = "sub"
         const val EMAIL_FIELD = "email"
+        const val FIRST_NAME_FIELD = "given_name"
+        const val LAST_NAME_FIELD = "family_name"
+        const val IMAGE_URL_FIELD = "picture"
     }
 
     override fun getOAuthUserByToken(token: String): GetOAuthUserResponse =
@@ -26,11 +29,15 @@ class GoogleClient(
             .header(HttpHeaders.AUTHORIZATION, AUTHORIZATION_HEADER_PREFIX + token)
             .retrieve()
             .onStatus({ it == HttpStatus.UNAUTHORIZED }) { _, _ -> throw InvalidOAuthTokenException() }
-            .requiredBody<Map<String, *>>()
+            .requiredBody<Map<String, String>>()
             .run {
                 GetOAuthUserResponse(
-                    id = get(ID_FIELD) as String,
-                    email = get(EMAIL_FIELD) as String
+                    id = getValue(ID_FIELD),
+                    provider = provider,
+                    email = getValue(EMAIL_FIELD),
+                    firstName = getValue(FIRST_NAME_FIELD),
+                    lastName = getValue(LAST_NAME_FIELD),
+                    imageUrl = getValue(IMAGE_URL_FIELD)
                 )
             }
 }

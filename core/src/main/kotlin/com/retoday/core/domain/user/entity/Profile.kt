@@ -1,5 +1,6 @@
 package com.retoday.core.domain.user.entity
 
+import com.retoday.core.domain.auth.dto.response.GetOAuthUserResponse
 import com.retoday.core.global.entity.BaseEntity
 import io.hypersistence.utils.hibernate.id.Tsid
 import jakarta.persistence.Entity
@@ -14,10 +15,16 @@ class Profile(
     @Tsid
     val id: Long? = null,
     val userId: Long,
-    val firstName: String,
-    val lastName: String,
-    val imageUrl: String,
+    var firstName: String,
+    var lastName: String,
+    var imageUrl: String,
     @Enumerated(EnumType.STRING)
     val timeZone: TimeZone = TimeZone.SEOUL,
     val recapPeriod: LocalTime? = null
-) : BaseEntity()
+) : BaseEntity() {
+    fun synchronizeOAuthUser(getOAuthUserResponse: GetOAuthUserResponse) {
+        firstName = getOAuthUserResponse.firstName
+        lastName = getOAuthUserResponse.lastName
+        imageUrl = getOAuthUserResponse.imageUrl
+    }
+}

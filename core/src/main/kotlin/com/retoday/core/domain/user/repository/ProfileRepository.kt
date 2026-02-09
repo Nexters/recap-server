@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository
 @Repository
 interface ProfileRepository :
     JpaRepository<Profile, Long>,
-    CustomProfileRepository
+    CustomProfileRepository {
+    fun findByUserId(userId: Long): Profile?
+}
