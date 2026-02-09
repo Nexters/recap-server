@@ -14,7 +14,9 @@ abstract class BaseEntity {
     @CreatedDate
     @Column(nullable = false, updatable = false)
     lateinit var createdAt: Instant
+        protected set
 
     @LastModifiedDate
     var updatedAt: Instant? = null
+        protected set
 }
