@@ -1,6 +1,6 @@
 package com.retoday.api.domain.user.dto.response
 
-import com.retoday.core.domain.user.dto.result.GetProfileByUserIdResult
+import com.retoday.core.domain.user.dto.result.GetMyProfileResult
 import com.retoday.core.domain.user.entity.TimeZone
 import java.time.LocalTime
 
@@ -15,7 +15,7 @@ data class GetMyProfileResponse(
     val excludedDomains: List<String>
 ) {
     companion object {
-        fun from(result: GetProfileByUserIdResult): GetMyProfileResponse =
+        fun from(result: GetMyProfileResult): GetMyProfileResponse =
             with(result) {
                 GetMyProfileResponse(
                     id = id,

@@ -4,7 +4,7 @@ import com.retoday.core.domain.user.dto.projection.ProfileWithEmail
 import com.retoday.core.domain.user.entity.TimeZone
 import java.time.LocalTime
 
-data class GetProfileByUserIdResult(
+data class GetMyProfileResult(
     val id: Long,
     val email: String,
     val firstName: String,
@@ -18,9 +18,9 @@ data class GetProfileByUserIdResult(
         fun of(
             profileWithEmail: ProfileWithEmail,
             excludedDomains: List<String>
-        ): GetProfileByUserIdResult =
+        ): GetMyProfileResult =
             with(profileWithEmail.profile) {
-                GetProfileByUserIdResult(
+                GetMyProfileResult(
                     id = id!!,
                     email = profileWithEmail.email,
                     firstName = firstName,

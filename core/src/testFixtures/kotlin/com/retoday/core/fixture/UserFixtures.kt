@@ -1,7 +1,7 @@
 package com.retoday.core.fixture
 
 import com.retoday.core.domain.user.dto.projection.ProfileWithEmail
-import com.retoday.core.domain.user.dto.result.GetProfileByUserIdResult
+import com.retoday.core.domain.user.dto.result.GetMyProfileResult
 import com.retoday.core.domain.user.entity.*
 import java.time.LocalTime
 
@@ -72,7 +72,7 @@ fun createProfileWithEmail(
         email = email
     )
 
-fun createGetProfileByUserIdResult(
+fun createGetMyProfileResult(
     id: Long = ID,
     email: String = EMAIL,
     firstName: String = FIRST_NAME,
@@ -81,8 +81,8 @@ fun createGetProfileByUserIdResult(
     timeZone: TimeZone = TIME_ZONE,
     recapPeriod: LocalTime? = RECAP_PERIOD,
     excludedDomains: List<String> = listOf(DOMAIN)
-): GetProfileByUserIdResult =
-    GetProfileByUserIdResult(
+): GetMyProfileResult =
+    GetMyProfileResult(
         id = id,
         email = email,
         firstName = firstName,

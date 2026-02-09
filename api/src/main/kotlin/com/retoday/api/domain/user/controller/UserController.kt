@@ -18,6 +18,6 @@ class UserController(
         userId: Long
     ): GetMyProfileResponse =
         userService
-            .getProfileByUserId(userId)
+            .getMyProfile(userId)
             .let { GetMyProfileResponse.from(it) }
 }

@@ -10,7 +10,7 @@ import com.retoday.api.extension.expectStatus
 import com.retoday.api.extension.withAuthentication
 import com.retoday.api.snippet.getMyProfileResponseFields
 import com.retoday.core.domain.user.service.UserService
-import com.retoday.core.fixture.createGetProfileByUserIdResult
+import com.retoday.core.fixture.createGetMyProfileResult
 import io.mockk.every
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 
@@ -28,9 +28,9 @@ class UserControllerTest : ControllerTest() {
                     .withAuthentication()
 
             context("유효한 요청이 주어진 경우") {
-                val result = createGetProfileByUserIdResult()
+                val result = createGetMyProfileResult()
 
-                every { userService.getProfileByUserId(any()) } returns result
+                every { userService.getMyProfile(any()) } returns result
 
                 it("상태 코드 200과 GetMyProfileResponse를 반환한다.") {
                     request
