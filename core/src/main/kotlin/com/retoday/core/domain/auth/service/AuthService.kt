@@ -69,29 +69,27 @@ class AuthService(
         )
     }
 
-    fun refresh(command: RefreshCommand): RefreshResult =
-        with(command) {
-            val userId = jwtProvider.extractUserId(refreshToken)
+    fun refresh(command: RefreshCommand): RefreshResult {
+        val userId = jwtProvider.extractUserId(command.refreshToken)
+        val refreshToken = refreshTokenRepository.findByIdOrNull(userId) ?: throw RefreshTokenNotFoundException()
 
-            refreshTokenRepository
-                .findByIdOrNull(userId)
-                ?.apply {
-                    if (content != refreshToken) {
-                        refreshTokenRepository.deleteById(userId)
+        if (refreshToken.content != command.refreshToken) {
+            refreshTokenRepository.deleteById(userId)
 
-                        throw InvalidAuthenticationException()
-                    }
-                }
-                ?: throw RefreshTokenNotFoundException()
-
-            val user = userRepository.findByIdOrNull(userId) ?: throw UserNotFoundException()
-            val (accessToken, refreshToken) = user.createTokens()
-
-            return RefreshResult(
-                accessToken = accessToken,
-                refreshToken = refreshToken
-            )
+            throw InvalidAuthenticationException()
         }
+
+        val (newAccessToken, newRefreshToken) =
+            userRepository
+                .findByIdOrNull(userId)
+                ?.createTokens()
+                ?: throw UserNotFoundException()
+
+        return RefreshResult(
+            accessToken = newAccessToken,
+            refreshToken = newRefreshToken
+        )
+    }
 
     fun logout(userId: Long) {
         refreshTokenRepository
