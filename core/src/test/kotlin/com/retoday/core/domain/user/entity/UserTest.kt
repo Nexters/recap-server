@@ -6,10 +6,10 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 
 class UserTest : BehaviorSpec() {
-    private val user = createUser()
-
     init {
         Given("가입한 사용자가") {
+            val user = createUser()
+
             And("소셜 프로필과 다른 사용자 정보를 가지고 있는 경우") {
                 val changedEmail = "1117mg@re-today.com"
                 val getOAuthUserResponse = createGetOAuthUserResponse(email = changedEmail)

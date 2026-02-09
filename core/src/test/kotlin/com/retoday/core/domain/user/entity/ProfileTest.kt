@@ -6,10 +6,10 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 
 class ProfileTest : BehaviorSpec() {
-    private val profile = createProfile()
-
     init {
         Given("가입한 사용자가") {
+            val profile = createProfile()
+
             And("소셜 프로필과 다른 사용자 정보를 가지고 있는 경우") {
                 val changedFirstName = "Yelim"
                 val changedLastName = "Lee"
