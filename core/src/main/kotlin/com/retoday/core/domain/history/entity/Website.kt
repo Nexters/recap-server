@@ -11,12 +11,11 @@ class Website(
     @Id
     @Tsid
     val id: Long? = null,
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     val domain: String,
     val categoryId: Long? = null,
     @Column(length = 500)
     var faviconUrl: String? = null,
-    @Column(nullable = false)
     var totalVisitCount: Long = 0
 ) : BaseEntity() {
     fun incrementVisitCount() {

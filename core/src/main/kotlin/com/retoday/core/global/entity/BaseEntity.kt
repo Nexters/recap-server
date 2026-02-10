@@ -19,4 +19,13 @@ abstract class BaseEntity {
     @LastModifiedDate
     var updatedAt: Instant? = null
         protected set
+
+    var deletedAt: Instant? = null
+        protected set
+
+    fun softDelete() {
+        this.deletedAt = Instant.now()
+    }
+
+    fun isDeleted(): Boolean = deletedAt != null
 }

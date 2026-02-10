@@ -16,15 +16,10 @@ class History(
     @Id
     @Tsid
     val id: Long? = null,
-    @Column(nullable = false)
     val userId: Long,
-    @Column(nullable = false)
     val pageId: Long,
-    @Column(nullable = false)
     val visitedAt: Instant,
-    @Column(nullable = false)
     val stayDuration: Int = 0,
-    @Column(nullable = false)
     val visitedDate: LocalDate,
     val scrollDepth: Int? = null
 ) : BaseEntity()
