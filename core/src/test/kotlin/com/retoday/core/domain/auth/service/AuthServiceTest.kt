@@ -5,8 +5,10 @@ import com.retoday.core.domain.auth.exception.InvalidAuthenticationException
 import com.retoday.core.domain.auth.exception.InvalidOAuthTokenException
 import com.retoday.core.domain.auth.exception.RefreshTokenNotFoundException
 import com.retoday.core.domain.auth.repository.RefreshTokenRepository
+import com.retoday.core.domain.user.entity.Profile
 import com.retoday.core.domain.user.entity.User
 import com.retoday.core.domain.user.exception.UserNotFoundException
+import com.retoday.core.domain.user.repository.ProfileRepository
 import com.retoday.core.domain.user.repository.UserRepository
 import com.retoday.core.fixture.*
 import com.retoday.core.global.jwt.JwtProvider
@@ -19,6 +21,7 @@ import org.springframework.data.repository.findByIdOrNull
 
 class AuthServiceTest : BehaviorSpec() {
     private val userRepository = mockk<UserRepository>()
+    private val profileRepository = mockk<ProfileRepository>()
     private val refreshTokenRepository = mockk<RefreshTokenRepository>()
     private val oAuthClient = mockk<OAuthClient>()
     private val jwtProvider =
@@ -36,6 +39,7 @@ class AuthServiceTest : BehaviorSpec() {
     private val authService =
         AuthService(
             userRepository = userRepository,
+            profileRepository = profileRepository,
             refreshTokenRepository = refreshTokenRepository,
             oAuthClients = listOf(oAuthClient),
             jwtProvider = jwtProvider,
@@ -45,40 +49,26 @@ class AuthServiceTest : BehaviorSpec() {
     init {
         Given("가입한 사용자가") {
             val command = createLoginCommand()
-            val user = createUser()
+            val user = spyk(createUser())
+            val profile = spyk(createProfile())
             val refreshToken = createRefreshToken()
-            val userSlot = slot<User>()
+            val getOAuthUserResponse = createGetOAuthUserResponse()
 
             every { userRepository.findBySocialIdAndProvider(any(), any()) } returns user
-            every { userRepository.save(capture(userSlot)) } returns user
+            every { userRepository.save(any()) } returns user
+            every { profileRepository.findByUserId(any()) } returns profile
+            every { profileRepository.save(any()) } returns profile
             every { refreshTokenRepository.save(any()) } returns refreshToken
-            every { oAuthClient.provider } returns command.provider
+            every { oAuthClient.getOAuthUserByToken(any()) } returns getOAuthUserResponse
+            every { oAuthClient.provider } returns getOAuthUserResponse.provider
 
-            And("소셜 이메일이 사용자 이메일과 같은 경우") {
-                every { oAuthClient.getOAuthUserByToken(any()) } returns createGetOAuthUserResponse()
+            When("로그인을 시도하면") {
+                val result = authService.login(command)
 
-                When("로그인을 시도하면") {
-                    val result = authService.login(command)
-
-                    Then("로그인 처리가 된다.") {
-                        result shouldBe createLoginResult()
-                    }
-                }
-            }
-
-            And("소셜 이메일이 사용자 이메일과 다른 경우") {
-                val changedEmail = "1117mg@re-today.com"
-
-                every { oAuthClient.getOAuthUserByToken(any()) } returns
-                    createGetOAuthUserResponse(email = changedEmail)
-
-                When("로그인을 시도하면") {
-                    val result = authService.login(command)
-
-                    Then("사용자 이메일이 변경되고 로그인 처리가 된다.") {
-                        userSlot.captured.email shouldBe changedEmail
-                        result shouldBe createLoginResult()
-                    }
+                Then("소셜 프로필과 사용자 정보가 동기화되고 로그인 처리가 된다.") {
+                    verify { user.synchronizeOAuthUser(any()) }
+                    verify { profile.synchronizeOAuthUser(any()) }
+                    result shouldBe createLoginResult()
                 }
             }
         }
@@ -86,13 +76,17 @@ class AuthServiceTest : BehaviorSpec() {
         Given("가입하지 않은 사용자가") {
             val command = createLoginCommand()
             val user = createUser()
+            val profile = createProfile()
             val refreshToken = createRefreshToken()
             val getOAuthUserResponse = createGetOAuthUserResponse()
             val userSlot = slot<User>()
+            val profileSlot = slot<Profile>()
 
             every { userRepository.findBySocialIdAndProvider(any(), any()) } returns null
             every { userRepository.save(capture(userSlot)) } returns user
             every { refreshTokenRepository.save(any()) } returns refreshToken
+            every { profileRepository.findByUserId(any()) } returns null
+            every { profileRepository.save(capture(profileSlot)) } returns profile
             every { oAuthClient.provider } returns command.provider
             every { oAuthClient.getOAuthUserByToken(any()) } returns getOAuthUserResponse
 
@@ -101,6 +95,7 @@ class AuthServiceTest : BehaviorSpec() {
 
                 Then("회원가입과 함께 로그인 처리가 된다.") {
                     userSlot.captured.id shouldBe null
+                    profileSlot.captured.id shouldBe null
                     result shouldBe createLoginResult()
                 }
             }

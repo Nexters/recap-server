@@ -25,11 +25,19 @@ fun createRefreshToken(
 
 fun createGetOAuthUserResponse(
     id: String = SOCIAL_ID,
-    email: String = EMAIL
+    provider: Provider = PROVIDER,
+    email: String = EMAIL,
+    firstName: String = FIRST_NAME,
+    lastName: String = LAST_NAME,
+    imageUrl: String = IMAGE_URL
 ): GetOAuthUserResponse =
     GetOAuthUserResponse(
         id = id,
-        email = email
+        provider = provider,
+        email = email,
+        firstName = firstName,
+        lastName = lastName,
+        imageUrl = imageUrl
     )
 
 fun createLoginCommand(
