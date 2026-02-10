@@ -3,11 +3,22 @@ package com.retoday.core.fixture
 import com.retoday.core.domain.history.dto.result.BatchItemResult
 import com.retoday.core.domain.history.dto.result.HistoryRecordBatchResult
 import com.retoday.core.domain.history.dto.result.HistoryRecordResult
+import com.retoday.core.domain.history.entity.Website
 import java.time.Instant
 
 const val PAGE_ID = 10L
 const val WEBSITE_ID = 5L
 const val STAY_DURATION = 100
+const val DOMAIN = "re-today.com"
+
+fun createWebsite(
+    id: Long? = ID,
+    domain: String = DOMAIN
+): Website =
+    Website(
+        id = id,
+        domain = domain
+    )
 
 fun createHistoryRecordResult(
     historyId: Long = ID,

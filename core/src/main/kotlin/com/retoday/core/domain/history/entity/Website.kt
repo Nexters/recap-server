@@ -1,4 +1,4 @@
-package com.retoday.core.domain.website.entity
+package com.retoday.core.domain.history.entity
 
 import com.retoday.core.global.entity.BaseEntity
 import io.hypersistence.utils.hibernate.id.Tsid
@@ -12,5 +12,13 @@ class Website(
     @Tsid
     val id: Long? = null,
     @Column(unique = true)
-    val domain: String
-) : BaseEntity()
+    val domain: String,
+    val categoryId: Long? = null,
+    @Column(length = 500)
+    var faviconUrl: String? = null,
+    var totalVisitCount: Long = 0
+) : BaseEntity() {
+    fun incrementVisitCount() {
+        totalVisitCount++
+    }
+}

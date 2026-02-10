@@ -1,7 +1,7 @@
 package com.retoday.core.domain.user.service
 
+import com.retoday.core.domain.history.repository.WebsiteRepository
 import com.retoday.core.domain.user.repository.ProfileRepository
-import com.retoday.core.domain.website.repository.WebsiteRepository
 import com.retoday.core.fixture.DOMAIN
 import com.retoday.core.fixture.ID
 import com.retoday.core.fixture.createGetMyProfileResult

@@ -1,8 +1,8 @@
 package com.retoday.core.domain.user.service
 
+import com.retoday.core.domain.history.repository.WebsiteRepository
 import com.retoday.core.domain.user.dto.result.GetMyProfileResult
 import com.retoday.core.domain.user.repository.ProfileRepository
-import com.retoday.core.domain.website.repository.WebsiteRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 

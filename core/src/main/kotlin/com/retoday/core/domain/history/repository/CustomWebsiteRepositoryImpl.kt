@@ -1,10 +1,10 @@
-package com.retoday.core.domain.website.repository
+package com.retoday.core.domain.history.repository
 
 import com.linecorp.kotlinjdsl.dsl.jpql.jpql
 import com.linecorp.kotlinjdsl.render.RenderContext
 import com.linecorp.kotlinjdsl.support.spring.data.jpa.extension.createQuery
+import com.retoday.core.domain.history.entity.Website
 import com.retoday.core.domain.user.entity.UserExcludedWebsite
-import com.retoday.core.domain.website.entity.Website
 import jakarta.persistence.EntityManager
 
 class CustomWebsiteRepositoryImpl(

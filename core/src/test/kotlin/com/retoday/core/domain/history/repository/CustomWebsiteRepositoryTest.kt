@@ -1,9 +1,9 @@
-package com.retoday.core.domain.website.repository
+package com.retoday.core.domain.history.repository
 
 import com.retoday.core.common.RepositoryTest
+import com.retoday.core.domain.history.entity.Website
 import com.retoday.core.domain.user.entity.User
 import com.retoday.core.domain.user.entity.UserExcludedWebsite
-import com.retoday.core.domain.website.entity.Website
 import com.retoday.core.fixture.createUser
 import com.retoday.core.fixture.createUserExcludedWebsite
 import com.retoday.core.fixture.createWebsite
