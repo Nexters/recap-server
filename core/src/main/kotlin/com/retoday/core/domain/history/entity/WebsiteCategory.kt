@@ -12,9 +12,7 @@ class WebsiteCategory(
     @Id
     @Tsid
     val id: Long? = null,
-
     @Column(nullable = false, length = 50, unique = true)
     val name: String,
-
     var deletedAt: Instant? = null
 ) : BaseEntity()
