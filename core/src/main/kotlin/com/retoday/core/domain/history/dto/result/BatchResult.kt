@@ -1,6 +1,4 @@
-package com.retoday.api.domain.history.dto.response
-
-import com.retoday.core.domain.history.dto.result.BatchItemResult
+package com.retoday.core.domain.history.dto.result
 
 data class BatchResult(
     val tabId: Int,
