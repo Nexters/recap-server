@@ -46,11 +46,11 @@ class HistoryControllerTest : ControllerTest() {
                     historyService.recordHistory(any<Long>(), any<HistoryRecordCommand>())
                 } returns result
 
-                it("상태 코드 201과 HistoryRecordResponse를 반환한다.") {
+                it("상태 코드 200과 HistoryRecordResponse를 반환한다.") {
                     authenticatedRequest(createHistoryRecordRequest())
-                        .expectStatus(201)
+                        .expectStatus(200)
                         .expectBody(HistoryRecordResponse.from(result))
-                        .document("방문 기록 저장 성공(201)") {
+                        .document("방문 기록 저장 성공(200)") {
                             requestBody(historyRecordRequestFields)
                             responseBody(historyRecordResponseFields)
                         }
@@ -158,11 +158,11 @@ class HistoryControllerTest : ControllerTest() {
                     historyService.recordHistoryBatch(any<Long>(), any<HistoryRecordBatchCommand>())
                 } returns result
 
-                it("상태 코드 201과 BatchResponse를 반환한다.") {
+                it("상태 코드 200과 BatchResponse를 반환한다.") {
                     authenticatedBatchRequest(createHistoryRecordBatchRequest())
-                        .expectStatus(201)
+                        .expectStatus(200)
                         .expectBody(HistoryRecordBatchResponse.from(result))
-                        .document("방문 기록 일괄 저장 성공(201)") {
+                        .document("방문 기록 일괄 저장 성공(200)") {
                             requestBody(historyRecordBatchRequestFields)
                             responseBody(historyRecordBatchResponseFields)
                         }
@@ -176,12 +176,12 @@ class HistoryControllerTest : ControllerTest() {
                     historyService.recordHistoryBatch(any<Long>(), any<HistoryRecordBatchCommand>())
                 } returns result
 
-                it("상태 코드 201과 부분 실패 응답을 반환한다.") {
+                it("상태 코드 200과 부분 실패 응답을 반환한다.") {
                     authenticatedBatchRequest(createHistoryRecordBatchRequest())
-                        .expectStatus(201)
+                        .expectStatus(200)
                         .expectBody(HistoryRecordBatchResponse.from(result))
                         .document(
-                            "방문 기록 일괄 저장 부분 실패(201)",
+                            "방문 기록 일괄 저장 부분 실패(200)",
                             nullableFields =
                                 setOf(
                                     "results[].historyId",

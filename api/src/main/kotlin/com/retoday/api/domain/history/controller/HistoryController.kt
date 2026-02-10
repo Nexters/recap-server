@@ -7,7 +7,6 @@ import com.retoday.api.domain.history.dto.response.HistoryRecordResponse
 import com.retoday.api.global.annotation.AuthenticationId
 import com.retoday.core.domain.history.service.HistoryService
 import jakarta.validation.Valid
-import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -16,7 +15,6 @@ class HistoryController(
     private val historyService: HistoryService
 ) {
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     fun recordHistory(
         @AuthenticationId userId: Long,
         @Valid @RequestBody request: HistoryRecordRequest
@@ -26,7 +24,6 @@ class HistoryController(
             .let { HistoryRecordResponse.from(it) }
 
     @PostMapping("/batch")
-    @ResponseStatus(HttpStatus.CREATED)
     fun recordHistoryBatch(
         @AuthenticationId userId: Long,
         @Valid @RequestBody request: HistoryRecordBatchRequest
