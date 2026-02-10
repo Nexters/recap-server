@@ -31,6 +31,14 @@ class HistoryControllerTest : ControllerTest() {
 
     init {
         describe("recordHistory()는") {
+            val baseRequest = { webClient.post().uri("/histories") }
+            val authenticatedRequest = { request: Any ->
+                baseRequest()
+                    .bodyValue(request)
+                    .withAuthentication()
+                    .exchange()
+            }
+
             context("유효한 요청이 주어진 경우") {
                 val result = createHistoryRecordResult()
 
@@ -39,12 +47,7 @@ class HistoryControllerTest : ControllerTest() {
                 } returns result
 
                 it("상태 코드 201과 HistoryRecordResponse를 반환한다.") {
-                    webClient
-                        .post()
-                        .uri("/histories")
-                        .bodyValue(createHistoryRecordRequest())
-                        .withAuthentication()
-                        .exchange()
+                    authenticatedRequest(createHistoryRecordRequest())
                         .expectStatus(201)
                         .expectBody(HistoryRecordResponse.from(result))
                         .document("방문 기록 저장 성공(201)") {
@@ -60,12 +63,7 @@ class HistoryControllerTest : ControllerTest() {
                 } throws WebsiteExcludedByUserException("github.com")
 
                 it("상태 코드 204와 ErrorResponse를 반환한다.") {
-                    webClient
-                        .post()
-                        .uri("/histories")
-                        .bodyValue(createHistoryRecordRequest())
-                        .withAuthentication()
-                        .exchange()
+                    authenticatedRequest(createHistoryRecordRequest())
                         .expectStatus(204)
                         .expectError()
                         .document("방문 기록 저장 실패(204)") {
@@ -80,12 +78,7 @@ class HistoryControllerTest : ControllerTest() {
                 } throws InvalidUrlException("invalid-url")
 
                 it("상태 코드 400과 ErrorResponse를 반환한다.") {
-                    webClient
-                        .post()
-                        .uri("/histories")
-                        .bodyValue(createHistoryRecordRequest())
-                        .withAuthentication()
-                        .exchange()
+                    authenticatedRequest(createHistoryRecordRequest())
                         .expectStatus(400)
                         .expectError()
                         .document("방문 기록 저장 실패 - 유효하지 않은 URL(400)") {
@@ -101,12 +94,7 @@ class HistoryControllerTest : ControllerTest() {
                 } throws DuplicateHistoryException(1, "https://github.com/Nexters/retoday-server")
 
                 it("상태 코드 409와 ErrorResponse를 반환한다.") {
-                    webClient
-                        .post()
-                        .uri("/histories")
-                        .bodyValue(createHistoryRecordRequest())
-                        .withAuthentication()
-                        .exchange()
+                    authenticatedRequest(createHistoryRecordRequest())
                         .expectStatus(409)
                         .expectError()
                         .document("방문 기록 저장 실패(409)") {
@@ -122,12 +110,7 @@ class HistoryControllerTest : ControllerTest() {
                 } throws RateLimitExceededException(1L, 60L)
 
                 it("상태 코드 429와 ErrorResponse를 반환한다.") {
-                    webClient
-                        .post()
-                        .uri("/histories")
-                        .bodyValue(createHistoryRecordRequest())
-                        .withAuthentication()
-                        .exchange()
+                    authenticatedRequest(createHistoryRecordRequest())
                         .expectStatus(429)
                         .expectError()
                         .document("방문 기록 저장 실패(429)") {
@@ -145,17 +128,12 @@ class HistoryControllerTest : ControllerTest() {
                 } throws InvalidTimeRangeException("closedAt은 visitedAt보다 이후여야 합니다")
 
                 it("상태 코드 400과 ErrorResponse를 반환한다.") {
-                    webClient
-                        .post()
-                        .uri("/histories")
-                        .bodyValue(
-                            createHistoryRecordRequest(
-                                visitedAt = now,
-                                closedAt = now.minusSeconds(10)
-                            )
-                        ).withAuthentication()
-                        .exchange()
-                        .expectStatus(400)
+                    authenticatedRequest(
+                        createHistoryRecordRequest(
+                            visitedAt = now,
+                            closedAt = now.minusSeconds(10)
+                        )
+                    ).expectStatus(400)
                         .expectError()
                         .document("방문 기록 저장 실패 - 유효하지 않은 시간 범위(400)") {
                             responseBody(errorResponseFields)
@@ -165,6 +143,14 @@ class HistoryControllerTest : ControllerTest() {
         }
 
         describe("recordHistoryBatch()는") {
+            val batchRequest = { webClient.post().uri("/histories/batch") }
+            val authenticatedBatchRequest = { request: Any ->
+                batchRequest()
+                    .bodyValue(request)
+                    .withAuthentication()
+                    .exchange()
+            }
+
             context("유효한 배치 요청이 주어진 경우") {
                 val result = createHistoryRecordBatchResult()
 
@@ -173,12 +159,7 @@ class HistoryControllerTest : ControllerTest() {
                 } returns result
 
                 it("상태 코드 201과 BatchResponse를 반환한다.") {
-                    webClient
-                        .post()
-                        .uri("/histories/batch")
-                        .bodyValue(createHistoryRecordBatchRequest())
-                        .withAuthentication()
-                        .exchange()
+                    authenticatedBatchRequest(createHistoryRecordBatchRequest())
                         .expectStatus(201)
                         .expectBody(HistoryRecordBatchResponse.from(result))
                         .document("방문 기록 일괄 저장 성공(201)") {
@@ -196,12 +177,7 @@ class HistoryControllerTest : ControllerTest() {
                 } returns result
 
                 it("상태 코드 201과 부분 실패 응답을 반환한다.") {
-                    webClient
-                        .post()
-                        .uri("/histories/batch")
-                        .bodyValue(createHistoryRecordBatchRequest())
-                        .withAuthentication()
-                        .exchange()
+                    authenticatedBatchRequest(createHistoryRecordBatchRequest())
                         .expectStatus(201)
                         .expectBody(HistoryRecordBatchResponse.from(result))
                         .document(
@@ -221,19 +197,14 @@ class HistoryControllerTest : ControllerTest() {
 
             context("최대 개수(100개)를 초과한 경우") {
                 it("상태 코드 400과 ErrorResponse를 반환한다.") {
-                    webClient
-                        .post()
-                        .uri("/histories/batch")
-                        .bodyValue(
-                            createHistoryRecordBatchRequest(
-                                records =
-                                    (1..101).map {
-                                        createHistoryRecordRequest(tabId = it)
-                                    }
-                            )
-                        ).withAuthentication()
-                        .exchange()
-                        .expectStatus(400)
+                    authenticatedBatchRequest(
+                        createHistoryRecordBatchRequest(
+                            records =
+                                (1..101).map {
+                                    createHistoryRecordRequest(tabId = it)
+                                }
+                        )
+                    ).expectStatus(400)
                         .expectError()
                         .document("방문 기록 일괄 저장 실패(400)") {
                             responseBody(errorResponseFields)
