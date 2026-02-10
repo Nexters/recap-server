@@ -1,6 +1,6 @@
 package com.retoday.core.fixture
 
-import com.retoday.core.domain.website.entity.Website
+import com.retoday.core.domain.history.entity.Website
 
 const val DOMAIN = "re-today.com"
 
