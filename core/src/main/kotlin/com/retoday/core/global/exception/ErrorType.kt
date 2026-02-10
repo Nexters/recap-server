@@ -18,7 +18,14 @@ enum class ErrorType(
     REFRESH_TOKEN_NOT_FOUND("존재하지 않는 리프레시 토큰입니다.", HttpStatus.NOT_FOUND),
 
     // User
-    USER_NOT_FOUND("존재하지 않는 사용자입니다.", HttpStatus.NOT_FOUND);
+    USER_NOT_FOUND("존재하지 않는 사용자입니다.", HttpStatus.NOT_FOUND),
+
+    // History
+    DUPLICATE_HISTORY("이미 저장된 히스토리입니다.", HttpStatus.CONFLICT),
+    INVALID_URL("유효하지 않은 URL입니다", HttpStatus.BAD_REQUEST),
+    RATE_LIMIT_EXCEEDED("요청 제한을 초과했습니다.", HttpStatus.TOO_MANY_REQUESTS),
+    INVALID_TIME_RANGE("유효하지 않은 시간 범위입니다", HttpStatus.BAD_REQUEST),
+    WEBSITE_EXCLUDED("사용자가 제외한 도메인입니다", HttpStatus.NO_CONTENT);
 
     val code: String = name
 }
