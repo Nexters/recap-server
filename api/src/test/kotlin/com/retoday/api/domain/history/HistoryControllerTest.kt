@@ -15,6 +15,7 @@ import com.retoday.core.domain.history.exception.DuplicateHistoryException
 import com.retoday.core.domain.history.exception.InvalidTimeRangeException
 import com.retoday.core.domain.history.exception.InvalidUrlException
 import com.retoday.core.domain.history.exception.RateLimitExceededException
+import com.retoday.core.domain.history.exception.WebsiteExcludedByUserException
 import com.retoday.core.domain.history.service.HistoryService
 import com.retoday.core.fixture.createHistoryRecordBatchResult
 import com.retoday.core.fixture.createHistoryRecordBatchResultWithFailures
@@ -49,6 +50,26 @@ class HistoryControllerTest : ControllerTest() {
                         .document("방문 기록 저장 성공(201)") {
                             requestBody(historyRecordRequestFields)
                             responseBody(historyRecordResponseFields)
+                        }
+                }
+            }
+
+            context("사용자가 제외한 도메인인 경우") {
+                every {
+                    historyService.recordHistory(any<Long>(), any<HistoryRecordCommand>())
+                } throws WebsiteExcludedByUserException("github.com")
+
+                it("상태 코드 204와 ErrorResponse를 반환한다.") {
+                    webClient
+                        .post()
+                        .uri("/histories")
+                        .bodyValue(createHistoryRecordRequest())
+                        .withAuthentication()
+                        .exchange()
+                        .expectStatus(204)
+                        .expectError()
+                        .document("방문 기록 저장 실패(204)") {
+                            responseBody(errorResponseFields)
                         }
                 }
             }
