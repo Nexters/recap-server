@@ -80,7 +80,7 @@ fun createGetMyProfileResult(
     imageUrl: String = IMAGE_URL,
     timeZone: TimeZone = TIME_ZONE,
     recapPeriod: LocalTime? = RECAP_PERIOD,
-    excludedDomains: List<String> = listOf(DOMAIN)
+    excludedDomains: List<String> = listOf(USER_EX_DOMAIN)
 ): GetMyProfileResult =
     GetMyProfileResult(
         id = id,
