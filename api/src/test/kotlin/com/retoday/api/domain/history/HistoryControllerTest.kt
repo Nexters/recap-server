@@ -3,13 +3,10 @@ package com.retoday.api.domain.history
 import com.ninjasquad.springmockk.MockkBean
 import com.retoday.api.common.ControllerTest
 import com.retoday.api.domain.history.controller.HistoryController
-import com.retoday.api.domain.history.dto.response.HistoryRecordBatchResponse
 import com.retoday.api.domain.history.dto.response.HistoryRecordResponse
 import com.retoday.api.extension.*
-import com.retoday.api.fixture.createHistoryRecordBatchRequest
 import com.retoday.api.fixture.createHistoryRecordRequest
 import com.retoday.api.snippet.*
-import com.retoday.core.domain.history.dto.command.HistoryRecordBatchCommand
 import com.retoday.core.domain.history.dto.command.HistoryRecordCommand
 import com.retoday.core.domain.history.exception.DuplicateHistoryException
 import com.retoday.core.domain.history.exception.InvalidTimeRangeException
@@ -17,8 +14,6 @@ import com.retoday.core.domain.history.exception.InvalidUrlException
 import com.retoday.core.domain.history.exception.RateLimitExceededException
 import com.retoday.core.domain.history.exception.WebsiteExcludedByUserException
 import com.retoday.core.domain.history.service.HistoryService
-import com.retoday.core.fixture.createHistoryRecordBatchResult
-import com.retoday.core.fixture.createHistoryRecordBatchResultWithFailures
 import com.retoday.core.fixture.createHistoryRecordResult
 import io.mockk.every
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -136,77 +131,6 @@ class HistoryControllerTest : ControllerTest() {
                     ).expectStatus(400)
                         .expectError()
                         .document("방문 기록 저장 실패 - 유효하지 않은 시간 범위(400)") {
-                            responseBody(errorResponseFields)
-                        }
-                }
-            }
-        }
-
-        describe("recordHistoryBatch()는") {
-            val batchRequest = { webClient.post().uri("/histories/batch") }
-            val authenticatedBatchRequest = { request: Any ->
-                batchRequest()
-                    .bodyValue(request)
-                    .withAuthentication()
-                    .exchange()
-            }
-
-            context("유효한 배치 요청이 주어진 경우") {
-                val result = createHistoryRecordBatchResult()
-
-                every {
-                    historyService.recordHistoryBatch(any<Long>(), any<HistoryRecordBatchCommand>())
-                } returns result
-
-                it("상태 코드 200과 BatchResponse를 반환한다.") {
-                    authenticatedBatchRequest(createHistoryRecordBatchRequest())
-                        .expectStatus(200)
-                        .expectBody(HistoryRecordBatchResponse.from(result))
-                        .document("방문 기록 일괄 저장 성공(200)") {
-                            requestBody(historyRecordBatchRequestFields)
-                            responseBody(historyRecordBatchResponseFields)
-                        }
-                }
-            }
-
-            context("일부 요청이 실패한 경우") {
-                val result = createHistoryRecordBatchResultWithFailures()
-
-                every {
-                    historyService.recordHistoryBatch(any<Long>(), any<HistoryRecordBatchCommand>())
-                } returns result
-
-                it("상태 코드 200과 부분 실패 응답을 반환한다.") {
-                    authenticatedBatchRequest(createHistoryRecordBatchRequest())
-                        .expectStatus(200)
-                        .expectBody(HistoryRecordBatchResponse.from(result))
-                        .document(
-                            "방문 기록 일괄 저장 부분 실패(200)",
-                            nullableFields =
-                                setOf(
-                                    "results[].historyId",
-                                    "results[].errorCode",
-                                    "results[].errorMessage"
-                                )
-                        ) {
-                            requestBody(historyRecordBatchRequestFields)
-                            responseBody(historyRecordBatchResponseFields)
-                        }
-                }
-            }
-
-            context("최대 개수(100개)를 초과한 경우") {
-                it("상태 코드 400과 ErrorResponse를 반환한다.") {
-                    authenticatedBatchRequest(
-                        createHistoryRecordBatchRequest(
-                            records =
-                                (1..101).map {
-                                    createHistoryRecordRequest(tabId = it)
-                                }
-                        )
-                    ).expectStatus(400)
-                        .expectError()
-                        .document("방문 기록 일괄 저장 실패(400)") {
                             responseBody(errorResponseFields)
                         }
                 }
