@@ -6,20 +6,16 @@ import jakarta.validation.constraints.*
 import java.time.Instant
 
 data class HistoryRecordRequest(
-    @field:NotNull
     val tabId: Int,
     @field:NotBlank
     @field:Size(max = 2048)
     val url: String,
-    @field:NotNull
     val visitedAt: Instant,
-    @field:NotNull
     val closedAt: Instant,
     @field:Size(max = 500)
     val title: String?,
     @field:Valid
     val metadata: PageMetadata?,
-    @field:NotNull
     val isFinal: Boolean,
     @field:Min(value = 0)
     @field:Max(value = 100)
@@ -33,7 +29,7 @@ data class HistoryRecordRequest(
             closedAt = closedAt,
             title = title,
             description = metadata?.description,
-            thumbnailUrl = metadata?.thumbnailUrl,
+            faviconUrl = metadata?.faviconUrl,
             isFinal = isFinal,
             scrollDepth = scrollDepth
         )

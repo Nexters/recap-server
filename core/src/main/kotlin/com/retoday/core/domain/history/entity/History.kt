@@ -17,9 +17,13 @@ class History(
     @Tsid
     val id: Long? = null,
     val userId: Long,
+    val websiteId: Long,
     val pageId: Long,
     val visitedAt: Instant,
-    val stayDuration: Int = 0,
+    val closedAt: Instant,
+    val stayDuration: Int, // closedAt - visitedAt (초)
     val visitedDate: LocalDate,
+    val visitedHour: Int, // 0-23
+    val isFinal: Boolean, // 탭 종료 여부
     val scrollDepth: Int? = null
 ) : BaseEntity()
