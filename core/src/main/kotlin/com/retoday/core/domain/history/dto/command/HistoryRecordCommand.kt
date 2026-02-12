@@ -13,20 +13,25 @@ data class HistoryRecordCommand(
     val title: String?,
     val description: String?,
     val faviconUrl: String?,
-    val isFinal: Boolean,
+    val isClosed: Boolean,
     val scrollDepth: Int?
 ) {
-    fun getStayDuration(): Int =
-        java.time.Duration
-            .between(visitedAt, closedAt)
-            .seconds
-            .toInt()
+    val stayDuration: Int
+        get() =
+            java.time.Duration
+                .between(visitedAt, closedAt)
+                .seconds
+                .toInt()
 
-    fun getDomain(): String = UrlUtils.extractDomain(url)
+    val domain: String
+        get() = UrlUtils.extractDomain(url)
 
-    fun getNormalizedUrl(): String = UrlUtils.normalizeUrl(url)
+    val normalizedUrl: String
+        get() = UrlUtils.normalizeUrl(url)
 
-    fun getVisitedDate(userTimeZone: ZoneId): LocalDate = visitedAt.atZone(userTimeZone).toLocalDate()
+    val visitedDate: LocalDate
+        get() = visitedAt.atZone(ZoneId.systemDefault()).toLocalDate()
 
-    fun getVisitedHour(userTimeZone: ZoneId): Int = visitedAt.atZone(userTimeZone).hour
+    val visitedHour: Int
+        get() = visitedAt.atZone(ZoneId.systemDefault()).hour
 }
