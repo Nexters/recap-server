@@ -16,7 +16,7 @@ data class HistoryRecordRequest(
     val title: String?,
     @field:Valid
     val metadata: PageMetadata?,
-    val isFinal: Boolean,
+    val isClosed: Boolean,
     @field:Min(value = 0)
     @field:Max(value = 100)
     val scrollDepth: Int?
@@ -30,7 +30,7 @@ data class HistoryRecordRequest(
             title = title,
             description = metadata?.description,
             faviconUrl = metadata?.faviconUrl,
-            isFinal = isFinal,
+            isClosed = isClosed,
             scrollDepth = scrollDepth
         )
 }

@@ -24,6 +24,6 @@ class History(
     val stayDuration: Int, // closedAt - visitedAt (초)
     val visitedDate: LocalDate,
     val visitedHour: Int, // 0-23
-    val isFinal: Boolean, // 탭 종료 여부
+    val isClosed: Boolean, // 탭 종료 여부
     val scrollDepth: Int? = null
 ) : BaseEntity()

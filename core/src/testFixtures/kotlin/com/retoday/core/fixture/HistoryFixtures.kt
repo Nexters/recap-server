@@ -73,7 +73,7 @@ fun createHistory(
     stayDuration: Int = STAY_DURATION,
     visitedDate: LocalDate = LocalDate.now(),
     visitedHour: Int = 10,
-    isFinal: Boolean = true,
+    isClosed: Boolean = true,
     scrollDepth: Int? = SCROLL_DEPTH
 ): History =
     History(
@@ -86,7 +86,7 @@ fun createHistory(
         stayDuration = stayDuration,
         visitedDate = visitedDate,
         visitedHour = visitedHour,
-        isFinal = isFinal,
+        isClosed = isClosed,
         scrollDepth = scrollDepth
     )
 
@@ -98,7 +98,7 @@ fun createHistoryRecordCommand(
     title: String? = TITLE,
     description: String? = DESCRIPTION,
     faviconUrl: String? = FAVICON_URL,
-    isFinal: Boolean = true,
+    isClosed: Boolean = true,
     scrollDepth: Int? = SCROLL_DEPTH
 ): HistoryRecordCommand =
     HistoryRecordCommand(
@@ -109,6 +109,6 @@ fun createHistoryRecordCommand(
         title = title,
         description = description,
         faviconUrl = faviconUrl,
-        isFinal = isFinal,
+        isClosed = isClosed,
         scrollDepth = scrollDepth
     )

@@ -22,7 +22,7 @@ fun createHistoryRecordRequest(
     title: String? = TITLE,
     description: String? = DESCRIPTION,
     faviconUrl: String? = FAVICON_URL,
-    isFinal: Boolean = IS_FINAL,
+    isClosed: Boolean = IS_FINAL,
     scrollDepth: Int? = SCROLL_DEPTH
 ): HistoryRecordRequest =
     HistoryRecordRequest(
@@ -36,6 +36,6 @@ fun createHistoryRecordRequest(
                 description = description,
                 faviconUrl = faviconUrl
             ),
-        isFinal = isFinal,
+        isClosed = isClosed,
         scrollDepth = scrollDepth
     )

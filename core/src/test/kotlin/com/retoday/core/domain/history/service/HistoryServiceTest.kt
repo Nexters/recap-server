@@ -4,7 +4,6 @@ import com.retoday.core.domain.history.exception.DuplicateHistoryException
 import com.retoday.core.domain.history.exception.InvalidTimeRangeException
 import com.retoday.core.domain.history.exception.InvalidUrlException
 import com.retoday.core.domain.history.repository.HistoryRepository
-import com.retoday.core.domain.user.service.UserService
 import com.retoday.core.fixture.*
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
@@ -13,30 +12,25 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import java.time.Instant
-import java.time.ZoneId
 
 class HistoryServiceTest :
     BehaviorSpec({
         val historyRepository = mockk<HistoryRepository>()
         val websiteService = mockk<WebsiteService>()
         val pageService = mockk<PageService>()
-        val userService = mockk<UserService>()
         val historyService =
             HistoryService(
                 historyRepository,
                 websiteService,
-                pageService,
-                userService
+                pageService
             )
 
         val userId = ID
-        val userTimeZone = ZoneId.of("Asia/Seoul")
         val website = createWebsite()
         val page = createPage()
         val history = createHistory()
 
         fun setupSuccessfulRecordMocks(faviconUrl: String? = FAVICON_URL) {
-            every { userService.getUserTimeZone(userId) } returns userTimeZone
             every { websiteService.findOrCreate(any(), faviconUrl) } returns website
             every { pageService.findOrCreate(any(), any(), any(), any()) } returns page
             every { historyRepository.findByUserIdAndPageIdAndVisitedAtAfter(any(), any(), any()) } returns null
@@ -57,7 +51,6 @@ class HistoryServiceTest :
                     result.websiteId shouldBe website.id
                     result.stayDuration shouldBe 10
 
-                    verify(exactly = 1) { userService.getUserTimeZone(userId) }
                     verify(exactly = 1) { websiteService.findOrCreate(DOMAIN, FAVICON_URL) }
                     verify(exactly = 1) { pageService.findOrCreate(any(), any(), any(), any()) }
                     verify(exactly = 1) { historyRepository.save(any()) }
@@ -71,7 +64,7 @@ class HistoryServiceTest :
                     title = null,
                     description = null,
                     faviconUrl = null,
-                    isFinal = false
+                    isClosed = false
                 )
 
             setupSuccessfulRecordMocks(faviconUrl = null)
@@ -118,7 +111,7 @@ class HistoryServiceTest :
         }
 
         Given("사용자가 탭을 이동했을 때") {
-            val command = createHistoryRecordCommand(isFinal = false)
+            val command = createHistoryRecordCommand(isClosed = false)
 
             setupSuccessfulRecordMocks()
 
