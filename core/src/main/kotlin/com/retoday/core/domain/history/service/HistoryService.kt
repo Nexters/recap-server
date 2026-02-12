@@ -6,7 +6,6 @@ import com.retoday.core.domain.history.entity.History
 import com.retoday.core.domain.history.exception.DuplicateHistoryException
 import com.retoday.core.domain.history.exception.InvalidTimeRangeException
 import com.retoday.core.domain.history.repository.HistoryRepository
-import com.retoday.core.domain.user.service.UserService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -15,8 +14,7 @@ import java.time.Instant
 class HistoryService(
     private val historyRepository: HistoryRepository,
     private val websiteService: WebsiteService,
-    private val pageService: PageService,
-    private val userService: UserService
+    private val pageService: PageService
 ) {
     @Transactional
     fun recordHistory(
@@ -27,30 +25,26 @@ class HistoryService(
             throw InvalidTimeRangeException("closedAt은 visitedAt보다 이후여야 합니다")
         }
 
-        val domain = command.getDomain()
-        val normalizedUrl = command.getNormalizedUrl()
-        val userTimeZone = userService.getUserTimeZone(userId)
-
-        val website = websiteService.findOrCreate(domain, command.faviconUrl)
+        val website = websiteService.findOrCreate(command.domain, command.faviconUrl)
         val page =
             pageService.findOrCreate(
                 websiteId = website.id!!,
-                url = normalizedUrl,
+                url = command.normalizedUrl,
                 title = command.title,
                 description = command.description
             )
 
-        checkDuplicateHistory(userId, page.id!!, command.visitedAt, command.tabId, normalizedUrl)
+        checkDuplicateHistory(userId, page.id!!, command.visitedAt, command.tabId, command.normalizedUrl)
 
         return historyRepository
-            .save(createHistory(userId, website.id!!, page.id!!, command, userTimeZone))
+            .save(createHistory(userId, website.id!!, page.id!!, command))
             .let {
                 HistoryRecordResult(
                     historyId = it.id!!,
                     pageId = page.id!!,
                     websiteId = website.id!!,
                     stayDuration = it.stayDuration,
-                    recordedAt = Instant.now()
+                    recordedAt = it.createdAt
                 )
             }
     }
@@ -74,18 +68,17 @@ class HistoryService(
         userId: Long,
         websiteId: Long,
         pageId: Long,
-        command: HistoryRecordCommand,
-        userTimeZone: java.time.ZoneId
+        command: HistoryRecordCommand
     ) = History(
         userId = userId,
         websiteId = websiteId,
         pageId = pageId,
         visitedAt = command.visitedAt,
         closedAt = command.closedAt,
-        stayDuration = command.getStayDuration(),
-        visitedDate = command.getVisitedDate(userTimeZone),
-        visitedHour = command.getVisitedHour(userTimeZone),
-        isFinal = command.isFinal,
+        stayDuration = command.stayDuration,
+        visitedDate = command.visitedDate,
+        visitedHour = command.visitedHour,
+        isClosed = command.isClosed,
         scrollDepth = command.scrollDepth
     )
 }

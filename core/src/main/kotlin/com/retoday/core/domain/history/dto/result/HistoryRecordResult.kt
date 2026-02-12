@@ -7,5 +7,5 @@ data class HistoryRecordResult(
     val pageId: Long,
     val websiteId: Long,
     val stayDuration: Int,
-    val recordedAt: Instant = Instant.now()
+    val recordedAt: Instant
 )
