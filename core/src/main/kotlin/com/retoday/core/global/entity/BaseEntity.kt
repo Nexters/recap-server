@@ -13,7 +13,7 @@ import java.time.Instant
 abstract class BaseEntity {
     @CreatedDate
     @Column(nullable = false, updatable = false)
-    lateinit var createdAt: Instant
+    var createdAt: Instant = Instant.EPOCH
         protected set
 
     @LastModifiedDate
