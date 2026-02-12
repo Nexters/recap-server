@@ -12,7 +12,7 @@ class Page(
     @Tsid
     val id: Long? = null,
     val websiteId: Long,
-    @Column(length = 2048, unique = true)
+    @Column(nullable = false, length = 2048, unique = true)
     val url: String,
     @Column(length = 500)
     var title: String? = null,

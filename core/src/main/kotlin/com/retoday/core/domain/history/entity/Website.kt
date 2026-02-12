@@ -11,7 +11,7 @@ class Website(
     @Id
     @Tsid
     val id: Long? = null,
-    @Column(unique = true)
+    @Column(nullable = false, unique = true)
     val domain: String,
     var categoryId: Long? = null,
     @Column(length = 500)
