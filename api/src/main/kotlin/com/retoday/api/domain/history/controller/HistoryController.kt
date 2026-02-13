@@ -1,8 +1,6 @@
 package com.retoday.api.domain.history.controller
 
-import com.retoday.api.domain.history.dto.request.HistoryRecordBatchRequest
 import com.retoday.api.domain.history.dto.request.HistoryRecordRequest
-import com.retoday.api.domain.history.dto.response.HistoryRecordBatchResponse
 import com.retoday.api.domain.history.dto.response.HistoryRecordResponse
 import com.retoday.api.global.annotation.AuthenticationId
 import com.retoday.core.domain.history.service.HistoryService
@@ -22,13 +20,4 @@ class HistoryController(
         historyService
             .recordHistory(userId, request.toCommand())
             .let { HistoryRecordResponse.from(it) }
-
-    @PostMapping("/batch")
-    fun recordHistoryBatch(
-        @AuthenticationId userId: Long,
-        @Valid @RequestBody request: HistoryRecordBatchRequest
-    ): HistoryRecordBatchResponse =
-        historyService
-            .recordHistoryBatch(userId, request.toCommand())
-            .let { HistoryRecordBatchResponse.from(it) }
 }

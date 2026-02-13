@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository
 @Repository
 interface WebsiteRepository :
     JpaRepository<Website, Long>,
-    CustomWebsiteRepository
+    CustomWebsiteRepository {
+    fun findByDomain(domain: String): Website?
+}

@@ -11,14 +11,13 @@ class Website(
     @Id
     @Tsid
     val id: Long? = null,
-    @Column(unique = true)
+    @Column(nullable = false, unique = true)
     val domain: String,
-    val categoryId: Long? = null,
+    var categoryId: Long? = null,
     @Column(length = 500)
-    var faviconUrl: String? = null,
-    var totalVisitCount: Long = 0
+    var faviconUrl: String? = null
 ) : BaseEntity() {
-    fun incrementVisitCount() {
-        totalVisitCount++
+    fun updateCategory(newCategoryId: Long?) {
+        this.categoryId = newCategoryId
     }
 }

@@ -1,6 +1,5 @@
 package com.retoday.api.fixture
 
-import com.retoday.api.domain.history.dto.request.HistoryRecordBatchRequest
 import com.retoday.api.domain.history.dto.request.HistoryRecordRequest
 import com.retoday.api.domain.history.dto.request.PageMetadata
 import java.time.Instant
@@ -11,7 +10,7 @@ val VISITED_AT: Instant = Instant.parse("2026-02-07T07:11:47.403Z")
 val CLOSED_AT: Instant = Instant.parse("2026-02-07T07:11:50.887Z")
 const val TITLE = "GitHub"
 const val DESCRIPTION = "GitHub is where people build software."
-const val THUMBNAIL_URL = "https://github.githubassets.com/favicons/favicon.svg"
+const val FAVICON_URL = "https://github.githubassets.com/favicons/favicon.svg"
 const val IS_FINAL = true
 const val SCROLL_DEPTH = 75
 
@@ -22,8 +21,8 @@ fun createHistoryRecordRequest(
     closedAt: Instant = CLOSED_AT,
     title: String? = TITLE,
     description: String? = DESCRIPTION,
-    thumbnailUrl: String? = THUMBNAIL_URL,
-    isFinal: Boolean = IS_FINAL,
+    faviconUrl: String? = FAVICON_URL,
+    isClosed: Boolean = IS_FINAL,
     scrollDepth: Int? = SCROLL_DEPTH
 ): HistoryRecordRequest =
     HistoryRecordRequest(
@@ -35,17 +34,8 @@ fun createHistoryRecordRequest(
         metadata =
             PageMetadata(
                 description = description,
-                thumbnailUrl = thumbnailUrl
+                faviconUrl = faviconUrl
             ),
-        isFinal = isFinal,
+        isClosed = isClosed,
         scrollDepth = scrollDepth
     )
-
-fun createHistoryRecordBatchRequest(
-    records: List<HistoryRecordRequest> =
-        listOf(
-            createHistoryRecordRequest(tabId = 1),
-            createHistoryRecordRequest(tabId = 2),
-            createHistoryRecordRequest(tabId = 3)
-        )
-): HistoryRecordBatchRequest = HistoryRecordBatchRequest(records = records)

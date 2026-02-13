@@ -11,6 +11,6 @@ class WebsiteCategory(
     @Id
     @Tsid
     val id: Long? = null,
-    @Column(length = 50, unique = true)
+    @Column(nullable = false, length = 50, unique = true)
     val name: String
 ) : BaseEntity()
