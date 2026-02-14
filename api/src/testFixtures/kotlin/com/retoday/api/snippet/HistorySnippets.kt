@@ -2,9 +2,11 @@ package com.retoday.api.snippet
 
 import com.retoday.api.domain.history.dto.request.HistoryRecordRequest
 import com.retoday.api.domain.history.dto.request.PageMetadata
+import com.retoday.api.domain.history.dto.response.GetMyScreenTimesResponse
 import com.retoday.api.domain.history.dto.response.HistoryRecordResponse
 import com.retoday.api.extension.desc
 import com.retoday.api.extension.fieldsOf
+import com.retoday.api.extension.listFieldsOf
 import com.retoday.api.extension.objectFieldsOf
 
 val historyRecordRequestFields =
@@ -31,3 +33,17 @@ val historyRecordResponseFields =
         HistoryRecordResponse::stayDuration desc "체류 시간 (초)",
         HistoryRecordResponse::recordedAt desc "기록 생성 시각"
     )
+
+val getMyScreenTimesResponseFields =
+    fieldsOf(
+        GetMyScreenTimesResponse::period desc "조회 기간 타입",
+        GetMyScreenTimesResponse::startedAt desc "조회 기간 시작일",
+        GetMyScreenTimesResponse::endedAt desc "조회 기간 종료일",
+        GetMyScreenTimesResponse::totalStayDuration desc "총 체류 시간(초)"
+    ) +
+        listFieldsOf(
+            GetMyScreenTimesResponse::screenTimes desc "구간별 체류 시간 목록",
+            GetMyScreenTimesResponse.ScreenTimeResponse::startedAt desc "구간 시작일",
+            GetMyScreenTimesResponse.ScreenTimeResponse::endedAt desc "구간 종료일",
+            GetMyScreenTimesResponse.ScreenTimeResponse::stayDuration desc "구간 체류 시간(초)"
+        )

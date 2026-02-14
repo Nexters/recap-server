@@ -2,10 +2,7 @@ package com.retoday.core.domain.user.service
 
 import com.retoday.core.domain.history.repository.WebsiteRepository
 import com.retoday.core.domain.user.repository.ProfileRepository
-import com.retoday.core.fixture.ID
-import com.retoday.core.fixture.USER_EX_DOMAIN
-import com.retoday.core.fixture.createGetMyProfileResult
-import com.retoday.core.fixture.createProfileWithEmail
+import com.retoday.core.fixture.*
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.equals.shouldBeEqual
 import io.mockk.every

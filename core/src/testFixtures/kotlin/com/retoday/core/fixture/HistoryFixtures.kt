@@ -1,6 +1,8 @@
 package com.retoday.core.fixture
 
 import com.retoday.core.domain.history.dto.command.HistoryRecordCommand
+import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
+import com.retoday.core.domain.history.dto.result.GetMyScreenTimesResult
 import com.retoday.core.domain.history.dto.result.HistoryRecordResult
 import com.retoday.core.domain.history.entity.History
 import com.retoday.core.domain.history.entity.Page
@@ -33,6 +35,123 @@ fun createHistoryRecordResult(
         websiteId = websiteId,
         stayDuration = stayDuration,
         recordedAt = recordedAt
+    )
+
+fun createGetMyScreenTimesResult(date: LocalDate = LocalDate.parse("2026-02-13")): GetMyScreenTimesResult =
+    GetMyScreenTimesResult(
+        period = GetMyScreenTimesQuery.Period.DAILY,
+        startedAt = date,
+        endedAt = date,
+        totalStayDuration = 15_600L,
+        screenTimes =
+            listOf(
+                GetMyScreenTimesResult.ScreenTime(
+                    startedAt = date,
+                    endedAt = date,
+                    stayDuration = 5_400L
+                ),
+                GetMyScreenTimesResult.ScreenTime(
+                    startedAt = date,
+                    endedAt = date,
+                    stayDuration = 3_600L
+                ),
+                GetMyScreenTimesResult.ScreenTime(
+                    startedAt = date,
+                    endedAt = date,
+                    stayDuration = 0L
+                ),
+                GetMyScreenTimesResult.ScreenTime(
+                    startedAt = date,
+                    endedAt = date,
+                    stayDuration = 0L
+                ),
+                GetMyScreenTimesResult.ScreenTime(
+                    startedAt = date,
+                    endedAt = date,
+                    stayDuration = 0L
+                ),
+                GetMyScreenTimesResult.ScreenTime(
+                    startedAt = date,
+                    endedAt = date,
+                    stayDuration = 6_000L
+                ),
+                GetMyScreenTimesResult.ScreenTime(
+                    startedAt = date,
+                    endedAt = date,
+                    stayDuration = 600L
+                ),
+                GetMyScreenTimesResult.ScreenTime(
+                    startedAt = date,
+                    endedAt = date,
+                    stayDuration = 0L
+                ),
+                GetMyScreenTimesResult.ScreenTime(
+                    startedAt = date,
+                    endedAt = date,
+                    stayDuration = 0L
+                ),
+                GetMyScreenTimesResult.ScreenTime(
+                    startedAt = date,
+                    endedAt = date,
+                    stayDuration = 0L
+                ),
+                GetMyScreenTimesResult.ScreenTime(
+                    startedAt = date,
+                    endedAt = date,
+                    stayDuration = 0L
+                ),
+                GetMyScreenTimesResult.ScreenTime(
+                    startedAt = date,
+                    endedAt = date.plusDays(1),
+                    stayDuration = 0L
+                )
+            )
+    )
+
+fun createGetMyWeeklyScreenTimesResult(): GetMyScreenTimesResult =
+    GetMyScreenTimesResult(
+        period = GetMyScreenTimesQuery.Period.WEEKLY,
+        startedAt = LocalDate.parse("2026-02-08"),
+        endedAt = LocalDate.parse("2026-02-14"),
+        totalStayDuration = 19_800L,
+        screenTimes =
+            listOf(
+                GetMyScreenTimesResult.ScreenTime(
+                    startedAt = LocalDate.parse("2026-02-08"),
+                    endedAt = LocalDate.parse("2026-02-09"),
+                    stayDuration = 3_600L
+                ),
+                GetMyScreenTimesResult.ScreenTime(
+                    startedAt = LocalDate.parse("2026-02-09"),
+                    endedAt = LocalDate.parse("2026-02-10"),
+                    stayDuration = 0L
+                ),
+                GetMyScreenTimesResult.ScreenTime(
+                    startedAt = LocalDate.parse("2026-02-10"),
+                    endedAt = LocalDate.parse("2026-02-11"),
+                    stayDuration = 3_600L
+                ),
+                GetMyScreenTimesResult.ScreenTime(
+                    startedAt = LocalDate.parse("2026-02-11"),
+                    endedAt = LocalDate.parse("2026-02-12"),
+                    stayDuration = 3_600L
+                ),
+                GetMyScreenTimesResult.ScreenTime(
+                    startedAt = LocalDate.parse("2026-02-12"),
+                    endedAt = LocalDate.parse("2026-02-13"),
+                    stayDuration = 0L
+                ),
+                GetMyScreenTimesResult.ScreenTime(
+                    startedAt = LocalDate.parse("2026-02-13"),
+                    endedAt = LocalDate.parse("2026-02-14"),
+                    stayDuration = 9_000L
+                ),
+                GetMyScreenTimesResult.ScreenTime(
+                    startedAt = LocalDate.parse("2026-02-14"),
+                    endedAt = LocalDate.parse("2026-02-15"),
+                    stayDuration = 0L
+                )
+            )
     )
 
 fun createWebsite(
