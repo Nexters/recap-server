@@ -3,6 +3,7 @@ package com.retoday.api.domain.history.dto.response
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.dto.result.GetMyScreenTimesResult
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 data class GetMyScreenTimesResponse(
     val period: GetMyScreenTimesQuery.Period,
@@ -12,8 +13,8 @@ data class GetMyScreenTimesResponse(
     val screenTimes: List<ScreenTimeResponse>
 ) {
     data class ScreenTimeResponse(
-        val startedAt: LocalDate,
-        val endedAt: LocalDate,
+        val startedAt: LocalDateTime,
+        val endedAt: LocalDateTime,
         val stayDuration: Long
     )
 

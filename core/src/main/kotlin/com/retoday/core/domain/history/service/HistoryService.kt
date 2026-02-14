@@ -105,7 +105,7 @@ class HistoryService(
                         periodStartedAt
                             .plus(index * period.screenTimeUnit.inWholeSeconds, ChronoUnit.SECONDS)
                             .atZone(profile.timeZone.id)
-                            .toLocalDate()
+                            .toLocalDateTime()
                     val endedAt =
                         minOf(
                             periodEndedAt,
@@ -114,7 +114,7 @@ class HistoryService(
                                 ChronoUnit.SECONDS
                             )
                         ).atZone(profile.timeZone.id)
-                            .toLocalDate()
+                            .toLocalDateTime()
 
                     GetMyScreenTimesResult.ScreenTime(
                         startedAt = startedAt,

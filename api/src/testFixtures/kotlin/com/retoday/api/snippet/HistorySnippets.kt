@@ -43,7 +43,7 @@ val getMyScreenTimesResponseFields =
     ) +
         listFieldsOf(
             GetMyScreenTimesResponse::screenTimes desc "구간별 체류 시간 목록",
-            GetMyScreenTimesResponse.ScreenTimeResponse::startedAt desc "구간 시작일",
-            GetMyScreenTimesResponse.ScreenTimeResponse::endedAt desc "구간 종료일",
+            GetMyScreenTimesResponse.ScreenTimeResponse::startedAt desc "구간 시작 일시",
+            GetMyScreenTimesResponse.ScreenTimeResponse::endedAt desc "구간 종료 일시",
             GetMyScreenTimesResponse.ScreenTimeResponse::stayDuration desc "구간 체류 시간(초)"
         )

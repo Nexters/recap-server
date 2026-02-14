@@ -44,68 +44,14 @@ fun createGetMyScreenTimesResult(date: LocalDate = LocalDate.parse("2026-02-13")
         endedAt = date,
         totalStayDuration = 15_600L,
         screenTimes =
-            listOf(
-                GetMyScreenTimesResult.ScreenTime(
-                    startedAt = date,
-                    endedAt = date,
-                    stayDuration = 5_400L
-                ),
-                GetMyScreenTimesResult.ScreenTime(
-                    startedAt = date,
-                    endedAt = date,
-                    stayDuration = 3_600L
-                ),
-                GetMyScreenTimesResult.ScreenTime(
-                    startedAt = date,
-                    endedAt = date,
-                    stayDuration = 0L
-                ),
-                GetMyScreenTimesResult.ScreenTime(
-                    startedAt = date,
-                    endedAt = date,
-                    stayDuration = 0L
-                ),
-                GetMyScreenTimesResult.ScreenTime(
-                    startedAt = date,
-                    endedAt = date,
-                    stayDuration = 0L
-                ),
-                GetMyScreenTimesResult.ScreenTime(
-                    startedAt = date,
-                    endedAt = date,
-                    stayDuration = 6_000L
-                ),
-                GetMyScreenTimesResult.ScreenTime(
-                    startedAt = date,
-                    endedAt = date,
-                    stayDuration = 600L
-                ),
-                GetMyScreenTimesResult.ScreenTime(
-                    startedAt = date,
-                    endedAt = date,
-                    stayDuration = 0L
-                ),
-                GetMyScreenTimesResult.ScreenTime(
-                    startedAt = date,
-                    endedAt = date,
-                    stayDuration = 0L
-                ),
-                GetMyScreenTimesResult.ScreenTime(
-                    startedAt = date,
-                    endedAt = date,
-                    stayDuration = 0L
-                ),
-                GetMyScreenTimesResult.ScreenTime(
-                    startedAt = date,
-                    endedAt = date,
-                    stayDuration = 0L
-                ),
-                GetMyScreenTimesResult.ScreenTime(
-                    startedAt = date,
-                    endedAt = date.plusDays(1),
-                    stayDuration = 0L
-                )
-            )
+            listOf(5_400L, 3_600L, 0L, 0L, 0L, 6_000L, 600L, 0L, 0L, 0L, 0L, 0L)
+                .mapIndexed { index, stayDuration ->
+                    GetMyScreenTimesResult.ScreenTime(
+                        startedAt = date.atStartOfDay().plusHours(index * 2L),
+                        endedAt = date.atStartOfDay().plusHours((index + 1) * 2L),
+                        stayDuration = stayDuration
+                    )
+                }
     )
 
 fun createGetMyWeeklyScreenTimesResult(): GetMyScreenTimesResult =
@@ -115,43 +61,14 @@ fun createGetMyWeeklyScreenTimesResult(): GetMyScreenTimesResult =
         endedAt = LocalDate.parse("2026-02-14"),
         totalStayDuration = 19_800L,
         screenTimes =
-            listOf(
-                GetMyScreenTimesResult.ScreenTime(
-                    startedAt = LocalDate.parse("2026-02-08"),
-                    endedAt = LocalDate.parse("2026-02-09"),
-                    stayDuration = 3_600L
-                ),
-                GetMyScreenTimesResult.ScreenTime(
-                    startedAt = LocalDate.parse("2026-02-09"),
-                    endedAt = LocalDate.parse("2026-02-10"),
-                    stayDuration = 0L
-                ),
-                GetMyScreenTimesResult.ScreenTime(
-                    startedAt = LocalDate.parse("2026-02-10"),
-                    endedAt = LocalDate.parse("2026-02-11"),
-                    stayDuration = 3_600L
-                ),
-                GetMyScreenTimesResult.ScreenTime(
-                    startedAt = LocalDate.parse("2026-02-11"),
-                    endedAt = LocalDate.parse("2026-02-12"),
-                    stayDuration = 3_600L
-                ),
-                GetMyScreenTimesResult.ScreenTime(
-                    startedAt = LocalDate.parse("2026-02-12"),
-                    endedAt = LocalDate.parse("2026-02-13"),
-                    stayDuration = 0L
-                ),
-                GetMyScreenTimesResult.ScreenTime(
-                    startedAt = LocalDate.parse("2026-02-13"),
-                    endedAt = LocalDate.parse("2026-02-14"),
-                    stayDuration = 9_000L
-                ),
-                GetMyScreenTimesResult.ScreenTime(
-                    startedAt = LocalDate.parse("2026-02-14"),
-                    endedAt = LocalDate.parse("2026-02-15"),
-                    stayDuration = 0L
-                )
-            )
+            listOf(3_600L, 0L, 3_600L, 3_600L, 0L, 9_000L, 0L)
+                .mapIndexed { index, stayDuration ->
+                    GetMyScreenTimesResult.ScreenTime(
+                        startedAt = LocalDate.parse("2026-02-08").atStartOfDay().plusDays(index.toLong()),
+                        endedAt = LocalDate.parse("2026-02-08").atStartOfDay().plusDays((index + 1).toLong()),
+                        stayDuration = stayDuration
+                    )
+                }
     )
 
 fun createWebsite(
