@@ -9,6 +9,8 @@ import com.retoday.api.extension.desc
 import com.retoday.api.extension.fieldsOf
 import com.retoday.api.extension.listFieldsOf
 import com.retoday.api.extension.objectFieldsOf
+import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
+import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.dto.result.GetMyCategoryAnalysesResult
 
 val historyRecordRequestFields =
@@ -38,8 +40,8 @@ val historyRecordResponseFields =
 
 val getMyScreenTimesQueryFields =
     fieldsOf(
-        "date" desc "조회 기준 일자(yyyy-MM-dd)",
-        "period" desc "조회 기간 타입(DAILY, WEEKLY)"
+        GetMyScreenTimesQuery::date desc "조회 기준 일자(yyyy-MM-dd)",
+        GetMyScreenTimesQuery::period desc "조회 기간 타입(DAILY, WEEKLY)"
     )
 
 val getMyScreenTimesResponseFields =
@@ -58,7 +60,7 @@ val getMyScreenTimesResponseFields =
 
 val getMyCategoryAnalysisQueryFields =
     fieldsOf(
-        "date" desc "조회 기준 일자(yyyy-MM-dd)"
+        GetMyCategoryAnalysisQuery::date desc "조회 기준 일자(yyyy-MM-dd)"
     )
 
 val getMyCategoryAnalysesResponseFields =
