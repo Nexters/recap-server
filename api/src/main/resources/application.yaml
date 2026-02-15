@@ -37,6 +37,9 @@ management:
       access: read_only
 logging:
   config: classpath:log4j2-${spring.profiles.active}.yaml
+gemini:
+  api:
+    key: ${GEMINI_API_KEY}
 ---
 spring:
   config:

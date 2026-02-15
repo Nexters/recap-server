@@ -22,6 +22,10 @@ mysql = "8.2.0"
 restdocs-api-spec = "0.19.4"
 springdoc-openapi = "2.8.9"
 
+# Gemini
+gemini = "1.38.0"
+jackson = "2.17.2"
+
 [plugins]
 
 # Java
@@ -88,6 +92,12 @@ springdoc-openapi = { group = "org.springdoc", name = "springdoc-openapi-starter
 
 # Hibernate
 hypersistence-utils = { group = "io.hypersistence", name = "hypersistence-utils-hibernate-63", version = "3.14.1" }
+
+# Gemini API
+gemini-google = { group = "com.google.genai", name = "google-genai", version.ref = "gemini" }
+
+# Jackson Kotlin
+jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson" }
 
 [bundles]
 test = [

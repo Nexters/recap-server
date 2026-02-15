@@ -14,9 +14,12 @@ dependencies {
     implementation(libs.spring.data.redis)
     implementation(libs.hypersistence.utils)
     implementation(libs.bundles.jwt)
+    implementation(libs.gemini.google)
+    implementation(libs.jackson.module.kotlin)
     runtimeOnly(libs.mysql.connector)
 
     testFixturesImplementation(libs.bundles.test)
+    testImplementation(libs.bundles.spring.test)
 }
 
 tasks {
