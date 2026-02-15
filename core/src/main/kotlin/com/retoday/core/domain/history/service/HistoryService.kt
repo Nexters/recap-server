@@ -1,7 +1,9 @@
 package com.retoday.core.domain.history.service
 
 import com.retoday.core.domain.history.dto.command.HistoryRecordCommand
+import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
+import com.retoday.core.domain.history.dto.result.GetMyCategoryAnalysesResult
 import com.retoday.core.domain.history.dto.result.GetMyScreenTimesResult
 import com.retoday.core.domain.history.dto.result.HistoryRecordResult
 import com.retoday.core.domain.history.entity.History
@@ -21,6 +23,10 @@ class HistoryService(
     private val websiteService: WebsiteService,
     private val pageService: PageService
 ) {
+    private companion object {
+        private const val DEFAULT_CATEGORY_NAME = "기타"
+    }
+
     @Transactional
     fun recordHistory(
         userId: Long,
@@ -76,9 +82,9 @@ class HistoryService(
             // 집계 구간과 겹치는 History([visitedAt, closedAt)와 집계 구간이 교집합을 가지는 데이터)들을 조회
             val histories =
                 historyRepository.findAllByUserIdAndVisitedAtBeforeAndClosedAtAfter(
-                    userId = userId,
-                    visitedAt = periodEndedAt,
-                    closedAt = periodStartedAt
+                    userId,
+                    periodEndedAt,
+                    periodStartedAt
                 )
 
             // 집계 구간을 period.screenTimeUnit 단위의 스크린타임들로 분할
@@ -157,6 +163,55 @@ class HistoryService(
                 screenTimes = screenTimes
             )
         }
+
+    @Transactional(readOnly = true)
+    fun getMyCategoryAnalyses(
+        userId: Long,
+        query: GetMyCategoryAnalysisQuery
+    ): GetMyCategoryAnalysesResult {
+        val profile = profileRepository.findByUserId(userId)!!
+        val periodStartedAt =
+            query.date
+                .atStartOfDay(profile.timeZone.id)
+                .toInstant()
+        val periodEndedAt = periodStartedAt.plus(1, ChronoUnit.DAYS)
+        val websiteForCategoryAnalyses =
+            historyRepository.findWebsiteForCategoryAnalysesByUserIdAndPeriodIn(
+                userId = userId,
+                startedAt = periodStartedAt,
+                endedAt = periodEndedAt
+            )
+        val categoryAnalyses =
+            websiteForCategoryAnalyses
+                .groupBy { it.categoryName ?: DEFAULT_CATEGORY_NAME }
+                .map { (categoryName, group) ->
+                    GetMyCategoryAnalysesResult.CategoryAnalysis(
+                        categoryName = categoryName,
+                        stayDuration = group.sumOf { it.stayDuration },
+                        websiteAnalyses =
+                            group
+                                .map {
+                                    GetMyCategoryAnalysesResult.WebsiteAnalysis(
+                                        domain = it.domain,
+                                        faviconUrl = it.faviconUrl,
+                                        stayDuration = it.stayDuration
+                                    )
+                                }.sortedWith(
+                                    compareByDescending<GetMyCategoryAnalysesResult.WebsiteAnalysis> { it.stayDuration }
+                                        .thenBy { it.domain }
+                                )
+                    )
+                }.sortedWith(
+                    compareByDescending<GetMyCategoryAnalysesResult.CategoryAnalysis> { it.stayDuration }
+                        .thenBy { it.categoryName }
+                )
+
+        return GetMyCategoryAnalysesResult(
+            date = query.date,
+            totalStayDuration = websiteForCategoryAnalyses.sumOf { it.stayDuration },
+            categoryAnalyses = categoryAnalyses
+        )
+    }
 
     private fun checkDuplicateHistory(
         userId: Long,

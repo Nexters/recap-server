@@ -14,17 +14,25 @@ infix fun String.desc(description: String): Field = this to description
 
 infix fun <T> KProperty<T>.desc(description: String): Field = name to description
 
-fun fieldsOf(vararg fields: Field): List<Field> = fields.asList()
+fun fieldsOf(vararg fields: Field): Array<Field> = fields as Array<Field>
 
 fun listFieldsOf(
     listField: Field,
     vararg fields: Field
-): List<Field> = fields.map { "${listField.first}[].${it.first}" desc it.second } + listField
+): Array<Field> =
+    fields
+        .map { "${listField.first}[].${it.first}" desc it.second }
+        .plus(listField)
+        .toTypedArray()
 
 fun objectFieldsOf(
     objectField: Field,
     vararg fields: Field
-): List<Field> = fields.map { "${objectField.first}.${it.first}" desc it.second } + objectField
+): Array<Field> =
+    fields
+        .map { "${objectField.first}.${it.first}" desc it.second }
+        .plus(objectField)
+        .toTypedArray()
 
 fun <T> BodySpec<T, *>.document(
     identifier: String,
@@ -42,7 +50,7 @@ class DocumentDsl<T>(
 ) {
     private val snippets: MutableList<Snippet> = mutableListOf()
 
-    fun requestBody(fields: List<Field>) {
+    fun requestBody(fields: Array<Field>) {
         snippets.add(
             requestFields(
                 fields.map {
@@ -53,7 +61,7 @@ class DocumentDsl<T>(
         )
     }
 
-    fun requestForm(fields: List<Field>) {
+    fun requestForm(fields: Array<Field>) {
         snippets.add(
             requestParts(
                 fields.map {
@@ -75,7 +83,7 @@ class DocumentDsl<T>(
         )
     }
 
-    fun queryParams(vararg fields: Field) {
+    fun queryParams(fields: Array<Field>) {
         snippets.add(
             queryParameters(
                 fields.map {
@@ -86,7 +94,7 @@ class DocumentDsl<T>(
         )
     }
 
-    fun responseBody(fields: List<Field>) {
+    fun responseBody(fields: Array<Field>) {
         snippets.add(
             responseFields(
                 fields.map {

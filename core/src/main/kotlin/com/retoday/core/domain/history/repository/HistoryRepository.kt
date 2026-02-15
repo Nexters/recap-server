@@ -1,7 +1,10 @@
 package com.retoday.core.domain.history.repository
 
+import com.retoday.core.domain.history.dto.projection.WebsiteForCategoryAnalysis
 import com.retoday.core.domain.history.entity.History
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import java.time.Instant
 
 interface HistoryRepository : JpaRepository<History, Long> {
@@ -16,4 +19,36 @@ interface HistoryRepository : JpaRepository<History, Long> {
         visitedAt: Instant,
         closedAt: Instant
     ): List<History>
+
+    @Query(
+        """
+            SELECT
+                w.domain AS domain,
+                w.favicon_url AS faviconUrl,
+                wc.name AS categoryName,
+                SUM(
+                    TIMESTAMPDIFF(
+                        SECOND,
+                        GREATEST(h.visited_at, :startedAt),
+                        LEAST(h.closed_at, :endedAt)
+                    )
+                ) AS stayDuration
+            FROM history h
+            JOIN website w ON w.id = h.website_id
+            LEFT JOIN website_category wc ON wc.id = w.category_id
+            WHERE h.user_id = :userId
+              AND h.visited_at < :endedAt
+              AND h.closed_at > :startedAt
+            GROUP BY h.website_id, w.domain, w.favicon_url, wc.name
+            """,
+        nativeQuery = true
+    )
+    fun findWebsiteForCategoryAnalysesByUserIdAndPeriodIn(
+        @Param("userId")
+        userId: Long,
+        @Param("startedAt")
+        startedAt: Instant,
+        @Param("endedAt")
+        endedAt: Instant
+    ): List<WebsiteForCategoryAnalysis>
 }

@@ -6,6 +6,7 @@ import java.time.Instant
 
 const val TAB_ID = 1
 const val HISTORY_URL = "https://github.com/Nexters/retoday-server"
+const val HISTORY_DOMAIN = "github.com"
 val VISITED_AT: Instant = Instant.parse("2026-02-07T07:11:47.403Z")
 val CLOSED_AT: Instant = Instant.parse("2026-02-07T07:11:50.887Z")
 const val TITLE = "GitHub"
