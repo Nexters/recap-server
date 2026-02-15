@@ -17,8 +17,7 @@ import org.springframework.test.context.ActiveProfiles
 )
 @ActiveProfiles("test")
 class GeminiRecapServiceTest(
-    private val geminiRecapService: GeminiRecapService,
-    private val geminiClient: com.google.genai.Client
+    private val geminiRecapService: GeminiRecapService
 ) : FunSpec({
 
         extensions(SpringExtension)
@@ -68,7 +67,7 @@ class GeminiRecapServiceTest(
 
             response shouldNotBe null
 
-            println("🚀 AI가 생성한 실제 응답 결과:")
+            println("AI가 생성한 실제 응답 결과:")
             println("---------------------------------")
             println(response)
             println("---------------------------------")

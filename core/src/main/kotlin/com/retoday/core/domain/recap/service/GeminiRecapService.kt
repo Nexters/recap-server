@@ -19,10 +19,19 @@ class GeminiRecapService(
         nickname: String,
         activities: List<UserActivityDto>
     ): GeminiRecapResponse {
-        val systemMessage = promptManager.getDailyRecapPrompt()
         val userDataJson = objectMapper.writeValueAsString(activities)
-
+        val variables =
+            mapOf(
+                "nickname" to nickname,
+                "activities" to userDataJson
+            )
         val userMessage = "사용자 닉네임: $nickname\n활동 기록: $userDataJson"
+
+        val systemMessage =
+            promptManager.getDailyRecapPrompt(
+                type = com.retoday.core.domain.recap.component.RecapType.TODAY_RECAP,
+                variables = variables
+            )
         val response =
             geminiClient.models.generateContent(
                 "models/gemini-2.5-flash",
