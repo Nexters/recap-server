@@ -61,28 +61,45 @@ class HistoryService(
     ): GetMyScreenTimesResult =
         with(query) {
             val profile = profileRepository.findByUserId(userId)!!
+
+            // period에 맞춰 집계 시작 시각을 계산
             val periodStartedAt =
                 period
                     .getStartedAt(date)
                     .atStartOfDay(profile.timeZone.id)
                     .toInstant()
+
+            // 집계 종료 시각은 시작 시각 + period 길이(1일/7일)로 계산
+            // 이하 집계는 [periodStartedAt, periodEndedAt) 구간 내에서 처리
             val periodEndedAt = periodStartedAt.plus(period.screenTimeDuration.inWholeDays, ChronoUnit.DAYS)
+
+            // 집계 구간과 겹치는 History([visitedAt, closedAt)와 집계 구간이 교집합을 가지는 데이터)들을 조회
             val histories =
                 historyRepository.findAllByUserIdAndVisitedAtBeforeAndClosedAtAfter(
                     userId = userId,
                     visitedAt = periodEndedAt,
                     closedAt = periodStartedAt
                 )
+
+            // 집계 구간을 period.screenTimeUnit 단위의 스크린타임들로 분할
+            // ex. DAILY: 2시간 단위 12개, WEEKLY: 하루 단위 7개.
             val stayDurations = MutableList(period.screenTimeCount) { 0L }
             var totalStayDuration = 0L
 
             histories.forEach {
+                // 개별 History가 집계 구간 밖으로 벗어날 수 있으므로 전처리
                 var startedAt = it.visitedAt.coerceIn(periodStartedAt, periodEndedAt)
                 val endedAt = it.closedAt.coerceIn(periodStartedAt, periodEndedAt)
 
+                // 하나의 History가 여러 스크린타임에 포함될 수 있으므로, period.screenTimeUnit 경계마다 분할하여 각 스크린타임에 체류시간을 배분
                 while (startedAt < endedAt) {
+                    // startedAt이 집계 시작으로부터 몇 초 떨어져 있는지 오프셋 계산
                     val offsetSecond = startedAt.epochSecond - periodStartedAt.epochSecond
+
+                    // 오프셋 기반으로 어떤 스크린타임에 포함될지 인덱스 계산
                     val screenTimeIndex = (offsetSecond / period.screenTimeUnit.inWholeSeconds).toInt()
+
+                    // 현재 스크린타임의 끝과 History 종료 시각 중 더 이른 시각까지를 이번 분할 구간으로 계산
                     val segmentEnd =
                         minOf(
                             endedAt,
@@ -91,6 +108,8 @@ class HistoryService(
                                 ChronoUnit.SECONDS
                             )
                         )
+
+                    // 현재 스크린타임에 포함될 체류시간 계산
                     val stayDuration = segmentEnd.epochSecond - startedAt.epochSecond
 
                     stayDurations[screenTimeIndex] += stayDuration
