@@ -1,9 +1,9 @@
 package com.retoday.core.domain.recap.dto
 
+// 1번: Today's Recap
 data class GeminiRecapResponse(
     val title: String = "",
-    val subtitle: String = "",
-    val daily_summary: String = "",
+    val dailySummary: String = "",
     val sections: List<RecapSection> = emptyList()
 )
 

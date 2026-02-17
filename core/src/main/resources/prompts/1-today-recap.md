@@ -34,10 +34,6 @@ Longer duration activities should receive more emphasis in interpretation and na
 - Must be a complete sentence.
 - No exclamations or keyword listing.
 
-## subtitle
-- Sentence summarizing the day.
-- Max 70 characters.
-
 ## daily_summary
 - 1–2 lines of summary and encouragement.
 - Max 70 characters.
@@ -59,14 +55,11 @@ Each section must include:
 - Sections should not overlap in theme.
 
 
-# Output Format (must match exactly)
+# Output Format (Strict)
 ```
 {
   "title": "string (10~23자, 문장형 제목)",
-  "subtitle": "string (70자 이하)",
-
-
-  "daily_summary": "string (70자 이내, 1~2줄 문장형 응원 메시지)",
+  "dailySummary": "string (70자 이내, 1~2줄 문장형 응원 메시지)",
 
   "sections": [
     {
