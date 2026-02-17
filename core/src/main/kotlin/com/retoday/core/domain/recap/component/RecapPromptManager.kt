@@ -1,5 +1,6 @@
 package com.retoday.core.domain.recap.component
 
+import com.retoday.core.domain.recap.exception.RecapPromptNotFoundException
 import org.springframework.core.io.ResourceLoader
 import org.springframework.stereotype.Component
 
@@ -14,7 +15,7 @@ class RecapPromptManager(
         val path = "classpath:prompts/${type.fileName}.md"
         val resource = resourceLoader.getResource(path)
         if (!resource.exists()) {
-            throw IllegalArgumentException("프롬프트 파일을 찾을 수 없습니다: $path")
+            throw RecapPromptNotFoundException()
         }
 
         var content = resource.inputStream.bufferedReader().use { it.readText() }
