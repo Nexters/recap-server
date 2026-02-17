@@ -11,10 +11,15 @@ import com.retoday.core.domain.recap.dto.GeminiRecapResponse
 import com.retoday.core.domain.recap.dto.GeminiTimelineResponse
 import com.retoday.core.domain.recap.dto.GeminiTopicResponse
 import com.retoday.core.domain.recap.dto.UserActivityDto
+import com.retoday.core.domain.recap.exception.RecapGenerationException
+import com.retoday.core.domain.recap.exception.RecapParsingException
+import com.retoday.core.domain.recap.exception.RecapResponseEmptyException
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 @Service
 class GeminiRecapService(
+    @Value("\${gemini.api.model}") private val modelVersion: String,
     private val geminiClient: Client,
     private val defaultAiConfig: GenerateContentConfig,
     private val promptManager: RecapPromptManager,
@@ -26,28 +31,38 @@ class GeminiRecapService(
         activities: List<UserActivityDto>,
         responseClass: Class<T>
     ): T {
-        val instruction = promptManager.getDailyRecapPrompt(type, mapOf("nickname" to nickname))
+        val instruction =
+            promptManager.getDailyRecapPrompt(type, mapOf("nickname" to nickname))
+
         val userDataJson = objectMapper.writeValueAsString(activities)
 
         val response =
-            geminiClient.models.generateContent(
-                "models/gemini-2.5-flash",
-                "분석할 데이터: $userDataJson",
-                GenerateContentConfig
-                    .builder()
-                    .systemInstruction(
-                        Content
-                            .builder()
-                            .parts(listOf(Part.builder().text(instruction).build()))
-                            .build()
-                    ).responseMimeType("application/json")
-                    .build()
-            )
+            try {
+                geminiClient.models.generateContent(
+                    "models/$modelVersion",
+                    "분석할 데이터: $userDataJson",
+                    GenerateContentConfig
+                        .builder()
+                        .systemInstruction(
+                            Content
+                                .builder()
+                                .parts(listOf(Part.builder().text(instruction).build()))
+                                .build()
+                        ).responseMimeType("application/json")
+                        .build()
+                )
+            } catch (e: Exception) {
+                throw RecapGenerationException()
+            }
 
-        val jsonString = response.text() ?: throw RuntimeException("${type.name} 응답 생성 실패")
+        val jsonString = response.text() ?: throw RecapResponseEmptyException()
         val cleanedJson = jsonString.replace("```json", "").replace("```", "").trim()
 
-        return objectMapper.readValue(cleanedJson, responseClass)
+        return try {
+            objectMapper.readValue(cleanedJson, responseClass)
+        } catch (e: Exception) {
+            throw RecapParsingException()
+        }
     }
 
     // 1. Today's Recap
