@@ -1,5 +1,6 @@
 package com.retoday.core.domain.user.entity
 
+import com.retoday.core.domain.auth.dto.response.GetOAuthUserResponse
 import com.retoday.core.global.entity.BaseEntity
 import io.hypersistence.utils.hibernate.id.Tsid
 import jakarta.persistence.*
@@ -18,4 +19,8 @@ class User(
     @Enumerated(EnumType.STRING)
     val roles: Set<Role> = setOf(Role.MEMBER),
     var isActive: Boolean = true
-) : BaseEntity()
+) : BaseEntity() {
+    fun synchronizeOAuthUser(getOAuthUserResponse: GetOAuthUserResponse) {
+        email = getOAuthUserResponse.email
+    }
+}

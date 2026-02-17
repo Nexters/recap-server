@@ -4,8 +4,8 @@ import com.retoday.api.domain.auth.dto.request.LoginRequest
 import com.retoday.api.domain.auth.dto.request.RefreshRequest
 import com.retoday.api.domain.auth.dto.response.LoginResponse
 import com.retoday.api.domain.auth.dto.response.RefreshResponse
-import com.retoday.api.util.desc
-import com.retoday.api.util.fieldsOf
+import com.retoday.api.extension.desc
+import com.retoday.api.extension.fieldsOf
 
 val loginRequestFields =
     fieldsOf(

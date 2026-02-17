@@ -13,4 +13,10 @@ abstract class ServerException(
             code = errorType.code,
             status = errorType.status
         )
+
+    constructor(errorType: ErrorType, customMessage: String) : this(
+        message = customMessage,
+        code = errorType.code,
+        status = errorType.status
+    )
 }

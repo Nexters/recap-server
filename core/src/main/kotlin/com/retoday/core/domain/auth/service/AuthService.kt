@@ -9,9 +9,12 @@ import com.retoday.core.domain.auth.entity.RefreshToken
 import com.retoday.core.domain.auth.exception.InvalidAuthenticationException
 import com.retoday.core.domain.auth.exception.RefreshTokenNotFoundException
 import com.retoday.core.domain.auth.repository.RefreshTokenRepository
+import com.retoday.core.domain.user.entity.Profile
 import com.retoday.core.domain.user.entity.User
 import com.retoday.core.domain.user.exception.UserNotFoundException
+import com.retoday.core.domain.user.repository.ProfileRepository
 import com.retoday.core.domain.user.repository.UserRepository
+import com.retoday.core.global.extension.orElse
 import com.retoday.core.global.jwt.JwtProvider
 import com.retoday.core.global.properties.JwtProperties
 import org.springframework.data.repository.findByIdOrNull
@@ -21,61 +24,72 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class AuthService(
     private val userRepository: UserRepository,
+    private val profileRepository: ProfileRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val oAuthClients: List<OAuthClient>,
     private val jwtProvider: JwtProvider,
     private val jwtProperties: JwtProperties
 ) {
     @Transactional
-    fun login(command: LoginCommand): LoginResult =
-        with(command) {
-            val getOAuthUserResponse =
-                oAuthClients
-                    .first { it.provider == provider }
-                    .getOAuthUserByToken(oAuthToken)
-            val user =
-                userRepository
-                    .findBySocialIdAndProvider(getOAuthUserResponse.id, provider)
-                    ?.apply { email = getOAuthUserResponse.email }
-                    ?: User(
+    fun login(command: LoginCommand): LoginResult {
+        val getOAuthUserResponse =
+            oAuthClients
+                .first { it.provider == command.provider }
+                .getOAuthUserByToken(command.oAuthToken)
+
+        val user =
+            userRepository
+                .findBySocialIdAndProvider(getOAuthUserResponse.id, getOAuthUserResponse.provider)
+                ?.apply { synchronizeOAuthUser(getOAuthUserResponse) }
+                .orElse {
+                    User(
                         socialId = getOAuthUserResponse.id,
                         email = getOAuthUserResponse.email,
-                        provider = provider
+                        provider = getOAuthUserResponse.provider
                     )
-            val (accessToken, refreshToken) =
-                userRepository
-                    .save(user)
-                    .createTokens()
+                }.let { userRepository.save(it) }
 
-            LoginResult(
-                accessToken = accessToken,
-                refreshToken = refreshToken
-            )
+        profileRepository
+            .findByUserId(user.id!!)
+            ?.apply { synchronizeOAuthUser(getOAuthUserResponse) }
+            .orElse {
+                Profile(
+                    userId = user.id!!,
+                    firstName = getOAuthUserResponse.firstName,
+                    lastName = getOAuthUserResponse.lastName,
+                    imageUrl = getOAuthUserResponse.imageUrl
+                )
+            }.let { profileRepository.save(it) }
+
+        val (accessToken, refreshToken) = user.createTokens()
+
+        return LoginResult(
+            accessToken = accessToken,
+            refreshToken = refreshToken
+        )
+    }
+
+    fun refresh(command: RefreshCommand): RefreshResult {
+        val userId = jwtProvider.extractUserId(command.refreshToken)
+        val refreshToken = refreshTokenRepository.findByIdOrNull(userId) ?: throw RefreshTokenNotFoundException()
+
+        if (refreshToken.content != command.refreshToken) {
+            refreshTokenRepository.deleteById(userId)
+
+            throw InvalidAuthenticationException()
         }
 
-    fun refresh(command: RefreshCommand): RefreshResult =
-        with(command) {
-            val userId = jwtProvider.extractUserId(refreshToken)
-
-            refreshTokenRepository
+        val (newAccessToken, newRefreshToken) =
+            userRepository
                 .findByIdOrNull(userId)
-                ?.apply {
-                    if (content != refreshToken) {
-                        refreshTokenRepository.deleteById(userId)
+                ?.createTokens()
+                ?: throw UserNotFoundException()
 
-                        throw InvalidAuthenticationException()
-                    }
-                }
-                ?: throw RefreshTokenNotFoundException()
-
-            val user = userRepository.findByIdOrNull(userId) ?: throw UserNotFoundException()
-            val (accessToken, refreshToken) = user.createTokens()
-
-            return RefreshResult(
-                accessToken = accessToken,
-                refreshToken = refreshToken
-            )
-        }
+        return RefreshResult(
+            accessToken = newAccessToken,
+            refreshToken = newRefreshToken
+        )
+    }
 
     fun logout(userId: Long) {
         refreshTokenRepository

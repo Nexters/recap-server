@@ -10,7 +10,6 @@ dependencies {
     implementation(libs.spring.security)
     implementation(libs.spring.validation)
     implementation(libs.spring.actuator)
-    implementation(libs.spring.log4j2)
     implementation(libs.bundles.jwt)
     implementation(libs.bundles.jackson)
     implementation(libs.springdoc.openapi)
@@ -47,10 +46,11 @@ tasks {
 }
 
 openapi3 {
-    title = "retoday API"
-    description = "retoday API Documentation"
-    version = "v1"
+    title = "Retoday API"
+    description = "Retoday API Documentation"
+    version = project.version.toString()
     format = "yaml"
     outputFileNamePrefix = "api"
     outputDirectory = "src/main/resources/static/docs"
+    setServer("/api/v1")
 }

@@ -18,9 +18,11 @@ jwt = "0.12.6"
 # Database
 mysql = "8.2.0"
 
+# JDSL
+jdsl = "3.7.2"
+
 # OpenAPI
 restdocs-api-spec = "0.19.4"
-springdoc-openapi = "2.8.9"
 
 # Gemini
 gemini = "1.38.0"
@@ -84,14 +86,20 @@ mockk-spring = { group = "com.ninja-squad", name = "springmockk", version = "4.0
 
 # Database
 mysql-connector = { group = "com.mysql", name = "mysql-connector-j", version.ref = "mysql" }
+h2 = { group = "com.h2database", name = "h2" }
+
+# Hibernate
+hypersistence-utils = { group = "io.hypersistence", name = "hypersistence-utils-hibernate-63", version = "3.14.1" }
+
+# JDSL
+jdsl-dsl = { group = "com.linecorp.kotlin-jdsl", name = "jpql-dsl", version.ref = "jdsl" }
+jdsl-render = { group = "com.linecorp.kotlin-jdsl", name = "jpql-render", version.ref = "jdsl" }
+jdsl-jpa = { group = "com.linecorp.kotlin-jdsl", name = "spring-data-jpa-support", version.ref = "jdsl" }
 
 # OpenAPI
 restdocs-api-spec = { group = "com.epages", name = "restdocs-api-spec", version.ref = "restdocs-api-spec" }
 restdocs-api-spec-webtestclient = { group = "com.epages", name = "restdocs-api-spec-webtestclient", version.ref = "restdocs-api-spec" }
-springdoc-openapi = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc-openapi" }
-
-# Hibernate
-hypersistence-utils = { group = "io.hypersistence", name = "hypersistence-utils-hibernate-63", version = "3.14.1" }
+springdoc-openapi = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-ui", version = "2.8.9" }
 
 # Gemini API
 gemini-google = { group = "com.google.genai", name = "google-genai", version.ref = "gemini" }
@@ -124,4 +132,9 @@ jwt = [
 jackson = [
     "jackson-kotlin",
     "jackson-yaml"
+]
+jdsl = [
+    "jdsl-dsl",
+    "jdsl-render",
+    "jdsl-jpa"
 ]

@@ -1,10 +1,12 @@
 package com.retoday.api.global.exception
 
 import com.retoday.api.global.dto.ErrorResponse
+import com.retoday.core.domain.history.exception.RateLimitExceededException
 import com.retoday.core.global.exception.ErrorType
 import com.retoday.core.global.exception.ServerException
-import com.retoday.core.global.util.getLogger
+import com.retoday.core.global.extension.getLogger
 import jakarta.validation.ConstraintViolationException
+import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.HttpRequestMethodNotSupportedException
@@ -19,6 +21,28 @@ class GlobalExceptionHandler {
         const val INVALID_JSON_MESSAGE = "JSON 형식이 올바르지 않습니다."
         val logger = getLogger()
     }
+
+    @ExceptionHandler(RateLimitExceededException::class)
+    fun handle(exception: RateLimitExceededException): ResponseEntity<ErrorResponse> =
+        with(exception) {
+            logger.warn { message }
+
+            val headers =
+                HttpHeaders().apply {
+                    set("Retry-After", retryAfterSeconds.toString())
+                }
+
+            val response =
+                ErrorResponse(
+                    code = code,
+                    message = message
+                )
+
+            ResponseEntity
+                .status(status)
+                .headers(headers)
+                .body(response)
+        }
 
     @ExceptionHandler(ServerException::class)
     fun handle(exception: ServerException): ResponseEntity<ErrorResponse> =

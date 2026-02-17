@@ -1,4 +1,4 @@
-package com.retoday.api.util
+package com.retoday.api.extension
 
 import com.epages.restdocs.apispec.WebTestClientRestDocumentationWrapper
 import org.springframework.restdocs.operation.preprocess.Preprocessors
@@ -28,15 +28,17 @@ fun objectFieldsOf(
 
 fun <T> BodySpec<T, *>.document(
     identifier: String,
+    nullableFields: Set<String> = emptySet(),
     init: (DocumentDsl<T>.() -> Unit)? = null
 ): BodySpec<T, *> =
-    DocumentDsl(identifier, this)
+    DocumentDsl(identifier, this, nullableFields)
         .apply { init?.let { it() } }
         .build()
 
 class DocumentDsl<T>(
     private val identifier: String,
-    private val contentSpec: BodySpec<T, *>
+    private val contentSpec: BodySpec<T, *>,
+    private val nullableFields: Set<String>
 ) {
     private val snippets: MutableList<Snippet> = mutableListOf()
 
@@ -88,8 +90,15 @@ class DocumentDsl<T>(
         snippets.add(
             responseFields(
                 fields.map {
-                    fieldWithPath(it.first)
-                        .description(it.second)
+                    val descriptor =
+                        fieldWithPath(it.first)
+                            .description(it.second)
+
+                    if (nullableFields.contains(it.first)) {
+                        descriptor.optional()
+                    } else {
+                        descriptor
+                    }
                 }
             )
         )

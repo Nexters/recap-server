@@ -1,8 +1,10 @@
-package com.retoday.api.util
+package com.retoday.api.extension
 
 import com.retoday.api.fixture.createRetodayAuthentication
 import com.retoday.api.global.dto.ErrorResponse
+import com.retoday.core.fixture.TOKEN
 import io.kotest.matchers.shouldBe
+import org.springframework.http.HttpHeaders
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.test.web.reactive.server.WebTestClient.*
@@ -20,4 +22,6 @@ fun ResponseSpec.expectError(): BodySpec<ErrorResponse, *> = expectBody<ErrorRes
 
 fun RequestHeadersSpec<*>.withAuthentication(
     authentication: Authentication = createRetodayAuthentication()
-): RequestHeadersSpec<*> = also { SecurityContextHolder.getContext().authentication = authentication }
+): RequestHeadersSpec<*> =
+    header(HttpHeaders.AUTHORIZATION, "Bearer $TOKEN")
+        .also { SecurityContextHolder.getContext().authentication = authentication }

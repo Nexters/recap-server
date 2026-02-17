@@ -12,4 +12,3 @@ indent_size = 4
 ij_kotlin_allow_trailing_comma = false
 ij_kotlin_allow_trailing_comma_on_call_site = false
 ktlint_standard_no-wildcard-imports = disabled
-ktlint_standard_package-name = disabled
