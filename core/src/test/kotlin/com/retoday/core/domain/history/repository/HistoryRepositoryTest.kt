@@ -13,7 +13,7 @@ class HistoryRepositoryTest : RepositoryTest() {
     private lateinit var historyRepository: HistoryRepository
 
     init {
-        "findWebsiteForCategoryAnalysesByUserIdAndPeriodIn()" {
+        "findWebsiteForCategoryAnalysesByUserIdAndPeriodInOrderByStayDurationDesc()" {
             val userId = 1L
             val periodStartedAt = Instant.parse("2026-02-13T00:00:00Z")
             val periodEndedAt = Instant.parse("2026-02-14T00:00:00Z")
@@ -84,7 +84,7 @@ class HistoryRepositoryTest : RepositoryTest() {
             entityManager.clear()
 
             val analyses =
-                historyRepository.findWebsiteForCategoryAnalysesByUserIdAndPeriodIn(
+                historyRepository.findWebsiteForCategoryAnalysesByUserIdAndPeriodInOrderByStayDurationDesc(
                     userId = userId,
                     startedAt = periodStartedAt,
                     endedAt = periodEndedAt

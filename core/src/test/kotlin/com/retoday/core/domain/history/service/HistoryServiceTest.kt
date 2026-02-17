@@ -267,7 +267,7 @@ class HistoryServiceTest :
             val dayEndUtc = Instant.parse("2026-02-13T15:00:00Z")
             every { profileRepository.findByUserId(userId) } returns profile
             every {
-                historyRepository.findWebsiteForCategoryAnalysesByUserIdAndPeriodIn(
+                historyRepository.findWebsiteForCategoryAnalysesByUserIdAndPeriodInOrderByStayDurationDesc(
                     userId = userId,
                     startedAt = dayStartUtc,
                     endedAt = dayEndUtc
@@ -288,7 +288,7 @@ class HistoryServiceTest :
                                 stayDuration = websiteAnalysis.stayDuration
                             )
                         }
-                    }.asReversed()
+                    }
 
             When("사용자가 본인 일간 카테고리 분석을 조회하면") {
                 val result = historyService.getMyCategoryAnalyses(userId, query)
@@ -296,7 +296,7 @@ class HistoryServiceTest :
                 Then("카테고리별 체류 시간과 도메인 목록이 정확하게 계산된다.") {
                     result shouldBe expectedResult
                     verify(exactly = 1) {
-                        historyRepository.findWebsiteForCategoryAnalysesByUserIdAndPeriodIn(
+                        historyRepository.findWebsiteForCategoryAnalysesByUserIdAndPeriodInOrderByStayDurationDesc(
                             userId = userId,
                             startedAt = dayStartUtc,
                             endedAt = dayEndUtc

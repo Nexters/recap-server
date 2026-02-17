@@ -40,10 +40,11 @@ interface HistoryRepository : JpaRepository<History, Long> {
               AND h.visited_at < :endedAt
               AND h.closed_at > :startedAt
             GROUP BY h.website_id, w.domain, w.favicon_url, wc.name
+            ORDER BY stayDuration DESC
             """,
         nativeQuery = true
     )
-    fun findWebsiteForCategoryAnalysesByUserIdAndPeriodIn(
+    fun findWebsiteForCategoryAnalysesByUserIdAndPeriodInOrderByStayDurationDesc(
         @Param("userId")
         userId: Long,
         @Param("startedAt")

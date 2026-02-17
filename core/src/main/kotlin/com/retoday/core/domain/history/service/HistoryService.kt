@@ -181,7 +181,7 @@ class HistoryService(
 
         // 집계 기간 내의 방문 기록들을 웹사이트 단위로 미리 집계해서 조회한다.
         val websiteForCategoryAnalyses =
-            historyRepository.findWebsiteForCategoryAnalysesByUserIdAndPeriodIn(
+            historyRepository.findWebsiteForCategoryAnalysesByUserIdAndPeriodInOrderByStayDurationDesc(
                 userId = userId,
                 startedAt = periodStartedAt,
                 endedAt = periodEndedAt
@@ -203,15 +203,9 @@ class HistoryService(
                                         faviconUrl = it.faviconUrl,
                                         stayDuration = it.stayDuration
                                     )
-                                }.sortedWith(
-                                    compareByDescending<GetMyCategoryAnalysesResult.WebsiteAnalysis> { it.stayDuration }
-                                        .thenBy { it.domain }
-                                )
+                                }
                     )
-                }.sortedWith(
-                    compareByDescending<GetMyCategoryAnalysesResult.CategoryAnalysis> { it.stayDuration }
-                        .thenBy { it.categoryName }
-                )
+                }.sortedByDescending { it.stayDuration }
 
         return GetMyCategoryAnalysesResult(
             date = query.date,
