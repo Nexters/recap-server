@@ -31,5 +31,7 @@ class RecapPromptManager(
 enum class RecapType(
     val fileName: String
 ) {
-    TODAY_RECAP("1-today-recap")
+    TODAY_RECAP("1-today-recap"),
+    TIMELINE("2-timeline"),
+    TOPIC("3-topic")
 }

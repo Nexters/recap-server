@@ -63,13 +63,15 @@ class GeminiRecapServiceTest(
                     )
                 )
 
-            val response = geminiRecapService.generateRecap(nickname, mockActivities)
+            val response1 = geminiRecapService.generateRecap(nickname, mockActivities)
+            val response3 = geminiRecapService.generateTopics(nickname, mockActivities)
 
-            response shouldNotBe null
+            response1 shouldNotBe null
 
             println("AI가 생성한 실제 응답 결과:")
             println("---------------------------------")
-            println(response)
+            println(response1)
             println("---------------------------------")
+            println(response3)
         }
     })
