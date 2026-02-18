@@ -11,7 +11,7 @@ class GeminiConfiguration(
     @Value("\${gemini.api.key}") private val apiKey: String
 ) {
     @Bean
-    fun geminiClient(): Client = Client.builder().apiKey(apiKey).build()
+    fun geminiSdkClient(): Client = Client.builder().apiKey(apiKey).build()
 
     @Bean
     fun defaultAiConfig(): GenerateContentConfig =
