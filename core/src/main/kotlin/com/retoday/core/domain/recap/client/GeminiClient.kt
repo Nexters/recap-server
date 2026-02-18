@@ -1,31 +1,32 @@
-package com.retoday.core.domain.recap.service
+package com.retoday.core.domain.recap.client
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.google.genai.Client
 import com.google.genai.types.Content
 import com.google.genai.types.GenerateContentConfig
 import com.google.genai.types.Part
 import com.retoday.core.domain.recap.component.RecapPromptManager
 import com.retoday.core.domain.recap.component.RecapType
-import com.retoday.core.domain.recap.dto.GeminiRecapResponse
-import com.retoday.core.domain.recap.dto.GeminiTimelineResponse
-import com.retoday.core.domain.recap.dto.GeminiTopicResponse
 import com.retoday.core.domain.recap.dto.UserActivityDto
 import com.retoday.core.domain.recap.exception.RecapGenerationException
 import com.retoday.core.domain.recap.exception.RecapParsingException
 import com.retoday.core.domain.recap.exception.RecapResponseEmptyException
+import com.retoday.core.global.annotation.Client
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.stereotype.Service
+import com.google.genai.Client as GeminiClient
 
-@Service
-class GeminiRecapService(
+@Client
+class GeminiClient(
     @Value("\${gemini.api.model}") private val modelVersion: String,
-    private val geminiClient: Client,
-    private val defaultAiConfig: GenerateContentConfig,
+    private val geminiSdkClient: GeminiClient,
     private val promptManager: RecapPromptManager,
     private val objectMapper: ObjectMapper
-) {
-    fun <T> askGemini(
+) : RecapAIClient(provider = AIProvider.GEMINI) {
+    private companion object {
+        const val MODEL_PREFIX = "models/"
+        const val RESPONSE_MIME_TYPE = "application/json"
+    }
+
+    override fun <T> generate(
         type: RecapType,
         nickname: String,
         activities: List<UserActivityDto>,
@@ -38,8 +39,8 @@ class GeminiRecapService(
 
         val response =
             try {
-                geminiClient.models.generateContent(
-                    "models/$modelVersion",
+                geminiSdkClient.models.generateContent(
+                    MODEL_PREFIX + modelVersion,
                     "분석할 데이터: $userDataJson",
                     GenerateContentConfig
                         .builder()
@@ -48,7 +49,7 @@ class GeminiRecapService(
                                 .builder()
                                 .parts(listOf(Part.builder().text(instruction).build()))
                                 .build()
-                        ).responseMimeType("application/json")
+                        ).responseMimeType(RESPONSE_MIME_TYPE)
                         .build()
                 )
             } catch (e: Exception) {
@@ -56,6 +57,7 @@ class GeminiRecapService(
             }
 
         val jsonString = response.text() ?: throw RecapResponseEmptyException()
+
         val cleanedJson = jsonString.replace("```json", "").replace("```", "").trim()
 
         return try {
@@ -64,22 +66,4 @@ class GeminiRecapService(
             throw RecapParsingException()
         }
     }
-
-    // 1. Today's Recap
-    fun generateRecap(
-        nickname: String,
-        activities: List<UserActivityDto>
-    ): GeminiRecapResponse = askGemini(RecapType.TODAY_RECAP, nickname, activities, GeminiRecapResponse::class.java)
-
-    // 2. AI 타임라인
-    fun generateTimeline(
-        nickname: String,
-        activities: List<UserActivityDto>
-    ): GeminiTimelineResponse = askGemini(RecapType.TIMELINE, nickname, activities, GeminiTimelineResponse::class.java)
-
-    // 3. 많이 둘러본 주제
-    fun generateTopics(
-        nickname: String,
-        activities: List<UserActivityDto>
-    ): GeminiTopicResponse = askGemini(RecapType.TOPIC, nickname, activities, GeminiTopicResponse::class.java)
 }
