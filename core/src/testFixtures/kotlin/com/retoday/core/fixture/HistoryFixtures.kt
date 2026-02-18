@@ -1,7 +1,7 @@
 package com.retoday.core.fixture
 
 import com.retoday.core.domain.history.dto.command.HistoryRecordCommand
-import com.retoday.core.domain.history.dto.projection.WebsiteForCategoryAnalysis
+import com.retoday.core.domain.history.dto.projection.WebsiteStatWithCategory
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.dto.result.GetMyCategoryAnalysesResult
 import com.retoday.core.domain.history.dto.result.GetMyScreenTimesResult
@@ -124,18 +124,18 @@ fun createGetMyCategoryAnalysisResult(date: LocalDate = LocalDate.parse("2026-02
             )
     )
 
-fun createWebsiteForCategoryAnalysis(
+fun createWebsiteStatWithCategory(
     domain: String,
     faviconUrl: String? = FAVICON_URL,
     categoryName: String? = null,
     stayDuration: Long
-): WebsiteForCategoryAnalysis =
-    object : WebsiteForCategoryAnalysis {
-        override val domain: String = domain
-        override val faviconUrl: String? = faviconUrl
-        override val categoryName: String? = categoryName
-        override val stayDuration: Long = stayDuration
-    }
+): WebsiteStatWithCategory =
+    WebsiteStatWithCategory(
+        domain = domain,
+        faviconUrl = faviconUrl,
+        categoryName = categoryName,
+        stayDuration = stayDuration
+    )
 
 fun createWebsite(
     id: Long? = WEBSITE_ID,

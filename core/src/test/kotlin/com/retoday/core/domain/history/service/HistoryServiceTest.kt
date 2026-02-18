@@ -267,7 +267,7 @@ class HistoryServiceTest :
             val dayEndUtc = Instant.parse("2026-02-13T15:00:00Z")
             every { profileRepository.findByUserId(userId) } returns profile
             every {
-                historyRepository.findWebsiteForCategoryAnalysesByUserIdAndPeriodInOrderByStayDurationDesc(
+                historyRepository.findWebsiteStatsWithCategoryByUserId(
                     userId = userId,
                     startedAt = dayStartUtc,
                     endedAt = dayEndUtc
@@ -276,7 +276,7 @@ class HistoryServiceTest :
                 expectedResult.categoryAnalyses
                     .flatMap { categoryAnalysis ->
                         categoryAnalysis.websiteAnalyses.map { websiteAnalysis ->
-                            createWebsiteForCategoryAnalysis(
+                            createWebsiteStatWithCategory(
                                 domain = websiteAnalysis.domain,
                                 faviconUrl = websiteAnalysis.faviconUrl,
                                 categoryName =
@@ -296,7 +296,7 @@ class HistoryServiceTest :
                 Then("카테고리별 체류 시간과 도메인 목록이 정확하게 계산된다.") {
                     result shouldBe expectedResult
                     verify(exactly = 1) {
-                        historyRepository.findWebsiteForCategoryAnalysesByUserIdAndPeriodInOrderByStayDurationDesc(
+                        historyRepository.findWebsiteStatsWithCategoryByUserId(
                             userId = userId,
                             startedAt = dayStartUtc,
                             endedAt = dayEndUtc

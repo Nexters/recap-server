@@ -180,15 +180,15 @@ class HistoryService(
         val periodEndedAt = periodStartedAt.plus(1, ChronoUnit.DAYS)
 
         // 집계 기간 내의 방문 기록들을 웹사이트 단위로 미리 집계해서 조회한다.
-        val websiteForCategoryAnalyses =
-            historyRepository.findWebsiteForCategoryAnalysesByUserIdAndPeriodInOrderByStayDurationDesc(
+        val websiteStatsWithCategory =
+            historyRepository.findWebsiteStatsWithCategoryByUserId(
                 userId = userId,
                 startedAt = periodStartedAt,
                 endedAt = periodEndedAt
             )
 
         val categoryAnalyses =
-            websiteForCategoryAnalyses
+            websiteStatsWithCategory
                 .groupBy { it.categoryName ?: DEFAULT_CATEGORY_NAME } // 카테고리명 기준으로 웹사이트를 집계(카테고리가 미지정은 '기타')
                 .map { (categoryName, group) ->
                     GetMyCategoryAnalysesResult.CategoryAnalysis(
@@ -209,7 +209,7 @@ class HistoryService(
 
         return GetMyCategoryAnalysesResult(
             date = query.date,
-            totalStayDuration = websiteForCategoryAnalyses.sumOf { it.stayDuration },
+            totalStayDuration = websiteStatsWithCategory.sumOf { it.stayDuration },
             categoryAnalyses = categoryAnalyses
         )
     }

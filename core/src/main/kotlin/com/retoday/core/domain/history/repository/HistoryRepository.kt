@@ -1,6 +1,6 @@
 package com.retoday.core.domain.history.repository
 
-import com.retoday.core.domain.history.dto.projection.WebsiteForCategoryAnalysis
+import com.retoday.core.domain.history.dto.projection.WebsiteStatWithCategory
 import com.retoday.core.domain.history.entity.History
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
@@ -44,12 +44,12 @@ interface HistoryRepository : JpaRepository<History, Long> {
             """,
         nativeQuery = true
     )
-    fun findWebsiteForCategoryAnalysesByUserIdAndPeriodInOrderByStayDurationDesc(
+    fun findWebsiteStatsWithCategoryByUserId(
         @Param("userId")
         userId: Long,
         @Param("startedAt")
         startedAt: Instant,
         @Param("endedAt")
         endedAt: Instant
-    ): List<WebsiteForCategoryAnalysis>
+    ): List<WebsiteStatWithCategory>
 }
