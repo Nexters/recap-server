@@ -25,7 +25,13 @@ enum class ErrorType(
     INVALID_URL("유효하지 않은 URL입니다", HttpStatus.BAD_REQUEST),
     RATE_LIMIT_EXCEEDED("요청 제한을 초과했습니다.", HttpStatus.TOO_MANY_REQUESTS),
     INVALID_TIME_RANGE("유효하지 않은 시간 범위입니다", HttpStatus.BAD_REQUEST),
-    WEBSITE_EXCLUDED("사용자가 제외한 도메인입니다", HttpStatus.NO_CONTENT);
+    WEBSITE_EXCLUDED("사용자가 제외한 도메인입니다", HttpStatus.NO_CONTENT),
+
+    // Recap
+    RECAP_GENERATION_FAILED("리캡 생성에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    RECAP_RESPONSE_EMPTY("AI 응답이 비어있습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    RECAP_PARSING_FAILED("AI 응답 파싱에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    PROMPT_FILE_NOT_FOUND("리캡 프롬프트 파일을 찾을 수 없습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
 
     val code: String = name
 }

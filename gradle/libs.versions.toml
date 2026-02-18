@@ -24,6 +24,10 @@ jdsl = "3.7.2"
 # OpenAPI
 restdocs-api-spec = "0.19.4"
 
+# Gemini
+gemini = "1.38.0"
+jackson = "2.17.2"
+
 [plugins]
 
 # Java
@@ -96,6 +100,12 @@ jdsl-jpa = { group = "com.linecorp.kotlin-jdsl", name = "spring-data-jpa-support
 restdocs-api-spec = { group = "com.epages", name = "restdocs-api-spec", version.ref = "restdocs-api-spec" }
 restdocs-api-spec-webtestclient = { group = "com.epages", name = "restdocs-api-spec-webtestclient", version.ref = "restdocs-api-spec" }
 springdoc-openapi = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-ui", version = "2.8.9" }
+
+# Gemini API
+gemini-google = { group = "com.google.genai", name = "google-genai", version.ref = "gemini" }
+
+# Jackson Kotlin
+jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson" }
 
 [bundles]
 test = [

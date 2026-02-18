@@ -1,0 +1,6 @@
+package com.retoday.core.domain.recap.exception
+
+import com.retoday.core.global.exception.ErrorType
+import com.retoday.core.global.exception.ServerException
+
+class RecapResponseEmptyException : ServerException(errorType = ErrorType.RECAP_RESPONSE_EMPTY)

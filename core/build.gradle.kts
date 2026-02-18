@@ -16,6 +16,8 @@ dependencies {
     implementation(libs.hypersistence.utils)
     implementation(libs.bundles.jdsl)
     implementation(libs.bundles.jwt)
+    implementation(libs.gemini.google)
+    implementation(libs.jackson.module.kotlin)
     runtimeOnly(libs.mysql.connector)
 
     testImplementation(libs.spring.test)
