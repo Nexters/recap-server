@@ -1,9 +1,11 @@
 package com.retoday.core.domain.history.service
 
+import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.exception.DuplicateHistoryException
 import com.retoday.core.domain.history.exception.InvalidTimeRangeException
 import com.retoday.core.domain.history.exception.InvalidUrlException
 import com.retoday.core.domain.history.repository.HistoryRepository
+import com.retoday.core.domain.user.repository.ProfileRepository
 import com.retoday.core.fixture.*
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
@@ -12,17 +14,20 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import java.time.Instant
+import java.time.LocalDate
 
 class HistoryServiceTest :
     BehaviorSpec({
         val historyRepository = mockk<HistoryRepository>()
         val websiteService = mockk<WebsiteService>()
         val pageService = mockk<PageService>()
+        val profileRepository = mockk<ProfileRepository>()
         val historyService =
             HistoryService(
-                historyRepository,
-                websiteService,
-                pageService
+                historyRepository = historyRepository,
+                websiteService = websiteService,
+                pageService = pageService,
+                profileRepository = profileRepository
             )
 
         val userId = ID
@@ -122,6 +127,129 @@ class HistoryServiceTest :
                     result.historyId shouldBe history.id
 
                     verify(exactly = 1) { historyRepository.save(any()) }
+                }
+            }
+        }
+
+        Given("일간 스크린타임 집계가 필요할 때") {
+            val targetDate = LocalDate.parse("2026-02-13")
+            val query =
+                GetMyScreenTimesQuery(
+                    date = targetDate,
+                    period = GetMyScreenTimesQuery.Period.DAILY
+                )
+            val profile = createProfile()
+            val dayStartUtc = Instant.parse("2026-02-12T15:00:00Z")
+            val dayEndUtc = Instant.parse("2026-02-13T15:00:00Z")
+            every { profileRepository.findByUserId(userId) } returns profile
+            every {
+                historyRepository.findAllByUserIdAndVisitedAtBeforeAndClosedAtAfter(
+                    userId = userId,
+                    visitedAt = dayEndUtc,
+                    closedAt = dayStartUtc
+                )
+            } returns
+                listOf(
+                    createHistory(
+                        id = 1L,
+                        websiteId = 101L,
+                        visitedAt = Instant.parse("2026-02-12T15:30:00Z"),
+                        closedAt = Instant.parse("2026-02-12T17:00:00Z"),
+                        stayDuration = 5_400
+                    ),
+                    createHistory(
+                        id = 2L,
+                        websiteId = 102L,
+                        visitedAt = Instant.parse("2026-02-12T17:30:00Z"),
+                        closedAt = Instant.parse("2026-02-12T18:30:00Z"),
+                        stayDuration = 3_600
+                    ),
+                    createHistory(
+                        id = 3L,
+                        websiteId = 103L,
+                        visitedAt = Instant.parse("2026-02-13T01:00:00Z"),
+                        closedAt = Instant.parse("2026-02-13T02:30:00Z"),
+                        stayDuration = 5_400
+                    ),
+                    createHistory(
+                        id = 4L,
+                        websiteId = 103L,
+                        visitedAt = Instant.parse("2026-02-13T02:50:00Z"),
+                        closedAt = Instant.parse("2026-02-13T03:10:00Z"),
+                        stayDuration = 1_200
+                    )
+                )
+
+            When("사용자가 본인 일간 스크린타임을 조회하면") {
+                val result = historyService.getMyScreenTimes(userId, query)
+
+                Then("2시간 단위 버킷과 총 체류 시간이 정확하게 계산된다.") {
+                    result shouldBe createGetMyScreenTimesResult(date = targetDate)
+                    verify(exactly = 1) {
+                        historyRepository.findAllByUserIdAndVisitedAtBeforeAndClosedAtAfter(
+                            userId = userId,
+                            visitedAt = dayEndUtc,
+                            closedAt = dayStartUtc
+                        )
+                    }
+                }
+            }
+        }
+
+        Given("주간 스크린타임 집계가 필요할 때") {
+            val targetDate = LocalDate.parse("2026-02-13")
+            val query =
+                GetMyScreenTimesQuery(
+                    date = targetDate,
+                    period = GetMyScreenTimesQuery.Period.WEEKLY
+                )
+            val profile = createProfile()
+            val weekStartUtc = Instant.parse("2026-02-07T15:00:00Z")
+            val weekEndUtc = Instant.parse("2026-02-14T15:00:00Z")
+            every { profileRepository.findByUserId(userId) } returns profile
+            every {
+                historyRepository.findAllByUserIdAndVisitedAtBeforeAndClosedAtAfter(
+                    userId = userId,
+                    visitedAt = weekEndUtc,
+                    closedAt = weekStartUtc
+                )
+            } returns
+                listOf(
+                    createHistory(
+                        id = 11L,
+                        websiteId = 201L,
+                        visitedAt = Instant.parse("2026-02-07T15:30:00Z"),
+                        closedAt = Instant.parse("2026-02-07T16:30:00Z"),
+                        stayDuration = 3_600
+                    ),
+                    createHistory(
+                        id = 12L,
+                        websiteId = 202L,
+                        visitedAt = Instant.parse("2026-02-10T14:00:00Z"),
+                        closedAt = Instant.parse("2026-02-10T16:00:00Z"),
+                        stayDuration = 7_200
+                    ),
+                    createHistory(
+                        id = 13L,
+                        websiteId = 203L,
+                        visitedAt = Instant.parse("2026-02-13T01:00:00Z"),
+                        closedAt = Instant.parse("2026-02-13T03:30:00Z"),
+                        stayDuration = 9_000
+                    )
+                )
+
+            When("사용자가 본인 주간 스크린타임을 조회하면") {
+                val result = historyService.getMyScreenTimes(userId, query)
+
+                Then("요일 단위 버킷과 총 체류 시간이 정확하게 계산된다.") {
+                    result shouldBe createGetMyWeeklyScreenTimesResult()
+                    verify(exactly = 1) {
+                        historyRepository.findAllByUserIdAndVisitedAtBeforeAndClosedAtAfter(
+                            userId = userId,
+                            visitedAt = weekEndUtc,
+                            closedAt = weekStartUtc
+                        )
+                    }
                 }
             }
         }

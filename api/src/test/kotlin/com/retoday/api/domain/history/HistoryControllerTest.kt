@@ -3,21 +3,24 @@ package com.retoday.api.domain.history
 import com.ninjasquad.springmockk.MockkBean
 import com.retoday.api.common.ControllerTest
 import com.retoday.api.domain.history.controller.HistoryController
+import com.retoday.api.domain.history.dto.response.GetMyScreenTimesResponse
 import com.retoday.api.domain.history.dto.response.HistoryRecordResponse
 import com.retoday.api.extension.*
 import com.retoday.api.fixture.createHistoryRecordRequest
-import com.retoday.api.snippet.*
+import com.retoday.api.snippet.errorResponseFields
+import com.retoday.api.snippet.getMyScreenTimesResponseFields
+import com.retoday.api.snippet.historyRecordRequestFields
+import com.retoday.api.snippet.historyRecordResponseFields
 import com.retoday.core.domain.history.dto.command.HistoryRecordCommand
-import com.retoday.core.domain.history.exception.DuplicateHistoryException
-import com.retoday.core.domain.history.exception.InvalidTimeRangeException
-import com.retoday.core.domain.history.exception.InvalidUrlException
-import com.retoday.core.domain.history.exception.RateLimitExceededException
-import com.retoday.core.domain.history.exception.WebsiteExcludedByUserException
+import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
+import com.retoday.core.domain.history.exception.*
 import com.retoday.core.domain.history.service.HistoryService
+import com.retoday.core.fixture.createGetMyScreenTimesResult
 import com.retoday.core.fixture.createHistoryRecordResult
 import io.mockk.every
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import java.time.Instant
+import java.time.LocalDate
 
 @WebMvcTest(HistoryController::class)
 class HistoryControllerTest : ControllerTest() {
@@ -132,6 +135,34 @@ class HistoryControllerTest : ControllerTest() {
                         .expectError()
                         .document("방문 기록 저장 실패 - 유효하지 않은 시간 범위(400)") {
                             responseBody(errorResponseFields)
+                        }
+                }
+            }
+        }
+
+        describe("getMyScreenTimes()은") {
+            val date = LocalDate.parse("2026-02-13")
+            val request =
+                webClient
+                    .get()
+                    .uri("/users/me/screen-times?date=$date&period=${GetMyScreenTimesQuery.Period.DAILY}")
+                    .withAuthentication()
+
+            context("유효한 요청이 주어진 경우") {
+                val result = createGetMyScreenTimesResult(date = date)
+                every { historyService.getMyScreenTimes(any(), any()) } returns result
+
+                it("상태 코드 200과 GetMyScreenTimesResponse를 반환한다.") {
+                    request
+                        .exchange()
+                        .expectStatus(200)
+                        .expectBody(GetMyScreenTimesResponse.from(result))
+                        .document("내 스크린타임 조회 성공(200)") {
+                            queryParams(
+                                "date" desc "조회 기준 일자(yyyy-MM-dd)",
+                                "period" desc "조회 기간 타입(DAILY, WEEKLY)"
+                            )
+                            responseBody(getMyScreenTimesResponseFields)
                         }
                 }
             }

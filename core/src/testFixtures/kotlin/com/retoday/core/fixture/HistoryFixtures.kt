@@ -1,6 +1,8 @@
 package com.retoday.core.fixture
 
 import com.retoday.core.domain.history.dto.command.HistoryRecordCommand
+import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
+import com.retoday.core.domain.history.dto.result.GetMyScreenTimesResult
 import com.retoday.core.domain.history.dto.result.HistoryRecordResult
 import com.retoday.core.domain.history.entity.History
 import com.retoday.core.domain.history.entity.Page
@@ -33,6 +35,40 @@ fun createHistoryRecordResult(
         websiteId = websiteId,
         stayDuration = stayDuration,
         recordedAt = recordedAt
+    )
+
+fun createGetMyScreenTimesResult(date: LocalDate = LocalDate.parse("2026-02-13")): GetMyScreenTimesResult =
+    GetMyScreenTimesResult(
+        period = GetMyScreenTimesQuery.Period.DAILY,
+        startedAt = date,
+        endedAt = date,
+        totalStayDuration = 15_600L,
+        screenTimes =
+            listOf(5_400L, 3_600L, 0L, 0L, 0L, 6_000L, 600L, 0L, 0L, 0L, 0L, 0L)
+                .mapIndexed { index, stayDuration ->
+                    GetMyScreenTimesResult.ScreenTime(
+                        startedAt = date.atStartOfDay().plusHours(index * 2L),
+                        endedAt = date.atStartOfDay().plusHours((index + 1) * 2L),
+                        stayDuration = stayDuration
+                    )
+                }
+    )
+
+fun createGetMyWeeklyScreenTimesResult(): GetMyScreenTimesResult =
+    GetMyScreenTimesResult(
+        period = GetMyScreenTimesQuery.Period.WEEKLY,
+        startedAt = LocalDate.parse("2026-02-08"),
+        endedAt = LocalDate.parse("2026-02-14"),
+        totalStayDuration = 19_800L,
+        screenTimes =
+            listOf(3_600L, 0L, 3_600L, 3_600L, 0L, 9_000L, 0L)
+                .mapIndexed { index, stayDuration ->
+                    GetMyScreenTimesResult.ScreenTime(
+                        startedAt = LocalDate.parse("2026-02-08").atStartOfDay().plusDays(index.toLong()),
+                        endedAt = LocalDate.parse("2026-02-08").atStartOfDay().plusDays((index + 1).toLong()),
+                        stayDuration = stayDuration
+                    )
+                }
     )
 
 fun createWebsite(

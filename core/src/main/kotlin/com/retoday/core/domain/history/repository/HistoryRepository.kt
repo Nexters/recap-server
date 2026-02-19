@@ -10,4 +10,10 @@ interface HistoryRepository : JpaRepository<History, Long> {
         pageId: Long,
         visitedAt: Instant
     ): History?
+
+    fun findAllByUserIdAndVisitedAtBeforeAndClosedAtAfter(
+        userId: Long,
+        visitedAt: Instant,
+        closedAt: Instant
+    ): List<History>
 }
