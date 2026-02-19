@@ -13,7 +13,10 @@ class WebsiteService(
     private val eventPublisher: ApplicationEventPublisher
 ) {
     @Transactional
-    fun findOrCreate(domain: String, faviconUrl: String?): Website =
+    fun findOrCreate(
+        domain: String,
+        faviconUrl: String?
+    ): Website =
         websiteRepository.findByDomain(domain) ?: run {
             Website(
                 domain = domain,
