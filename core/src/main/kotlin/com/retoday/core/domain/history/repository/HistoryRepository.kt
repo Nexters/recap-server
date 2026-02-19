@@ -37,8 +37,8 @@ interface HistoryRepository : JpaRepository<History, Long> {
             JOIN website w ON w.id = h.website_id
             LEFT JOIN website_category wc ON wc.id = w.category_id
             WHERE h.user_id = :userId
-              AND h.visited_at < :endedAt
-              AND h.closed_at > :startedAt
+              AND h.visited_at BETWEEN DATE_SUB(:startedAt, INTERVAL 1 DAY) AND :endedAt
+              AND h.closed_at BETWEEN :startedAt AND DATE_ADD(:endedAt, INTERVAL 1 DAY)
             GROUP BY h.website_id, w.domain, w.favicon_url, wc.name
             ORDER BY stayDuration DESC
             """,
