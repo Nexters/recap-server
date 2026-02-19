@@ -26,12 +26,14 @@ interface HistoryRepository : JpaRepository<History, Long> {
                 w.domain AS domain,
                 w.favicon_url AS faviconUrl,
                 wc.name AS categoryName,
-                SUM(
-                    TIMESTAMPDIFF(
-                        SECOND,
-                        GREATEST(h.visited_at, :startedAt),
-                        LEAST(h.closed_at, :endedAt)
-                    )
+                CAST(
+                    SUM(
+                        TIMESTAMPDIFF(
+                            SECOND,
+                            GREATEST(h.visited_at, :startedAt),
+                            LEAST(h.closed_at, :endedAt)
+                        )
+                    ) AS SIGNED
                 ) AS stayDuration
             FROM history h
             JOIN website w ON w.id = h.website_id
