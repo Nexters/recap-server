@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface WebsiteCategoryRepository : JpaRepository<WebsiteCategory, Long>
+interface WebsiteCategoryRepository : JpaRepository<WebsiteCategory, Long> {
+    fun findByName(name: String): WebsiteCategory?
+}
