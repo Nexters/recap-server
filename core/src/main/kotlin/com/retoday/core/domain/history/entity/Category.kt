@@ -17,6 +17,6 @@ enum class Category(
     ETC("기타");
 
     companion object {
-        fun fromDisplayName(name: String): Category? = values().firstOrNull { it.displayName == name }
+        fun fromDisplayName(name: String): Category? = entries.firstOrNull { it.displayName == name }
     }
 }
