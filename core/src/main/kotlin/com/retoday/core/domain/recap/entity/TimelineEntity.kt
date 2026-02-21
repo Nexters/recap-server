@@ -2,7 +2,6 @@ package com.retoday.core.domain.recap.entity
 
 import io.hypersistence.utils.hibernate.id.Tsid
 import jakarta.persistence.*
-import java.time.Duration
 import java.time.Instant
 
 @Entity
