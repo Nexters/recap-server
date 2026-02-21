@@ -3,10 +3,12 @@ package com.retoday.core.fixture
 import com.retoday.core.domain.history.dto.command.HistoryRecordCommand
 import com.retoday.core.domain.history.dto.projection.WebsiteStatWithCategory
 import com.retoday.core.domain.history.dto.projection.WebsiteStatWithVisitCount
+import com.retoday.core.domain.history.dto.query.GetMyWorkPatternQuery
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.dto.result.GetMyCategoryAnalysesResult
 import com.retoday.core.domain.history.dto.result.GetMyFrequentlyVisitedWebsitesResult
 import com.retoday.core.domain.history.dto.result.GetMyScreenTimesResult
+import com.retoday.core.domain.history.dto.result.GetMyWorkPatternResult
 import com.retoday.core.domain.history.dto.result.HistoryRecordResult
 import com.retoday.core.domain.history.entity.History
 import com.retoday.core.domain.history.entity.Page
@@ -151,6 +153,24 @@ fun createGetMyFrequentlyVisitedWebsitesResult(
                     visitCount = 2L,
                     stayDuration = 3_600L
                 )
+            )
+    )
+
+fun createGetMyWorkPatternResult(
+    date: LocalDate = LocalDate.parse("2026-02-13"),
+    dawnCount: Long = 2L,
+    morningCount: Long = 3L,
+    daytimeCount: Long = 5L,
+    eveningCount: Long = 4L
+): GetMyWorkPatternResult =
+    GetMyWorkPatternResult(
+        date = date,
+        counts =
+            mapOf(
+                GetMyWorkPatternQuery.TimeSlot.DAWN to dawnCount,
+                GetMyWorkPatternQuery.TimeSlot.MORNING to morningCount,
+                GetMyWorkPatternQuery.TimeSlot.DAYTIME to daytimeCount,
+                GetMyWorkPatternQuery.TimeSlot.EVENING to eveningCount
             )
     )
 

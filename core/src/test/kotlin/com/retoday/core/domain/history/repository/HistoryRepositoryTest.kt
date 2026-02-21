@@ -1,6 +1,7 @@
 package com.retoday.core.domain.history.repository
 
 import com.retoday.core.common.RepositoryTest
+import com.retoday.core.domain.history.dto.projection.WorkPatternHourlyCount
 import com.retoday.core.fixture.*
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -13,6 +14,133 @@ class HistoryRepositoryTest : RepositoryTest() {
     private lateinit var historyRepository: HistoryRepository
 
     init {
+        "findHourlyHistoryCountsByUserId()" {
+            val userId = 1L
+            val startedAt = Instant.parse("2026-02-13T00:00:00Z")
+
+            createHistory(
+                id = null,
+                userId = userId,
+                websiteId = 101L,
+                pageId = 201L,
+                visitedAt = Instant.parse("2026-02-13T00:10:00Z"),
+                closedAt = Instant.parse("2026-02-13T00:20:00Z"),
+                stayDuration = 600,
+                visitedDate = LocalDate.parse("2026-02-13"),
+                visitedHour = 0
+            ).save()
+            createHistory(
+                id = null,
+                userId = userId,
+                websiteId = 101L,
+                pageId = 202L,
+                visitedAt = Instant.parse("2026-02-13T00:59:00Z"),
+                closedAt = Instant.parse("2026-02-13T01:10:00Z"),
+                stayDuration = 660,
+                visitedDate = LocalDate.parse("2026-02-13"),
+                visitedHour = 0
+            ).save()
+            createHistory(
+                id = null,
+                userId = userId,
+                websiteId = 101L,
+                pageId = 203L,
+                visitedAt = Instant.parse("2026-02-13T06:01:00Z"),
+                closedAt = Instant.parse("2026-02-13T06:20:00Z"),
+                stayDuration = 1_140,
+                visitedDate = LocalDate.parse("2026-02-13"),
+                visitedHour = 6
+            ).save()
+            createHistory(
+                id = null,
+                userId = userId,
+                websiteId = 101L,
+                pageId = 204L,
+                visitedAt = Instant.parse("2026-02-13T11:59:00Z"),
+                closedAt = Instant.parse("2026-02-13T12:30:00Z"),
+                stayDuration = 1_860,
+                visitedDate = LocalDate.parse("2026-02-13"),
+                visitedHour = 11
+            ).save()
+            createHistory(
+                id = null,
+                userId = userId,
+                websiteId = 101L,
+                pageId = 205L,
+                visitedAt = Instant.parse("2026-02-13T12:00:00Z"),
+                closedAt = Instant.parse("2026-02-13T12:10:00Z"),
+                stayDuration = 600,
+                visitedDate = LocalDate.parse("2026-02-13"),
+                visitedHour = 12
+            ).save()
+            createHistory(
+                id = null,
+                userId = userId,
+                websiteId = 101L,
+                pageId = 206L,
+                visitedAt = Instant.parse("2026-02-13T23:30:00Z"),
+                closedAt = Instant.parse("2026-02-13T23:40:00Z"),
+                stayDuration = 600,
+                visitedDate = LocalDate.parse("2026-02-13"),
+                visitedHour = 23
+            ).save()
+
+            // 집계 시작 이전 데이터는 제외된다.
+            createHistory(
+                id = null,
+                userId = userId,
+                websiteId = 101L,
+                pageId = 207L,
+                visitedAt = Instant.parse("2026-02-12T23:59:00Z"),
+                closedAt = Instant.parse("2026-02-13T00:10:00Z"),
+                stayDuration = 660,
+                visitedDate = LocalDate.parse("2026-02-12"),
+                visitedHour = 23
+            ).save()
+            // 집계 종료(다음날 00:00) 시각과 같은 데이터는 제외된다.
+            createHistory(
+                id = null,
+                userId = userId,
+                websiteId = 101L,
+                pageId = 208L,
+                visitedAt = Instant.parse("2026-02-14T00:00:00Z"),
+                closedAt = Instant.parse("2026-02-14T00:10:00Z"),
+                stayDuration = 600,
+                visitedDate = LocalDate.parse("2026-02-14"),
+                visitedHour = 0
+            ).save()
+            // 다른 사용자의 데이터는 제외된다.
+            createHistory(
+                id = null,
+                userId = 2L,
+                websiteId = 101L,
+                pageId = 209L,
+                visitedAt = Instant.parse("2026-02-13T00:30:00Z"),
+                closedAt = Instant.parse("2026-02-13T00:40:00Z"),
+                stayDuration = 600,
+                visitedDate = LocalDate.parse("2026-02-13"),
+                visitedHour = 0
+            ).save()
+
+            entityManager.flush()
+            entityManager.clear()
+
+            val counts =
+                historyRepository.findHourlyHistoryCountsByUserId(
+                    userId = userId,
+                    startedAt = startedAt
+                )
+
+            counts shouldBe
+                listOf(
+                    WorkPatternHourlyCount(hour = 0L, count = 2L),
+                    WorkPatternHourlyCount(hour = 6L, count = 1L),
+                    WorkPatternHourlyCount(hour = 11L, count = 1L),
+                    WorkPatternHourlyCount(hour = 12L, count = 1L),
+                    WorkPatternHourlyCount(hour = 23L, count = 1L)
+                )
+        }
+
         "findWebsiteStatsWithCategoryByUserId()" {
             val userId = 1L
             val periodStartedAt = Instant.parse("2026-02-13T00:00:00Z")

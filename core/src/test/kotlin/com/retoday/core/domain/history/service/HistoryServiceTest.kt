@@ -1,9 +1,11 @@
 package com.retoday.core.domain.history.service
 
 import com.retoday.core.domain.history.client.AICategoryClient
+import com.retoday.core.domain.history.dto.projection.WorkPatternHourlyCount
 import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
 import com.retoday.core.domain.history.dto.query.GetMyFrequentlyVisitedWebsitesQuery
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
+import com.retoday.core.domain.history.dto.query.GetMyWorkPatternQuery
 import com.retoday.core.domain.history.entity.Website
 import com.retoday.core.domain.history.entity.WebsiteCategory
 import com.retoday.core.domain.history.exception.DuplicateHistoryException
@@ -38,7 +40,6 @@ class HistoryServiceTest :
                 profileRepository = profileRepository,
                 websiteService = websiteService,
                 pageService = pageService,
-                profileRepository = profileRepository,
                 categoryRepository = categoryRepository,
                 aiClient = aiClient
             )
@@ -266,6 +267,7 @@ class HistoryServiceTest :
                 }
             }
         }
+
         Given("웹사이트 도메인 카테고리 분류가 필요할 때") {
             val domain = "hackers.com"
             val studyCategory = WebsiteCategory(id = 10L, name = "학습")
@@ -299,6 +301,7 @@ class HistoryServiceTest :
                 }
             }
         }
+
         Given("일간 카테고리 분석 집계가 필요할 때") {
             val targetDate = LocalDate.parse("2026-02-13")
             val query =
@@ -394,6 +397,53 @@ class HistoryServiceTest :
                             startedAt = dayStartUtc,
                             endedAt = dayEndUtc,
                             limit = query.limit
+                        )
+                    }
+                }
+            }
+        }
+
+        Given("일간 작업 패턴 분석 집계가 필요할 때") {
+            val targetDate = LocalDate.parse("2026-02-13")
+            val query = GetMyWorkPatternQuery(date = targetDate)
+            val profile = createProfile()
+            val dayStartUtc = Instant.parse("2026-02-12T15:00:00Z")
+            val expectedResult =
+                createGetMyWorkPatternResult(
+                    date = targetDate,
+                    dawnCount = 2L,
+                    morningCount = 3L,
+                    daytimeCount = 5L,
+                    eveningCount = 4L
+                )
+
+            every { profileRepository.findByUserId(userId) } returns profile
+            every {
+                historyRepository.findHourlyHistoryCountsByUserId(
+                    userId = userId,
+                    startedAt = Instant.parse("2026-02-12T15:00:00Z")
+                )
+            } returns
+                listOf(
+                    WorkPatternHourlyCount(hour = 0L, count = 1L),
+                    WorkPatternHourlyCount(hour = 5L, count = 1L),
+                    WorkPatternHourlyCount(hour = 6L, count = 2L),
+                    WorkPatternHourlyCount(hour = 11L, count = 1L),
+                    WorkPatternHourlyCount(hour = 12L, count = 2L),
+                    WorkPatternHourlyCount(hour = 15L, count = 3L),
+                    WorkPatternHourlyCount(hour = 18L, count = 1L),
+                    WorkPatternHourlyCount(hour = 23L, count = 3L)
+                )
+
+            When("사용자가 본인 일간 작업 패턴 분석을 조회하면") {
+                val result = historyService.getMyWorkPattern(userId, query)
+
+                Then("시간대별 활동 기록 개수가 정확하게 계산된다.") {
+                    result shouldBe expectedResult
+                    verify(exactly = 1) {
+                        historyRepository.findHourlyHistoryCountsByUserId(
+                            userId = userId,
+                            startedAt = dayStartUtc
                         )
                     }
                 }

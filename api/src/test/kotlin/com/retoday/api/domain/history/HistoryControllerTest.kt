@@ -3,10 +3,7 @@ package com.retoday.api.domain.history
 import com.ninjasquad.springmockk.MockkBean
 import com.retoday.api.common.ControllerTest
 import com.retoday.api.domain.history.controller.HistoryController
-import com.retoday.api.domain.history.dto.response.GetMyCategoryAnalysesResponse
-import com.retoday.api.domain.history.dto.response.GetMyFrequentlyVisitedWebsitesResponse
-import com.retoday.api.domain.history.dto.response.GetMyScreenTimesResponse
-import com.retoday.api.domain.history.dto.response.HistoryRecordResponse
+import com.retoday.api.domain.history.dto.response.*
 import com.retoday.api.extension.*
 import com.retoday.api.fixture.HISTORY_DOMAIN
 import com.retoday.api.fixture.HISTORY_URL
@@ -15,10 +12,7 @@ import com.retoday.api.snippet.*
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.exception.*
 import com.retoday.core.domain.history.service.HistoryService
-import com.retoday.core.fixture.createGetMyCategoryAnalysisResult
-import com.retoday.core.fixture.createGetMyFrequentlyVisitedWebsitesResult
-import com.retoday.core.fixture.createGetMyScreenTimesResult
-import com.retoday.core.fixture.createHistoryRecordResult
+import com.retoday.core.fixture.*
 import com.retoday.core.global.ratelimit.RateLimiter
 import io.mockk.every
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -230,6 +224,31 @@ class HistoryControllerTest : ControllerTest() {
                         .document("자주 방문한 웹사이트 조회 성공(200)") {
                             queryParams(getMyFrequentlyVisitedWebsitesQueryFields)
                             responseBody(getMyFrequentlyVisitedWebsitesResponseFields)
+                        }
+                }
+            }
+        }
+
+        describe("getMyWorkPattern()은") {
+            val date = LocalDate.parse("2026-02-13")
+            val request =
+                webClient
+                    .get()
+                    .uri("/users/me/work-pattern?date=$date")
+                    .withAuthentication()
+
+            context("유효한 요청이 주어진 경우") {
+                val result = createGetMyWorkPatternResult(date = date)
+                every { historyService.getMyWorkPattern(any(), any()) } returns result
+
+                it("상태 코드 200과 GetMyWorkPatternResponse를 반환한다.") {
+                    request
+                        .exchange()
+                        .expectStatus(200)
+                        .expectBody(GetMyWorkPatternResponse.from(result))
+                        .document("내 일간 작업 패턴 분석 조회 성공(200)") {
+                            queryParams(getMyWorkPatternQueryFields)
+                            responseBody(getMyWorkPatternResponseFields)
                         }
                 }
             }
