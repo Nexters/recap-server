@@ -26,6 +26,7 @@ enum class ErrorType(
     RATE_LIMIT_EXCEEDED("요청 제한을 초과했습니다.", HttpStatus.TOO_MANY_REQUESTS),
     INVALID_TIME_RANGE("유효하지 않은 시간 범위입니다", HttpStatus.BAD_REQUEST),
     WEBSITE_EXCLUDED("사용자가 제외한 도메인입니다", HttpStatus.NO_CONTENT),
+    WEBSITE_CATEGORY_CLASSIFICATION_FAILED("카테고리 분류에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
 
     // Recap
     RECAP_GENERATION_FAILED("리캡 생성에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
