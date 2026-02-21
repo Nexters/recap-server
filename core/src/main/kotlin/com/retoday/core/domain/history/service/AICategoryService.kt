@@ -1,7 +1,6 @@
 package com.retoday.core.domain.history.service
 
 import com.retoday.core.domain.history.client.AICategoryClient
-import com.retoday.core.domain.history.entity.Category
 import com.retoday.core.domain.history.exception.InvalidCategoryException
 import com.retoday.core.domain.history.repository.WebsiteCategoryRepository
 import com.retoday.core.domain.history.repository.WebsiteRepository
@@ -26,12 +25,17 @@ class AICategoryService(
                 ?.takeIf { it.categoryId == null }
                 ?: return
 
-        // ai 호출
-        val predicted: Category = aiClient.classify(domain)
+        val categories =
+            categoryRepository
+                .findAll()
+                .map { it.name }
+
+        val predictedName =
+            aiClient.classify(domain, categories)
 
         val category =
             categoryRepository
-                .findByName(predicted.displayName)
+                .findByName(predictedName)
                 ?: throw InvalidCategoryException()
 
         website.updateCategory(category.id!!)
