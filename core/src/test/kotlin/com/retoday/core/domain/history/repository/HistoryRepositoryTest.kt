@@ -29,10 +29,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = githubId,
                 pageId = 11L,
                 visitedAt = Instant.parse("2026-02-13T01:00:00Z"),
-                closedAt = Instant.parse("2026-02-13T02:00:00Z"),
-                stayDuration = 3_600,
-                visitedDate = LocalDate.parse("2026-02-13"),
-                visitedHour = 1
+                closedAt = Instant.parse("2026-02-13T02:00:00Z")
             ).save()
             createHistory(
                 id = null,
@@ -40,10 +37,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = githubId,
                 pageId = 12L,
                 visitedAt = Instant.parse("2026-02-13T10:00:00Z"),
-                closedAt = Instant.parse("2026-02-13T10:30:00Z"),
-                stayDuration = 1_800,
-                visitedDate = LocalDate.parse("2026-02-13"),
-                visitedHour = 10
+                closedAt = Instant.parse("2026-02-13T10:30:00Z")
             ).save()
             createHistory(
                 id = null,
@@ -51,10 +45,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = newsId,
                 pageId = 13L,
                 visitedAt = Instant.parse("2026-02-13T23:30:00Z"),
-                closedAt = Instant.parse("2026-02-14T00:30:00Z"),
-                stayDuration = 3_600,
-                visitedDate = LocalDate.parse("2026-02-13"),
-                visitedHour = 23
+                closedAt = Instant.parse("2026-02-14T00:30:00Z")
             ).save()
 
             entityManager.flush()
@@ -82,10 +73,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = 101L,
                 pageId = 201L,
                 visitedAt = Instant.parse("2026-02-13T00:10:00Z"),
-                closedAt = Instant.parse("2026-02-13T00:20:00Z"),
-                stayDuration = 600,
-                visitedDate = LocalDate.parse("2026-02-13"),
-                visitedHour = 0
+                closedAt = Instant.parse("2026-02-13T00:20:00Z")
             ).save()
             createHistory(
                 id = null,
@@ -93,10 +81,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = 101L,
                 pageId = 202L,
                 visitedAt = Instant.parse("2026-02-13T00:59:00Z"),
-                closedAt = Instant.parse("2026-02-13T01:10:00Z"),
-                stayDuration = 660,
-                visitedDate = LocalDate.parse("2026-02-13"),
-                visitedHour = 0
+                closedAt = Instant.parse("2026-02-13T01:10:00Z")
             ).save()
             createHistory(
                 id = null,
@@ -104,10 +89,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = 101L,
                 pageId = 203L,
                 visitedAt = Instant.parse("2026-02-13T06:01:00Z"),
-                closedAt = Instant.parse("2026-02-13T06:20:00Z"),
-                stayDuration = 1_140,
-                visitedDate = LocalDate.parse("2026-02-13"),
-                visitedHour = 6
+                closedAt = Instant.parse("2026-02-13T06:20:00Z")
             ).save()
             createHistory(
                 id = null,
@@ -115,10 +97,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = 101L,
                 pageId = 204L,
                 visitedAt = Instant.parse("2026-02-13T11:59:00Z"),
-                closedAt = Instant.parse("2026-02-13T12:30:00Z"),
-                stayDuration = 1_860,
-                visitedDate = LocalDate.parse("2026-02-13"),
-                visitedHour = 11
+                closedAt = Instant.parse("2026-02-13T12:30:00Z")
             ).save()
             createHistory(
                 id = null,
@@ -126,10 +105,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = 101L,
                 pageId = 205L,
                 visitedAt = Instant.parse("2026-02-13T12:00:00Z"),
-                closedAt = Instant.parse("2026-02-13T12:10:00Z"),
-                stayDuration = 600,
-                visitedDate = LocalDate.parse("2026-02-13"),
-                visitedHour = 12
+                closedAt = Instant.parse("2026-02-13T12:10:00Z")
             ).save()
             createHistory(
                 id = null,
@@ -137,10 +113,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = 101L,
                 pageId = 206L,
                 visitedAt = Instant.parse("2026-02-13T23:30:00Z"),
-                closedAt = Instant.parse("2026-02-13T23:40:00Z"),
-                stayDuration = 600,
-                visitedDate = LocalDate.parse("2026-02-13"),
-                visitedHour = 23
+                closedAt = Instant.parse("2026-02-13T23:40:00Z")
             ).save()
 
             // 집계 시작 이전 데이터는 제외된다.
@@ -150,10 +123,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = 101L,
                 pageId = 207L,
                 visitedAt = Instant.parse("2026-02-12T23:59:00Z"),
-                closedAt = Instant.parse("2026-02-13T00:10:00Z"),
-                stayDuration = 660,
-                visitedDate = LocalDate.parse("2026-02-12"),
-                visitedHour = 23
+                closedAt = Instant.parse("2026-02-13T00:10:00Z")
             ).save()
             // 집계 종료(다음날 00:00) 시각과 같은 데이터는 제외된다.
             createHistory(
@@ -162,10 +132,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = 101L,
                 pageId = 208L,
                 visitedAt = Instant.parse("2026-02-14T00:00:00Z"),
-                closedAt = Instant.parse("2026-02-14T00:10:00Z"),
-                stayDuration = 600,
-                visitedDate = LocalDate.parse("2026-02-14"),
-                visitedHour = 0
+                closedAt = Instant.parse("2026-02-14T00:10:00Z")
             ).save()
             // 다른 사용자의 데이터는 제외된다.
             createHistory(
@@ -174,10 +141,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = 101L,
                 pageId = 209L,
                 visitedAt = Instant.parse("2026-02-13T00:30:00Z"),
-                closedAt = Instant.parse("2026-02-13T00:40:00Z"),
-                stayDuration = 600,
-                visitedDate = LocalDate.parse("2026-02-13"),
-                visitedHour = 0
+                closedAt = Instant.parse("2026-02-13T00:40:00Z")
             ).save()
 
             entityManager.flush()
@@ -293,10 +257,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = githubId,
                 pageId = 21L,
                 visitedAt = Instant.parse("2026-02-13T00:10:00Z"),
-                closedAt = Instant.parse("2026-02-13T00:40:00Z"),
-                stayDuration = 1_800,
-                visitedDate = LocalDate.parse("2026-02-13"),
-                visitedHour = 0
+                closedAt = Instant.parse("2026-02-13T00:40:00Z")
             ).save()
             createHistory(
                 id = null,
@@ -304,10 +265,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = githubId,
                 pageId = 22L,
                 visitedAt = Instant.parse("2026-02-13T01:00:00Z"),
-                closedAt = Instant.parse("2026-02-13T01:20:00Z"),
-                stayDuration = 1_200,
-                visitedDate = LocalDate.parse("2026-02-13"),
-                visitedHour = 1
+                closedAt = Instant.parse("2026-02-13T01:20:00Z")
             ).save()
             createHistory(
                 id = null,
@@ -315,10 +273,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = youtubeId,
                 pageId = 23L,
                 visitedAt = Instant.parse("2026-02-13T02:00:00Z"),
-                closedAt = Instant.parse("2026-02-13T03:00:00Z"),
-                stayDuration = 3_600,
-                visitedDate = LocalDate.parse("2026-02-13"),
-                visitedHour = 2
+                closedAt = Instant.parse("2026-02-13T03:00:00Z")
             ).save()
             createHistory(
                 id = null,
@@ -326,10 +281,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = youtubeId,
                 pageId = 24L,
                 visitedAt = Instant.parse("2026-02-13T23:50:00Z"),
-                closedAt = Instant.parse("2026-02-14T00:10:00Z"),
-                stayDuration = 1_200,
-                visitedDate = LocalDate.parse("2026-02-13"),
-                visitedHour = 23
+                closedAt = Instant.parse("2026-02-14T00:10:00Z")
             ).save()
             createHistory(
                 id = null,
@@ -337,10 +289,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = newsId,
                 pageId = 25L,
                 visitedAt = Instant.parse("2026-02-12T23:50:00Z"),
-                closedAt = Instant.parse("2026-02-13T00:20:00Z"),
-                stayDuration = 1_800,
-                visitedDate = LocalDate.parse("2026-02-12"),
-                visitedHour = 23
+                closedAt = Instant.parse("2026-02-13T00:20:00Z")
             ).save()
             createHistory(
                 id = null,
@@ -348,10 +297,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = newsId,
                 pageId = 26L,
                 visitedAt = Instant.parse("2026-02-13T05:00:00Z"),
-                closedAt = Instant.parse("2026-02-13T05:10:00Z"),
-                stayDuration = 600,
-                visitedDate = LocalDate.parse("2026-02-13"),
-                visitedHour = 5
+                closedAt = Instant.parse("2026-02-13T05:10:00Z")
             ).save()
             createHistory(
                 id = null,
@@ -359,10 +305,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = githubId,
                 pageId = 27L,
                 visitedAt = Instant.parse("2026-02-13T08:00:00Z"),
-                closedAt = Instant.parse("2026-02-13T09:00:00Z"),
-                stayDuration = 3_600,
-                visitedDate = LocalDate.parse("2026-02-13"),
-                visitedHour = 8
+                closedAt = Instant.parse("2026-02-13T09:00:00Z")
             ).save()
 
             entityManager.flush()
