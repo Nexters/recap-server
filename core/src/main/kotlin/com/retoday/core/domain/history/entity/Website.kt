@@ -20,4 +20,8 @@ class Website(
     fun updateCategory(newCategoryId: Long?) {
         this.categoryId = newCategoryId
     }
+
+    fun updateFaviconUrl(newFaviconUrl: String) {
+        this.faviconUrl = newFaviconUrl
+    }
 }

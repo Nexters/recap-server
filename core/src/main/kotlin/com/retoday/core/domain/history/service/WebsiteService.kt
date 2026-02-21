@@ -18,7 +18,13 @@ class WebsiteService(
         domain: String,
         faviconUrl: String?
     ): Website =
-        websiteRepository.findByDomain(domain) ?: try {
+        websiteRepository
+            .findByDomain(domain)
+            ?.also { website ->
+                if (website.faviconUrl == null && faviconUrl != null) {
+                    website.updateFaviconUrl(faviconUrl)
+                }
+            } ?: try {
             websiteRepository
                 .save(Website(domain = domain, faviconUrl = faviconUrl))
                 .also { eventPublisher.publishEvent(WebsiteCategoryClassificationEvent(it.id!!, domain)) }
