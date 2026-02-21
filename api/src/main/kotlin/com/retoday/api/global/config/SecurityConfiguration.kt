@@ -33,6 +33,7 @@ class SecurityConfiguration {
         jwtAuthenticationFilter: JwtAuthenticationFilter
     ): SecurityFilterChain =
         with(http) {
+            cors {}
             csrf { it.disable() }
             formLogin { it.disable() }
             logout { it.disable() }

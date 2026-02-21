@@ -70,7 +70,6 @@ class HistoryServiceTest :
                     result.historyId shouldBe history.id
                     result.pageId shouldBe page.id
                     result.websiteId shouldBe website.id
-                    result.stayDuration shouldBe 10
 
                     verify(exactly = 1) { websiteService.findOrCreate(DOMAIN, FAVICON_URL) }
                     verify(exactly = 1) { pageService.findOrCreate(any(), any(), any(), any()) }
@@ -231,22 +230,19 @@ class HistoryServiceTest :
                         id = 11L,
                         websiteId = 201L,
                         visitedAt = Instant.parse("2026-02-07T15:30:00Z"),
-                        closedAt = Instant.parse("2026-02-07T16:30:00Z"),
-                        stayDuration = 3_600
+                        closedAt = Instant.parse("2026-02-07T16:30:00Z")
                     ),
                     createHistory(
                         id = 12L,
                         websiteId = 202L,
                         visitedAt = Instant.parse("2026-02-10T14:00:00Z"),
-                        closedAt = Instant.parse("2026-02-10T16:00:00Z"),
-                        stayDuration = 7_200
+                        closedAt = Instant.parse("2026-02-10T16:00:00Z")
                     ),
                     createHistory(
                         id = 13L,
                         websiteId = 203L,
                         visitedAt = Instant.parse("2026-02-13T01:00:00Z"),
-                        closedAt = Instant.parse("2026-02-13T03:30:00Z"),
-                        stayDuration = 9_000
+                        closedAt = Instant.parse("2026-02-13T03:30:00Z")
                     )
                 )
 
