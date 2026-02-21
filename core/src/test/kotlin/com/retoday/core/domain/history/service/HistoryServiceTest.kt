@@ -1,10 +1,15 @@
 package com.retoday.core.domain.history.service
 
+import com.retoday.core.domain.history.client.AICategoryClient
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
+import com.retoday.core.domain.history.entity.Website
+import com.retoday.core.domain.history.entity.WebsiteCategory
 import com.retoday.core.domain.history.exception.DuplicateHistoryException
+import com.retoday.core.domain.history.exception.InvalidCategoryException
 import com.retoday.core.domain.history.exception.InvalidTimeRangeException
 import com.retoday.core.domain.history.exception.InvalidUrlException
 import com.retoday.core.domain.history.repository.HistoryRepository
+import com.retoday.core.domain.history.repository.WebsiteCategoryRepository
 import com.retoday.core.domain.user.repository.ProfileRepository
 import com.retoday.core.fixture.*
 import io.kotest.assertions.throwables.shouldThrow
@@ -22,12 +27,16 @@ class HistoryServiceTest :
         val websiteService = mockk<WebsiteService>()
         val pageService = mockk<PageService>()
         val profileRepository = mockk<ProfileRepository>()
+        val categoryRepository = mockk<WebsiteCategoryRepository>()
+        val aiClient = mockk<AICategoryClient>()
         val historyService =
             HistoryService(
                 historyRepository = historyRepository,
                 websiteService = websiteService,
                 pageService = pageService,
-                profileRepository = profileRepository
+                profileRepository = profileRepository,
+                categoryRepository = categoryRepository,
+                aiClient = aiClient
             )
 
         val userId = ID
@@ -249,6 +258,39 @@ class HistoryServiceTest :
                             visitedAt = weekEndUtc,
                             closedAt = weekStartUtc
                         )
+                    }
+                }
+            }
+        }
+        Given("웹사이트 도메인 카테고리 분류가 필요할 때") {
+            val domain = "hackers.com"
+            val studyCategory = WebsiteCategory(id = 10L, name = "학습")
+            val categoryList = listOf(studyCategory)
+            val categoryNames = listOf("학습")
+
+            When("카테고리가 할당되지 않은 도메인인 경우") {
+                val targetWebsite = Website(id = 1L, domain = domain, categoryId = null)
+                every { categoryRepository.findAll() } returns categoryList
+                every { aiClient.classify(domain, categoryNames) } returns "학습"
+                every { categoryRepository.findByName("학습") } returns studyCategory
+
+                historyService.classifyCategory(targetWebsite, domain)
+
+                Then("AI 결과에 따라 웹사이트의 카테고리가 업데이트되어야 한다") {
+                    targetWebsite.categoryId shouldBe 10L
+                    verify(exactly = 1) { aiClient.classify(domain, any()) }
+                }
+            }
+
+            When("AI가 분류한 카테고리가 DB에 존재하지 않는 이름이라면") {
+                val freshWebsite = Website(id = 2L, domain = domain, categoryId = null)
+                every { categoryRepository.findAll() } returns categoryList
+                every { aiClient.classify(domain, categoryNames) } returns "잘못된카테고리"
+                every { categoryRepository.findByName("잘못된카테고리") } returns null
+
+                Then("InvalidCategoryException이 발생해야 한다") {
+                    shouldThrow<InvalidCategoryException> {
+                        historyService.classifyCategory(freshWebsite, domain)
                     }
                 }
             }

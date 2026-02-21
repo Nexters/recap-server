@@ -1,13 +1,17 @@
 package com.retoday.core.domain.history.service
 
+import com.retoday.core.domain.history.client.AICategoryClient
 import com.retoday.core.domain.history.dto.command.HistoryRecordCommand
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.dto.result.GetMyScreenTimesResult
 import com.retoday.core.domain.history.dto.result.HistoryRecordResult
 import com.retoday.core.domain.history.entity.History
+import com.retoday.core.domain.history.entity.Website
 import com.retoday.core.domain.history.exception.DuplicateHistoryException
+import com.retoday.core.domain.history.exception.InvalidCategoryException
 import com.retoday.core.domain.history.exception.InvalidTimeRangeException
 import com.retoday.core.domain.history.repository.HistoryRepository
+import com.retoday.core.domain.history.repository.WebsiteCategoryRepository
 import com.retoday.core.domain.user.repository.ProfileRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -19,7 +23,9 @@ class HistoryService(
     private val historyRepository: HistoryRepository,
     private val profileRepository: ProfileRepository,
     private val websiteService: WebsiteService,
-    private val pageService: PageService
+    private val pageService: PageService,
+    private val categoryRepository: WebsiteCategoryRepository,
+    private val aiClient: AICategoryClient
 ) {
     @Transactional
     fun recordHistory(
@@ -190,4 +196,25 @@ class HistoryService(
         isClosed = command.isClosed,
         scrollDepth = command.scrollDepth
     )
+
+    @Transactional
+    fun classifyCategory(
+        website: Website,
+        domain: String
+    ) {
+        val categories =
+            categoryRepository
+                .findAll()
+                .map { it.name }
+
+        val predictedName =
+            aiClient.classify(domain, categories)
+
+        val category =
+            categoryRepository
+                .findByName(predictedName)
+                ?: throw InvalidCategoryException()
+
+        website.updateCategory(category.id!!)
+    }
 }
