@@ -17,6 +17,7 @@ import com.retoday.core.domain.history.exception.*
 import com.retoday.core.domain.history.service.HistoryService
 import com.retoday.core.fixture.createGetMyScreenTimesResult
 import com.retoday.core.fixture.createHistoryRecordResult
+import com.retoday.core.global.ratelimit.RateLimiter
 import io.mockk.every
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import java.time.Instant
@@ -27,7 +28,14 @@ class HistoryControllerTest : ControllerTest() {
     @MockkBean
     private lateinit var historyService: HistoryService
 
+    @MockkBean
+    private lateinit var rateLimiter: RateLimiter
+
     init {
+        beforeTest {
+            every { rateLimiter.checkHistoryExceeded(any()) } returns null
+        }
+
         describe("recordHistory()는") {
             val baseRequest = { webClient.post().uri("/histories") }
             val authenticatedRequest = { request: Any ->
@@ -103,9 +111,7 @@ class HistoryControllerTest : ControllerTest() {
             }
 
             context("Rate Limit을 초과한 경우") {
-                every {
-                    historyService.recordHistory(any<Long>(), any<HistoryRecordCommand>())
-                } throws RateLimitExceededException(1L, 60L)
+                every { rateLimiter.checkHistoryExceeded(any()) } returns 60L
 
                 it("상태 코드 429와 ErrorResponse를 반환한다.") {
                     authenticatedRequest(createHistoryRecordRequest())
