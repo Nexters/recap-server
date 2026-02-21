@@ -34,14 +34,12 @@ fun createHistoryRecordResult(
     historyId: Long = ID,
     pageId: Long = PAGE_ID,
     websiteId: Long = WEBSITE_ID,
-    stayDuration: Int = STAY_DURATION,
     recordedAt: Instant = Instant.now()
 ): HistoryRecordResult =
     HistoryRecordResult(
         historyId = historyId,
         pageId = pageId,
         websiteId = websiteId,
-        stayDuration = stayDuration,
         recordedAt = recordedAt
     )
 
@@ -258,9 +256,6 @@ fun createHistory(
     pageId: Long = PAGE_ID,
     visitedAt: Instant = Instant.now().minusSeconds(10),
     closedAt: Instant = Instant.now(),
-    stayDuration: Int = STAY_DURATION,
-    visitedDate: LocalDate = LocalDate.now(),
-    visitedHour: Int = 10,
     isClosed: Boolean = true,
     scrollDepth: Int? = SCROLL_DEPTH
 ): History =
@@ -271,9 +266,6 @@ fun createHistory(
         pageId = pageId,
         visitedAt = visitedAt,
         closedAt = closedAt,
-        stayDuration = stayDuration,
-        visitedDate = visitedDate,
-        visitedHour = visitedHour,
         isClosed = isClosed,
         scrollDepth = scrollDepth
     )

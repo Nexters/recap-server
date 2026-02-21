@@ -7,7 +7,6 @@ import jakarta.persistence.Id
 import jakarta.persistence.Index
 import jakarta.persistence.Table
 import java.time.Instant
-import java.time.LocalDate
 
 @Entity
 @Table(
@@ -24,9 +23,6 @@ class History(
     val pageId: Long,
     val visitedAt: Instant,
     val closedAt: Instant,
-    val stayDuration: Int, // closedAt - visitedAt (초)
-    val visitedDate: LocalDate,
-    val visitedHour: Int, // 0-23
     val isClosed: Boolean, // 탭 종료 여부
     val scrollDepth: Int? = null
 ) : BaseEntity()

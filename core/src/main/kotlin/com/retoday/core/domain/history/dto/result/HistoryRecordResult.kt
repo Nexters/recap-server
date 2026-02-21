@@ -6,6 +6,5 @@ data class HistoryRecordResult(
     val historyId: Long,
     val pageId: Long,
     val websiteId: Long,
-    val stayDuration: Int,
     val recordedAt: Instant
 )

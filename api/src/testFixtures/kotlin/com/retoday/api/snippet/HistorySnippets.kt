@@ -40,7 +40,6 @@ val historyRecordResponseFields =
         HistoryRecordResponse::historyId desc "생성된 히스토리 ID",
         HistoryRecordResponse::pageId desc "페이지 ID",
         HistoryRecordResponse::websiteId desc "웹사이트(도메인) ID",
-        HistoryRecordResponse::stayDuration desc "체류 시간 (초)",
         HistoryRecordResponse::recordedAt desc "기록 생성 시각"
     )
 
