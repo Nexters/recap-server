@@ -2,7 +2,6 @@ package com.retoday.api.domain.recap.controller
 
 import com.retoday.core.domain.recap.dto.RecapDetailResponse
 import com.retoday.core.domain.recap.service.RecapService
-import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
