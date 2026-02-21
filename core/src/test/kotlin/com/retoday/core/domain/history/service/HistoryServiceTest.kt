@@ -1,6 +1,7 @@
 package com.retoday.core.domain.history.service
 
 import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
+import com.retoday.core.domain.history.dto.query.GetMyFrequentlyVisitedWebsitesQuery
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.exception.DuplicateHistoryException
 import com.retoday.core.domain.history.exception.InvalidTimeRangeException
@@ -16,6 +17,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import java.time.Instant
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 class HistoryServiceTest :
     BehaviorSpec({
@@ -300,6 +302,56 @@ class HistoryServiceTest :
                             userId = userId,
                             startedAt = dayStartUtc,
                             endedAt = dayEndUtc
+                        )
+                    }
+                }
+            }
+        }
+
+        Given("특정 일자 자주 방문한 웹사이트 집계가 필요할 때") {
+            val targetDate = LocalDate.parse("2026-02-13")
+            val query =
+                GetMyFrequentlyVisitedWebsitesQuery(
+                    date = targetDate,
+                    limit = 2
+                )
+            val profile = createProfile()
+            val dayStartUtc =
+                targetDate
+                    .atStartOfDay(profile.timeZone.id)
+                    .toInstant()
+            val dayEndUtc = dayStartUtc.plus(1, ChronoUnit.DAYS)
+            val expectedResult = createGetMyFrequentlyVisitedWebsitesResult(date = targetDate)
+
+            every { profileRepository.findByUserId(userId) } returns profile
+            every {
+                historyRepository.findWebsiteStatsWithVisitCountByUserId(
+                    userId = userId,
+                    startedAt = dayStartUtc,
+                    endedAt = dayEndUtc,
+                    limit = query.limit
+                )
+            } returns
+                expectedResult.websiteAnalyses.map {
+                    createWebsiteStatWithVisitCount(
+                        domain = it.domain,
+                        faviconUrl = it.faviconUrl,
+                        visitCount = it.visitCount,
+                        stayDuration = it.stayDuration
+                    )
+                }
+
+            When("사용자가 특정 일자의 자주 방문한 웹사이트를 조회하면") {
+                val result = historyService.getMyFrequentlyVisitedWebsites(userId, query)
+
+                Then("방문 횟수와 체류 시간 기준 목록이 반환된다.") {
+                    result shouldBe expectedResult
+                    verify(exactly = 1) {
+                        historyRepository.findWebsiteStatsWithVisitCountByUserId(
+                            userId = userId,
+                            startedAt = dayStartUtc,
+                            endedAt = dayEndUtc,
+                            limit = query.limit
                         )
                     }
                 }

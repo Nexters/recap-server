@@ -1,6 +1,7 @@
 package com.retoday.core.domain.history.repository
 
 import com.retoday.core.domain.history.dto.projection.WebsiteStatWithCategory
+import com.retoday.core.domain.history.dto.projection.WebsiteStatWithVisitCount
 import com.retoday.core.domain.history.entity.History
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
@@ -54,4 +55,41 @@ interface HistoryRepository : JpaRepository<History, Long> {
         @Param("endedAt")
         endedAt: Instant
     ): List<WebsiteStatWithCategory>
+
+    @Query(
+        """
+            SELECT
+                w.domain AS domain,
+                w.favicon_url AS faviconUrl,
+                CAST(COUNT(*) AS SIGNED) AS visitCount,
+                CAST(
+                    SUM(
+                        TIMESTAMPDIFF(
+                            SECOND,
+                            GREATEST(h.visited_at, :startedAt),
+                            LEAST(h.closed_at, :endedAt)
+                        )
+                    ) AS SIGNED
+                ) AS stayDuration
+            FROM history h
+            JOIN website w ON w.id = h.website_id
+            WHERE h.user_id = :userId
+              AND h.visited_at BETWEEN DATE_SUB(:startedAt, INTERVAL 1 DAY) AND :endedAt
+              AND h.closed_at BETWEEN :startedAt AND DATE_ADD(:endedAt, INTERVAL 1 DAY)
+            GROUP BY h.website_id, w.domain, w.favicon_url
+            ORDER BY visitCount DESC, stayDuration DESC
+            LIMIT :limit
+            """,
+        nativeQuery = true
+    )
+    fun findWebsiteStatsWithVisitCountByUserId(
+        @Param("userId")
+        userId: Long,
+        @Param("startedAt")
+        startedAt: Instant,
+        @Param("endedAt")
+        endedAt: Instant,
+        @Param("limit")
+        limit: Int
+    ): List<WebsiteStatWithVisitCount>
 }

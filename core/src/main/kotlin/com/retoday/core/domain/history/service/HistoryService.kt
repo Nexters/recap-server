@@ -2,8 +2,10 @@ package com.retoday.core.domain.history.service
 
 import com.retoday.core.domain.history.dto.command.HistoryRecordCommand
 import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
+import com.retoday.core.domain.history.dto.query.GetMyFrequentlyVisitedWebsitesQuery
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.dto.result.GetMyCategoryAnalysesResult
+import com.retoday.core.domain.history.dto.result.GetMyFrequentlyVisitedWebsitesResult
 import com.retoday.core.domain.history.dto.result.GetMyScreenTimesResult
 import com.retoday.core.domain.history.dto.result.HistoryRecordResult
 import com.retoday.core.domain.history.entity.History
@@ -116,7 +118,7 @@ class HistoryService(
                         )
 
                     // 현재 스크린타임에 포함될 체류시간 계산
-                    val stayDuration = segmentEnd.epochSecond - startedAt.epochSecond
+                    val stayDuration = (segmentEnd.epochSecond - startedAt.epochSecond).toInt()
 
                     stayDurations[screenTimeIndex] += stayDuration
                     totalStayDuration += stayDuration
@@ -211,6 +213,40 @@ class HistoryService(
             date = query.date,
             totalStayDuration = websiteStatsWithCategory.sumOf { it.stayDuration },
             categoryAnalyses = categoryAnalyses
+        )
+    }
+
+    @Transactional(readOnly = true)
+    fun getMyFrequentlyVisitedWebsites(
+        userId: Long,
+        query: GetMyFrequentlyVisitedWebsitesQuery
+    ): GetMyFrequentlyVisitedWebsitesResult {
+        val profile = profileRepository.findByUserId(userId)!!
+        val periodStartedAt =
+            query.date
+                .atStartOfDay(profile.timeZone.id)
+                .toInstant()
+        val periodEndedAt = periodStartedAt.plus(1, ChronoUnit.DAYS)
+
+        val websiteStatsWithVisitCount =
+            historyRepository.findWebsiteStatsWithVisitCountByUserId(
+                userId = userId,
+                startedAt = periodStartedAt,
+                endedAt = periodEndedAt,
+                limit = query.limit.coerceAtLeast(1)
+            )
+
+        return GetMyFrequentlyVisitedWebsitesResult(
+            date = query.date,
+            websiteAnalyses =
+                websiteStatsWithVisitCount.map {
+                    GetMyFrequentlyVisitedWebsitesResult.WebsiteAnalysis(
+                        domain = it.domain,
+                        faviconUrl = it.faviconUrl,
+                        visitCount = it.visitCount,
+                        stayDuration = it.stayDuration
+                    )
+                }
         )
     }
 
