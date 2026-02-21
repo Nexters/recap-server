@@ -7,6 +7,7 @@ import com.retoday.api.domain.history.dto.response.GetMyScreenTimesResponse
 import com.retoday.api.domain.history.dto.response.HistoryRecordResponse
 import com.retoday.api.extension.*
 import com.retoday.api.fixture.createHistoryRecordRequest
+import com.retoday.api.global.exception.GlobalExceptionHandler
 import com.retoday.api.snippet.errorResponseFields
 import com.retoday.api.snippet.getMyScreenTimesResponseFields
 import com.retoday.api.snippet.historyRecordRequestFields
@@ -20,10 +21,12 @@ import com.retoday.core.fixture.createHistoryRecordResult
 import com.retoday.core.global.ratelimit.RateLimiter
 import io.mockk.every
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.context.annotation.Import
 import java.time.Instant
 import java.time.LocalDate
 
 @WebMvcTest(HistoryController::class)
+@Import(GlobalExceptionHandler::class)
 class HistoryControllerTest : ControllerTest() {
     @MockkBean
     private lateinit var historyService: HistoryService
@@ -32,10 +35,6 @@ class HistoryControllerTest : ControllerTest() {
     private lateinit var rateLimiter: RateLimiter
 
     init {
-        beforeTest {
-            every { rateLimiter.checkHistoryExceeded(any()) } returns null
-        }
-
         describe("recordHistory()는") {
             val baseRequest = { webClient.post().uri("/histories") }
             val authenticatedRequest = { request: Any ->
@@ -46,6 +45,8 @@ class HistoryControllerTest : ControllerTest() {
             }
 
             context("유효한 요청이 주어진 경우") {
+                every { rateLimiter.checkHistoryExceeded(any()) } returns null
+
                 val result = createHistoryRecordResult()
 
                 every {
@@ -64,6 +65,8 @@ class HistoryControllerTest : ControllerTest() {
             }
 
             context("사용자가 제외한 도메인인 경우") {
+                every { rateLimiter.checkHistoryExceeded(any()) } returns null
+
                 every {
                     historyService.recordHistory(any<Long>(), any<HistoryRecordCommand>())
                 } throws WebsiteExcludedByUserException("github.com")
@@ -79,6 +82,8 @@ class HistoryControllerTest : ControllerTest() {
             }
 
             context("유효하지 않은 URL이 주어진 경우") {
+                every { rateLimiter.checkHistoryExceeded(any()) } returns null
+
                 every {
                     historyService.recordHistory(any<Long>(), any<HistoryRecordCommand>())
                 } throws InvalidUrlException("invalid-url")
@@ -95,6 +100,8 @@ class HistoryControllerTest : ControllerTest() {
             }
 
             context("중복된 요청이 주어진 경우") {
+                every { rateLimiter.checkHistoryExceeded(any()) } returns null
+
                 every {
                     historyService.recordHistory(any<Long>(), any<HistoryRecordCommand>())
                 } throws DuplicateHistoryException(1, "https://github.com/Nexters/retoday-server")
@@ -113,6 +120,10 @@ class HistoryControllerTest : ControllerTest() {
             context("Rate Limit을 초과한 경우") {
                 every { rateLimiter.checkHistoryExceeded(any()) } returns 60L
 
+                every {
+                    historyService.recordHistory(any(), any())
+                }
+
                 it("상태 코드 429와 ErrorResponse를 반환한다.") {
                     authenticatedRequest(createHistoryRecordRequest())
                         .expectStatus(429)
@@ -125,6 +136,8 @@ class HistoryControllerTest : ControllerTest() {
             }
 
             context("Validation 실패 (closedAt < visitedAt)인 경우") {
+                every { rateLimiter.checkHistoryExceeded(any()) } returns null
+
                 val now = Instant.now()
 
                 every {
