@@ -3,33 +3,44 @@ package com.retoday.api.domain.history
 import com.ninjasquad.springmockk.MockkBean
 import com.retoday.api.common.ControllerTest
 import com.retoday.api.domain.history.controller.HistoryController
+import com.retoday.api.domain.history.dto.response.GetMyCategoryAnalysesResponse
 import com.retoday.api.domain.history.dto.response.GetMyScreenTimesResponse
 import com.retoday.api.domain.history.dto.response.HistoryRecordResponse
 import com.retoday.api.extension.*
+import com.retoday.api.fixture.HISTORY_DOMAIN
+import com.retoday.api.fixture.HISTORY_URL
 import com.retoday.api.fixture.createHistoryRecordRequest
-import com.retoday.api.snippet.errorResponseFields
-import com.retoday.api.snippet.getMyScreenTimesResponseFields
-import com.retoday.api.snippet.historyRecordRequestFields
-import com.retoday.api.snippet.historyRecordResponseFields
+import com.retoday.api.snippet.*
 import com.retoday.core.domain.history.dto.command.HistoryRecordCommand
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.exception.*
 import com.retoday.core.domain.history.service.HistoryService
+import com.retoday.core.fixture.createGetMyCategoryAnalysisResult
 import com.retoday.core.fixture.createGetMyScreenTimesResult
 import com.retoday.core.fixture.createHistoryRecordResult
+import com.retoday.core.global.ratelimit.RateLimiter
 import io.mockk.every
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.context.annotation.Import
 import java.time.Instant
 import java.time.LocalDate
 
 @WebMvcTest(HistoryController::class)
+@Import(GlobalExceptionHandler::class)
 class HistoryControllerTest : ControllerTest() {
     @MockkBean
     private lateinit var historyService: HistoryService
 
+    @MockkBean
+    private lateinit var rateLimiter: RateLimiter
+
     init {
         describe("recordHistory()는") {
-            val baseRequest = { webClient.post().uri("/histories") }
+            val baseRequest = {
+                webClient
+                    .post()
+                    .uri("/histories")
+            }
             val authenticatedRequest = { request: Any ->
                 baseRequest()
                     .bodyValue(request)
@@ -38,11 +49,11 @@ class HistoryControllerTest : ControllerTest() {
             }
 
             context("유효한 요청이 주어진 경우") {
+                every { rateLimiter.checkHistoryExceeded(any()) } returns null
+
                 val result = createHistoryRecordResult()
 
-                every {
-                    historyService.recordHistory(any<Long>(), any<HistoryRecordCommand>())
-                } returns result
+                every { historyService.recordHistory(any(), any()) } returns result
 
                 it("상태 코드 200과 HistoryRecordResponse를 반환한다.") {
                     authenticatedRequest(createHistoryRecordRequest())
@@ -56,9 +67,11 @@ class HistoryControllerTest : ControllerTest() {
             }
 
             context("사용자가 제외한 도메인인 경우") {
+                every { rateLimiter.checkHistoryExceeded(any()) } returns null
+
                 every {
-                    historyService.recordHistory(any<Long>(), any<HistoryRecordCommand>())
-                } throws WebsiteExcludedByUserException("github.com")
+                    historyService.recordHistory(any(), any())
+                } throws WebsiteExcludedByUserException(HISTORY_DOMAIN)
 
                 it("상태 코드 204와 ErrorResponse를 반환한다.") {
                     authenticatedRequest(createHistoryRecordRequest())
@@ -71,8 +84,10 @@ class HistoryControllerTest : ControllerTest() {
             }
 
             context("유효하지 않은 URL이 주어진 경우") {
+                every { rateLimiter.checkHistoryExceeded(any()) } returns null
+
                 every {
-                    historyService.recordHistory(any<Long>(), any<HistoryRecordCommand>())
+                    historyService.recordHistory(any(), any())
                 } throws InvalidUrlException("invalid-url")
 
                 it("상태 코드 400과 ErrorResponse를 반환한다.") {
@@ -87,9 +102,11 @@ class HistoryControllerTest : ControllerTest() {
             }
 
             context("중복된 요청이 주어진 경우") {
+                every { rateLimiter.checkHistoryExceeded(any()) } returns null
+
                 every {
-                    historyService.recordHistory(any<Long>(), any<HistoryRecordCommand>())
-                } throws DuplicateHistoryException(1, "https://github.com/Nexters/retoday-server")
+                    historyService.recordHistory(any(), any())
+                } throws DuplicateHistoryException(1, HISTORY_URL)
 
                 it("상태 코드 409와 ErrorResponse를 반환한다.") {
                     authenticatedRequest(createHistoryRecordRequest())
@@ -103,8 +120,10 @@ class HistoryControllerTest : ControllerTest() {
             }
 
             context("Rate Limit을 초과한 경우") {
+                every { rateLimiter.checkHistoryExceeded(any()) } returns 60L
+
                 every {
-                    historyService.recordHistory(any<Long>(), any<HistoryRecordCommand>())
+                    historyService.recordHistory(any(), any())
                 } throws RateLimitExceededException(1L, 60L)
 
                 it("상태 코드 429와 ErrorResponse를 반환한다.") {
@@ -119,10 +138,12 @@ class HistoryControllerTest : ControllerTest() {
             }
 
             context("Validation 실패 (closedAt < visitedAt)인 경우") {
+                every { rateLimiter.checkHistoryExceeded(any()) } returns null
+
                 val now = Instant.now()
 
                 every {
-                    historyService.recordHistory(any<Long>(), any<HistoryRecordCommand>())
+                    historyService.recordHistory(any(), any())
                 } throws InvalidTimeRangeException("closedAt은 visitedAt보다 이후여야 합니다")
 
                 it("상태 코드 400과 ErrorResponse를 반환한다.") {
@@ -158,11 +179,33 @@ class HistoryControllerTest : ControllerTest() {
                         .expectStatus(200)
                         .expectBody(GetMyScreenTimesResponse.from(result))
                         .document("내 스크린타임 조회 성공(200)") {
-                            queryParams(
-                                "date" desc "조회 기준 일자(yyyy-MM-dd)",
-                                "period" desc "조회 기간 타입(DAILY, WEEKLY)"
-                            )
+                            queryParams(getMyScreenTimesQueryFields)
                             responseBody(getMyScreenTimesResponseFields)
+                        }
+                }
+            }
+        }
+
+        describe("getMyCategoryAnalyses()은") {
+            val date = LocalDate.parse("2026-02-13")
+            val request =
+                webClient
+                    .get()
+                    .uri("/users/me/category-analyses?date=$date")
+                    .withAuthentication()
+
+            context("유효한 요청이 주어진 경우") {
+                val result = createGetMyCategoryAnalysisResult(date = date)
+                every { historyService.getMyCategoryAnalyses(any(), any()) } returns result
+
+                it("상태 코드 200과 GetMyCategoryAnalysisResponse를 반환한다.") {
+                    request
+                        .exchange()
+                        .expectStatus(200)
+                        .expectBody(GetMyCategoryAnalysesResponse.from(result))
+                        .document("내 카테고리 분석 조회 성공(200)") {
+                            queryParams(getMyCategoryAnalysisQueryFields)
+                            responseBody(getMyCategoryAnalysesResponseFields)
                         }
                 }
             }

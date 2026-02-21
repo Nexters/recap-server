@@ -1,6 +1,7 @@
 package com.retoday.core.domain.history.service
 
 import com.retoday.core.domain.history.client.AICategoryClient
+import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.entity.Website
 import com.retoday.core.domain.history.entity.WebsiteCategory
@@ -32,6 +33,7 @@ class HistoryServiceTest :
         val historyService =
             HistoryService(
                 historyRepository = historyRepository,
+                profileRepository = profileRepository,
                 websiteService = websiteService,
                 pageService = pageService,
                 profileRepository = profileRepository,
@@ -291,6 +293,56 @@ class HistoryServiceTest :
                 Then("InvalidCategoryException이 발생해야 한다") {
                     shouldThrow<InvalidCategoryException> {
                         historyService.classifyCategory(freshWebsite, domain)
+                    }
+                }
+            }
+        }
+        Given("일간 카테고리 분석 집계가 필요할 때") {
+            val targetDate = LocalDate.parse("2026-02-13")
+            val query =
+                GetMyCategoryAnalysisQuery(
+                    date = targetDate
+                )
+            val expectedResult = createGetMyCategoryAnalysisResult(date = targetDate)
+            val profile = createProfile()
+            val dayStartUtc = Instant.parse("2026-02-12T15:00:00Z")
+            val dayEndUtc = Instant.parse("2026-02-13T15:00:00Z")
+            every { profileRepository.findByUserId(userId) } returns profile
+            every {
+                historyRepository.findWebsiteStatsWithCategoryByUserId(
+                    userId = userId,
+                    startedAt = dayStartUtc,
+                    endedAt = dayEndUtc
+                )
+            } returns
+                expectedResult.categoryAnalyses
+                    .flatMap { categoryAnalysis ->
+                        categoryAnalysis.websiteAnalyses.map { websiteAnalysis ->
+                            createWebsiteStatWithCategory(
+                                domain = websiteAnalysis.domain,
+                                faviconUrl = websiteAnalysis.faviconUrl,
+                                categoryName =
+                                    if (categoryAnalysis.categoryName == "기타") {
+                                        null
+                                    } else {
+                                        categoryAnalysis.categoryName
+                                    },
+                                stayDuration = websiteAnalysis.stayDuration
+                            )
+                        }
+                    }
+
+            When("사용자가 본인 일간 카테고리 분석을 조회하면") {
+                val result = historyService.getMyCategoryAnalyses(userId, query)
+
+                Then("카테고리별 체류 시간과 도메인 목록이 정확하게 계산된다.") {
+                    result shouldBe expectedResult
+                    verify(exactly = 1) {
+                        historyRepository.findWebsiteStatsWithCategoryByUserId(
+                            userId = userId,
+                            startedAt = dayStartUtc,
+                            endedAt = dayEndUtc
+                        )
                     }
                 }
             }

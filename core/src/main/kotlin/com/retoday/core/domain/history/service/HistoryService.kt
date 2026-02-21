@@ -2,7 +2,9 @@ package com.retoday.core.domain.history.service
 
 import com.retoday.core.domain.history.client.AICategoryClient
 import com.retoday.core.domain.history.dto.command.HistoryRecordCommand
+import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
+import com.retoday.core.domain.history.dto.result.GetMyCategoryAnalysesResult
 import com.retoday.core.domain.history.dto.result.GetMyScreenTimesResult
 import com.retoday.core.domain.history.dto.result.HistoryRecordResult
 import com.retoday.core.domain.history.entity.History
@@ -27,6 +29,10 @@ class HistoryService(
     private val categoryRepository: WebsiteCategoryRepository,
     private val aiClient: AICategoryClient
 ) {
+    private companion object {
+        private const val DEFAULT_CATEGORY_NAME = "기타"
+    }
+
     @Transactional
     fun recordHistory(
         userId: Long,
@@ -82,9 +88,9 @@ class HistoryService(
             // 집계 구간과 겹치는 History([visitedAt, closedAt)와 집계 구간이 교집합을 가지는 데이터)들을 조회
             val histories =
                 historyRepository.findAllByUserIdAndVisitedAtBeforeAndClosedAtAfter(
-                    userId = userId,
-                    visitedAt = periodEndedAt,
-                    closedAt = periodStartedAt
+                    userId,
+                    periodEndedAt,
+                    periodStartedAt
                 )
 
             // 집계 구간을 period.screenTimeUnit 단위의 스크린타임들로 분할
@@ -163,6 +169,56 @@ class HistoryService(
                 screenTimes = screenTimes
             )
         }
+
+    @Transactional(readOnly = true)
+    fun getMyCategoryAnalyses(
+        userId: Long,
+        query: GetMyCategoryAnalysisQuery
+    ): GetMyCategoryAnalysesResult {
+        val profile = profileRepository.findByUserId(userId)!!
+        val periodStartedAt =
+            query.date
+                .atStartOfDay(profile.timeZone.id)
+                .toInstant()
+
+        // 카테고리 분석은 일 단위 집계이므로 집계 종료 시각을 시작 시각 + 1일로 계산
+        // 이하 집계는 [periodStartedAt, periodEndedAt) 구간 내에서 처리
+        val periodEndedAt = periodStartedAt.plus(1, ChronoUnit.DAYS)
+
+        // 집계 기간 내의 방문 기록들을 웹사이트 단위로 미리 집계해서 조회한다.
+        val websiteStatsWithCategory =
+            historyRepository.findWebsiteStatsWithCategoryByUserId(
+                userId = userId,
+                startedAt = periodStartedAt,
+                endedAt = periodEndedAt
+            )
+
+        val categoryAnalyses =
+            websiteStatsWithCategory
+                .groupBy { it.categoryName ?: DEFAULT_CATEGORY_NAME } // 카테고리명 기준으로 웹사이트를 집계(카테고리가 미지정은 '기타')
+                .map { (categoryName, group) ->
+                    GetMyCategoryAnalysesResult.CategoryAnalysis(
+                        categoryName = categoryName,
+                        stayDuration = group.sumOf { it.stayDuration }, // 카테고리 체류시간 합산
+                        websiteAnalyses =
+                            group
+                                .map {
+                                    // 해당 카테고리를 가진 웹사이트 정보 및 체류시간 합산
+                                    GetMyCategoryAnalysesResult.WebsiteAnalysis(
+                                        domain = it.domain,
+                                        faviconUrl = it.faviconUrl,
+                                        stayDuration = it.stayDuration
+                                    )
+                                }
+                    )
+                }.sortedByDescending { it.stayDuration }
+
+        return GetMyCategoryAnalysesResult(
+            date = query.date,
+            totalStayDuration = websiteStatsWithCategory.sumOf { it.stayDuration },
+            categoryAnalyses = categoryAnalyses
+        )
+    }
 
     private fun checkDuplicateHistory(
         userId: Long,

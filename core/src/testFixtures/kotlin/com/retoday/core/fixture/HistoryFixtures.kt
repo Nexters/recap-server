@@ -1,12 +1,15 @@
 package com.retoday.core.fixture
 
 import com.retoday.core.domain.history.dto.command.HistoryRecordCommand
+import com.retoday.core.domain.history.dto.projection.WebsiteStatWithCategory
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
+import com.retoday.core.domain.history.dto.result.GetMyCategoryAnalysesResult
 import com.retoday.core.domain.history.dto.result.GetMyScreenTimesResult
 import com.retoday.core.domain.history.dto.result.HistoryRecordResult
 import com.retoday.core.domain.history.entity.History
 import com.retoday.core.domain.history.entity.Page
 import com.retoday.core.domain.history.entity.Website
+import com.retoday.core.domain.history.entity.WebsiteCategory
 import java.time.Instant
 import java.time.LocalDate
 
@@ -71,6 +74,69 @@ fun createGetMyWeeklyScreenTimesResult(): GetMyScreenTimesResult =
                 }
     )
 
+fun createGetMyCategoryAnalysisResult(date: LocalDate = LocalDate.parse("2026-02-13")): GetMyCategoryAnalysesResult =
+    GetMyCategoryAnalysesResult(
+        date = date,
+        totalStayDuration = 16_200L,
+        categoryAnalyses =
+            listOf(
+                GetMyCategoryAnalysesResult.CategoryAnalysis(
+                    categoryName = "개발",
+                    stayDuration = 9_000L,
+                    websiteAnalyses =
+                        listOf(
+                            GetMyCategoryAnalysesResult.WebsiteAnalysis(
+                                domain = DOMAIN,
+                                faviconUrl = FAVICON_URL,
+                                stayDuration = 5_400L
+                            ),
+                            GetMyCategoryAnalysesResult.WebsiteAnalysis(
+                                domain = "stackoverflow.com",
+                                faviconUrl = "https://stackoverflow.com/favicon.ico",
+                                stayDuration = 3_600L
+                            )
+                        )
+                ),
+                GetMyCategoryAnalysesResult.CategoryAnalysis(
+                    categoryName = "콘텐츠",
+                    stayDuration = 5_400L,
+                    websiteAnalyses =
+                        listOf(
+                            GetMyCategoryAnalysesResult.WebsiteAnalysis(
+                                domain = "youtube.com",
+                                faviconUrl = "https://www.youtube.com/favicon.ico",
+                                stayDuration = 5_400L
+                            )
+                        )
+                ),
+                GetMyCategoryAnalysesResult.CategoryAnalysis(
+                    categoryName = "기타",
+                    stayDuration = 1_800L,
+                    websiteAnalyses =
+                        listOf(
+                            GetMyCategoryAnalysesResult.WebsiteAnalysis(
+                                domain = "uncategorized.com",
+                                faviconUrl = "https://uncategorized.com/favicon.ico",
+                                stayDuration = 1_800L
+                            )
+                        )
+                )
+            )
+    )
+
+fun createWebsiteStatWithCategory(
+    domain: String,
+    faviconUrl: String? = FAVICON_URL,
+    categoryName: String? = null,
+    stayDuration: Long
+): WebsiteStatWithCategory =
+    WebsiteStatWithCategory(
+        domain = domain,
+        faviconUrl = faviconUrl,
+        categoryName = categoryName,
+        stayDuration = stayDuration
+    )
+
 fun createWebsite(
     id: Long? = WEBSITE_ID,
     domain: String = DOMAIN,
@@ -82,6 +148,15 @@ fun createWebsite(
         domain = domain,
         categoryId = categoryId,
         faviconUrl = faviconUrl
+    )
+
+fun createWebsiteCategory(
+    id: Long? = ID,
+    name: String = "개발"
+): WebsiteCategory =
+    WebsiteCategory(
+        id = id,
+        name = name
     )
 
 fun createPage(
