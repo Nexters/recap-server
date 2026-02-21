@@ -2,10 +2,7 @@ package com.retoday.api.snippet
 
 import com.retoday.api.domain.history.dto.request.HistoryRecordRequest
 import com.retoday.api.domain.history.dto.request.PageMetadata
-import com.retoday.api.domain.history.dto.response.GetMyCategoryAnalysesResponse
-import com.retoday.api.domain.history.dto.response.GetMyFrequentlyVisitedWebsitesResponse
-import com.retoday.api.domain.history.dto.response.GetMyScreenTimesResponse
-import com.retoday.api.domain.history.dto.response.HistoryRecordResponse
+import com.retoday.api.domain.history.dto.response.*
 import com.retoday.api.extension.desc
 import com.retoday.api.extension.fieldsOf
 import com.retoday.api.extension.listFieldsOf
@@ -13,6 +10,7 @@ import com.retoday.api.extension.objectFieldsOf
 import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
 import com.retoday.core.domain.history.dto.query.GetMyFrequentlyVisitedWebsitesQuery
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
+import com.retoday.core.domain.history.dto.query.GetMyWorkPatternQuery
 import com.retoday.core.domain.history.dto.result.GetMyCategoryAnalysesResult
 import com.retoday.core.domain.history.dto.result.GetMyFrequentlyVisitedWebsitesResult
 
@@ -97,5 +95,22 @@ val getMyFrequentlyVisitedWebsitesResponseFields =
             GetMyFrequentlyVisitedWebsitesResult.WebsiteAnalysis::faviconUrl desc "파비콘 URL",
             GetMyFrequentlyVisitedWebsitesResult.WebsiteAnalysis::visitCount desc "방문 횟수",
             GetMyFrequentlyVisitedWebsitesResult.WebsiteAnalysis::stayDuration desc "체류 시간(초)"
+        )
+    )
+
+val getMyWorkPatternQueryFields =
+    fieldsOf(
+        GetMyWorkPatternQuery::date desc "조회 기준 일자(yyyy-MM-dd)"
+    )
+
+val getMyWorkPatternResponseFields =
+    fieldsOf(
+        GetMyWorkPatternResponse::date desc "조회 기준 일자",
+        *objectFieldsOf(
+            objectField = GetMyWorkPatternResponse::counts desc "시간대별 활동 기록 개수",
+            GetMyWorkPatternQuery.TimeSlot.DAWN.name desc "새벽(00:00~05:59) 활동 기록 개수",
+            GetMyWorkPatternQuery.TimeSlot.MORNING.name desc "아침(06:00~11:59) 활동 기록 개수",
+            GetMyWorkPatternQuery.TimeSlot.DAYTIME.name desc "점심/낮(12:00~17:59) 활동 기록 개수",
+            GetMyWorkPatternQuery.TimeSlot.EVENING.name desc "저녁/밤(18:00~23:59) 활동 기록 개수"
         )
     )

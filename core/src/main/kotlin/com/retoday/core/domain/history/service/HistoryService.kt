@@ -5,10 +5,8 @@ import com.retoday.core.domain.history.dto.command.HistoryRecordCommand
 import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
 import com.retoday.core.domain.history.dto.query.GetMyFrequentlyVisitedWebsitesQuery
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
-import com.retoday.core.domain.history.dto.result.GetMyCategoryAnalysesResult
-import com.retoday.core.domain.history.dto.result.GetMyFrequentlyVisitedWebsitesResult
-import com.retoday.core.domain.history.dto.result.GetMyScreenTimesResult
-import com.retoday.core.domain.history.dto.result.HistoryRecordResult
+import com.retoday.core.domain.history.dto.query.GetMyWorkPatternQuery
+import com.retoday.core.domain.history.dto.result.*
 import com.retoday.core.domain.history.entity.History
 import com.retoday.core.domain.history.entity.Website
 import com.retoday.core.domain.history.exception.DuplicateHistoryException
@@ -252,6 +250,32 @@ class HistoryService(
                         visitCount = it.visitCount,
                         stayDuration = it.stayDuration
                     )
+                }
+        )
+    }
+
+    @Transactional(readOnly = true)
+    fun getMyWorkPattern(
+        userId: Long,
+        query: GetMyWorkPatternQuery
+    ): GetMyWorkPatternResult {
+        val profile = profileRepository.findByUserId(userId)!!
+        val periodStartedAt =
+            query.date
+                .atStartOfDay(profile.timeZone.id)
+                .toInstant()
+        val hourlyHistoryCounts =
+            historyRepository
+                .findHourlyHistoryCountsByUserId(
+                    userId = userId,
+                    startedAt = periodStartedAt
+                ).associate { it.hour.toInt() to it.count }
+
+        return GetMyWorkPatternResult(
+            date = query.date,
+            counts =
+                GetMyWorkPatternQuery.TimeSlot.entries.associateWith { timeSlot ->
+                    (timeSlot.startedAt until timeSlot.endedAt).sumOf { hourlyHistoryCounts[it.toInt()] ?: 0L }
                 }
         )
     }

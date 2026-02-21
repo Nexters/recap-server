@@ -2,6 +2,7 @@ package com.retoday.core.domain.history.repository
 
 import com.retoday.core.domain.history.dto.projection.WebsiteStatWithCategory
 import com.retoday.core.domain.history.dto.projection.WebsiteStatWithVisitCount
+import com.retoday.core.domain.history.dto.projection.WorkPatternHourlyCount
 import com.retoday.core.domain.history.entity.History
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
@@ -20,6 +21,27 @@ interface HistoryRepository : JpaRepository<History, Long> {
         visitedAt: Instant,
         closedAt: Instant
     ): List<History>
+
+    @Query(
+        """
+            SELECT
+                CAST(TIMESTAMPDIFF(HOUR, :startedAt, h.visited_at) AS SIGNED) AS hour,
+                CAST(COUNT(*) AS SIGNED) AS count
+            FROM history h
+            WHERE h.user_id = :userId
+              AND h.visited_at >= :startedAt
+              AND h.visited_at < DATE_ADD(:startedAt, INTERVAL 1 DAY)
+            GROUP BY hour
+            ORDER BY hour
+            """,
+        nativeQuery = true
+    )
+    fun findHourlyHistoryCountsByUserId(
+        @Param("userId")
+        userId: Long,
+        @Param("startedAt")
+        startedAt: Instant
+    ): List<WorkPatternHourlyCount>
 
     @Query(
         """

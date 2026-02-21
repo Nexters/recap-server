@@ -1,14 +1,12 @@
 package com.retoday.api.domain.history.controller
 
 import com.retoday.api.domain.history.dto.request.HistoryRecordRequest
-import com.retoday.api.domain.history.dto.response.GetMyCategoryAnalysesResponse
-import com.retoday.api.domain.history.dto.response.GetMyFrequentlyVisitedWebsitesResponse
-import com.retoday.api.domain.history.dto.response.GetMyScreenTimesResponse
-import com.retoday.api.domain.history.dto.response.HistoryRecordResponse
+import com.retoday.api.domain.history.dto.response.*
 import com.retoday.api.global.annotation.AuthenticationId
 import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
 import com.retoday.core.domain.history.dto.query.GetMyFrequentlyVisitedWebsitesQuery
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
+import com.retoday.core.domain.history.dto.query.GetMyWorkPatternQuery
 import com.retoday.core.domain.history.exception.RateLimitExceededException
 import com.retoday.core.domain.history.service.HistoryService
 import com.retoday.core.global.ratelimit.RateLimiter
@@ -85,4 +83,15 @@ class HistoryController(
                         limit = limit
                     )
             ).let { GetMyFrequentlyVisitedWebsitesResponse.from(it) }
+
+    @GetMapping("/users/me/work-pattern")
+    fun getMyWorkPattern(
+        @AuthenticationId
+        userId: Long,
+        @RequestParam
+        date: LocalDate
+    ): GetMyWorkPatternResponse =
+        historyService
+            .getMyWorkPattern(userId, GetMyWorkPatternQuery(date = date))
+            .let { GetMyWorkPatternResponse.from(it) }
 }
