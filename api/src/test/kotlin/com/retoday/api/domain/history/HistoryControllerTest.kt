@@ -4,6 +4,10 @@ import com.ninjasquad.springmockk.MockkBean
 import com.retoday.api.common.ControllerTest
 import com.retoday.api.domain.history.controller.HistoryController
 import com.retoday.api.domain.history.dto.response.*
+import com.retoday.api.domain.history.dto.response.GetMyCategoryAnalysesResponse
+import com.retoday.api.domain.history.dto.response.GetMyLongestStayedWebsiteResponse
+import com.retoday.api.domain.history.dto.response.GetMyScreenTimesResponse
+import com.retoday.api.domain.history.dto.response.HistoryRecordResponse
 import com.retoday.api.extension.*
 import com.retoday.api.fixture.HISTORY_DOMAIN
 import com.retoday.api.fixture.HISTORY_URL
@@ -13,6 +17,10 @@ import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.exception.*
 import com.retoday.core.domain.history.service.HistoryService
 import com.retoday.core.fixture.*
+import com.retoday.core.fixture.createGetMyCategoryAnalysisResult
+import com.retoday.core.fixture.createGetMyLongestStayedWebsiteResult
+import com.retoday.core.fixture.createGetMyScreenTimesResult
+import com.retoday.core.fixture.createHistoryRecordResult
 import com.retoday.core.global.ratelimit.RateLimiter
 import io.mockk.every
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -249,6 +257,31 @@ class HistoryControllerTest : ControllerTest() {
                         .document("내 일간 작업 패턴 분석 조회 성공(200)") {
                             queryParams(getMyWorkPatternQueryFields)
                             responseBody(getMyWorkPatternResponseFields)
+                        }
+                }
+            }
+        }
+
+        describe("getMyLongestStayedWebsite()은") {
+            val date = LocalDate.parse("2026-02-13")
+            val request =
+                webClient
+                    .get()
+                    .uri("/users/me/longest-stayed-website?date=$date")
+                    .withAuthentication()
+
+            context("유효한 요청이 주어진 경우") {
+                val result = createGetMyLongestStayedWebsiteResult(date = date)
+                every { historyService.getMyLongestStayedWebsite(any(), any()) } returns result
+
+                it("상태 코드 200과 GetMyLongestStayedWebsiteResponse를 반환한다.") {
+                    request
+                        .exchange()
+                        .expectStatus(200)
+                        .expectBody(GetMyLongestStayedWebsiteResponse.from(result))
+                        .document("내 최장 체류 웹사이트 조회 성공(200)") {
+                            queryParams(getMyLongestStayedWebsiteQueryFields)
+                            responseBody(getMyLongestStayedWebsiteResponseFields)
                         }
                 }
             }

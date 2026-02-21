@@ -4,9 +4,14 @@ import com.retoday.core.domain.history.client.AICategoryClient
 import com.retoday.core.domain.history.dto.command.HistoryRecordCommand
 import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
 import com.retoday.core.domain.history.dto.query.GetMyFrequentlyVisitedWebsitesQuery
+import com.retoday.core.domain.history.dto.query.GetMyLongestStayedWebsiteQuery
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.dto.query.GetMyWorkPatternQuery
 import com.retoday.core.domain.history.dto.result.*
+import com.retoday.core.domain.history.dto.result.GetMyCategoryAnalysesResult
+import com.retoday.core.domain.history.dto.result.GetMyLongestStayedWebsiteResult
+import com.retoday.core.domain.history.dto.result.GetMyScreenTimesResult
+import com.retoday.core.domain.history.dto.result.HistoryRecordResult
 import com.retoday.core.domain.history.entity.History
 import com.retoday.core.domain.history.entity.Website
 import com.retoday.core.domain.history.exception.DuplicateHistoryException
@@ -277,6 +282,33 @@ class HistoryService(
                 GetMyWorkPatternQuery.TimeSlot.entries.associateWith { timeSlot ->
                     (timeSlot.startedAt until timeSlot.endedAt).sumOf { hourlyHistoryCounts[it.toInt()] ?: 0L }
                 }
+        )
+    }
+
+    @Transactional(readOnly = true)
+    fun getMyLongestStayedWebsite(
+        userId: Long,
+        query: GetMyLongestStayedWebsiteQuery
+    ): GetMyLongestStayedWebsiteResult {
+        val profile = profileRepository.findByUserId(userId)!!
+        val periodStartedAt =
+            query.date
+                .atStartOfDay(profile.timeZone.id)
+                .toInstant()
+        val periodEndedAt = periodStartedAt.plus(1, ChronoUnit.DAYS)
+
+        val websiteStat =
+            historyRepository.findTopWebsiteStatByUserId(
+                userId = userId,
+                startedAt = periodStartedAt,
+                endedAt = periodEndedAt
+            )
+
+        return GetMyLongestStayedWebsiteResult(
+            date = query.date,
+            domain = websiteStat?.domain,
+            faviconUrl = websiteStat?.faviconUrl,
+            stayDuration = websiteStat?.stayDuration ?: 0L
         )
     }
 

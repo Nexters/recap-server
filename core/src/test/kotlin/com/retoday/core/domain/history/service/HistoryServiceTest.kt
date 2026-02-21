@@ -1,9 +1,11 @@
 package com.retoday.core.domain.history.service
 
 import com.retoday.core.domain.history.client.AICategoryClient
+import com.retoday.core.domain.history.dto.projection.WebsiteStat
 import com.retoday.core.domain.history.dto.projection.WorkPatternHourlyCount
 import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
 import com.retoday.core.domain.history.dto.query.GetMyFrequentlyVisitedWebsitesQuery
+import com.retoday.core.domain.history.dto.query.GetMyLongestStayedWebsiteQuery
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.dto.query.GetMyWorkPatternQuery
 import com.retoday.core.domain.history.entity.Website
@@ -444,6 +446,44 @@ class HistoryServiceTest :
                         historyRepository.findHourlyHistoryCountsByUserId(
                             userId = userId,
                             startedAt = dayStartUtc
+                        )
+                    }
+                }
+            }
+        }
+
+        Given("가장 오래 머문 웹사이트 조회가 필요할 때") {
+            val targetDate = LocalDate.parse("2026-02-13")
+            val query = GetMyLongestStayedWebsiteQuery(date = targetDate)
+            val profile = createProfile()
+            val dayStartUtc = Instant.parse("2026-02-12T15:00:00Z")
+            val dayEndUtc = Instant.parse("2026-02-13T15:00:00Z")
+            val expectedResult = createGetMyLongestStayedWebsiteResult(date = targetDate, stayDuration = 5_400L)
+
+            every { profileRepository.findByUserId(userId) } returns profile
+            every {
+                historyRepository.findTopWebsiteStatByUserId(
+                    userId = userId,
+                    startedAt = dayStartUtc,
+                    endedAt = dayEndUtc
+                )
+            } returns
+                WebsiteStat(
+                    domain = expectedResult.domain!!,
+                    faviconUrl = expectedResult.faviconUrl,
+                    stayDuration = expectedResult.stayDuration
+                )
+
+            When("사용자가 본인의 최장 체류 웹사이트를 조회하면") {
+                val result = historyService.getMyLongestStayedWebsite(userId, query)
+
+                Then("최장 체류 웹사이트 정보가 반환된다.") {
+                    result shouldBe expectedResult
+                    verify(exactly = 1) {
+                        historyRepository.findTopWebsiteStatByUserId(
+                            userId = userId,
+                            startedAt = dayStartUtc,
+                            endedAt = dayEndUtc
                         )
                     }
                 }

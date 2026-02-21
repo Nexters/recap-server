@@ -2,9 +2,14 @@ package com.retoday.api.domain.history.controller
 
 import com.retoday.api.domain.history.dto.request.HistoryRecordRequest
 import com.retoday.api.domain.history.dto.response.*
+import com.retoday.api.domain.history.dto.response.GetMyCategoryAnalysesResponse
+import com.retoday.api.domain.history.dto.response.GetMyLongestStayedWebsiteResponse
+import com.retoday.api.domain.history.dto.response.GetMyScreenTimesResponse
+import com.retoday.api.domain.history.dto.response.HistoryRecordResponse
 import com.retoday.api.global.annotation.AuthenticationId
 import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
 import com.retoday.core.domain.history.dto.query.GetMyFrequentlyVisitedWebsitesQuery
+import com.retoday.core.domain.history.dto.query.GetMyLongestStayedWebsiteQuery
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.dto.query.GetMyWorkPatternQuery
 import com.retoday.core.domain.history.exception.RateLimitExceededException
@@ -94,4 +99,15 @@ class HistoryController(
         historyService
             .getMyWorkPattern(userId, GetMyWorkPatternQuery(date = date))
             .let { GetMyWorkPatternResponse.from(it) }
+
+    @GetMapping("/users/me/longest-stayed-website")
+    fun getMyLongestStayedWebsite(
+        @AuthenticationId
+        userId: Long,
+        @RequestParam
+        date: LocalDate
+    ): GetMyLongestStayedWebsiteResponse =
+        historyService
+            .getMyLongestStayedWebsite(userId, GetMyLongestStayedWebsiteQuery(date = date))
+            .let { GetMyLongestStayedWebsiteResponse.from(it) }
 }
