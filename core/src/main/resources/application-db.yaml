@@ -47,7 +47,7 @@ spring:
       on-profile: prod
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
   data:
     redis:
       url: ${REDIS_URL}
