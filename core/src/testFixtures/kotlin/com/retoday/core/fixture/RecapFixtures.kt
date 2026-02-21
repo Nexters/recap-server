@@ -85,16 +85,23 @@ fun createRecapEntity(
     )
 
 fun createUserTimelineActivities(): List<UserTimelineDto> {
+    // 기준 시간을 UTC Instant로 설정
     val baseTime = Instant.parse("2024-05-20T10:00:00Z")
 
-    fun Instant.toLdt() = LocalDateTime.ofInstant(this, ZoneId.systemDefault())
     return listOf(
         UserTimelineDto(
             title = "활동 제목 1",
             description = "상세 설명 1",
             categoryName = "개발",
-            visitedAt = baseTime.toLdt(),
-            closedAt = baseTime.plus(1, ChronoUnit.HOURS).toLdt()
+            visitedAt = baseTime, // 변환 없이 그대로 사용
+            closedAt = baseTime.plus(1, ChronoUnit.HOURS) // 바로 계산해서 사용
+        ),
+        UserTimelineDto(
+            title = "활동 제목 2",
+            description = "상세 설명 2",
+            categoryName = "디자인",
+            visitedAt = baseTime.plus(2, ChronoUnit.HOURS),
+            closedAt = baseTime.plus(3, ChronoUnit.HOURS)
         )
     )
 }
