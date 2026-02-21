@@ -8,57 +8,79 @@ import org.springframework.restdocs.snippet.Snippet
 import org.springframework.test.web.reactive.server.WebTestClient.BodySpec
 import kotlin.reflect.KProperty
 
-private typealias Field = Pair<String, String>
+data class Field(
+    val name: String,
+    val description: String,
+    val isOptional: Boolean = false
+)
 
-infix fun String.desc(description: String): Field = this to description
+fun optional(field: Field): Field = field.copy(isOptional = true)
 
-infix fun <T> KProperty<T>.desc(description: String): Field = name to description
+infix fun String.desc(description: String): Field =
+    Field(
+        name = this,
+        description = description
+    )
 
-fun fieldsOf(vararg fields: Field): List<Field> = fields.asList()
+infix fun <T> KProperty<T>.desc(description: String): Field =
+    Field(
+        name = name,
+        description = description
+    )
+
+fun fieldsOf(vararg fields: Field): Array<Field> = fields as Array<Field>
 
 fun listFieldsOf(
     listField: Field,
     vararg fields: Field
-): List<Field> = fields.map { "${listField.first}[].${it.first}" desc it.second } + listField
+): Array<Field> =
+    fields
+        .map { "${listField.name}[].${it.name}" desc it.description }
+        .plus(listField)
+        .toTypedArray()
 
 fun objectFieldsOf(
     objectField: Field,
     vararg fields: Field
-): List<Field> = fields.map { "${objectField.first}.${it.first}" desc it.second } + objectField
+): Array<Field> =
+    fields
+        .map { "${objectField.name}.${it.name}" desc it.description }
+        .plus(objectField)
+        .toTypedArray()
 
 fun <T> BodySpec<T, *>.document(
     identifier: String,
-    nullableFields: Set<String> = emptySet(),
     init: (DocumentDsl<T>.() -> Unit)? = null
 ): BodySpec<T, *> =
-    DocumentDsl(identifier, this, nullableFields)
+    DocumentDsl(identifier, this)
         .apply { init?.let { it() } }
         .build()
 
 class DocumentDsl<T>(
     private val identifier: String,
-    private val contentSpec: BodySpec<T, *>,
-    private val nullableFields: Set<String>
+    private val contentSpec: BodySpec<T, *>
 ) {
     private val snippets: MutableList<Snippet> = mutableListOf()
 
-    fun requestBody(fields: List<Field>) {
+    fun requestBody(fields: Array<Field>) {
         snippets.add(
             requestFields(
                 fields.map {
-                    fieldWithPath(it.first)
-                        .description(it.second)
+                    fieldWithPath(it.name)
+                        .description(it.description)
+                        .apply { if (it.isOptional) optional() }
                 }
             )
         )
     }
 
-    fun requestForm(fields: List<Field>) {
+    fun requestForm(fields: Array<Field>) {
         snippets.add(
             requestParts(
                 fields.map {
-                    partWithName(it.first)
-                        .description(it.second)
+                    partWithName(it.name)
+                        .description(it.description)
+                        .apply { if (it.isOptional) optional() }
                 }
             )
         )
@@ -68,37 +90,32 @@ class DocumentDsl<T>(
         snippets.add(
             pathParameters(
                 fields.map {
-                    parameterWithName(it.first)
-                        .description(it.second)
+                    parameterWithName(it.name)
+                        .description(it.description)
+                        .apply { if (it.isOptional) optional() }
                 }
             )
         )
     }
 
-    fun queryParams(vararg fields: Field) {
+    fun queryParams(fields: Array<Field>) {
         snippets.add(
             queryParameters(
                 fields.map {
-                    parameterWithName(it.first)
-                        .description(it.second)
+                    parameterWithName(it.name)
+                        .description(it.description)
+                        .apply { if (it.isOptional) optional() }
                 }
             )
         )
     }
 
-    fun responseBody(fields: List<Field>) {
+    fun responseBody(fields: Array<Field>) {
         snippets.add(
             responseFields(
                 fields.map {
-                    val descriptor =
-                        fieldWithPath(it.first)
-                            .description(it.second)
-
-                    if (nullableFields.contains(it.first)) {
-                        descriptor.optional()
-                    } else {
-                        descriptor
-                    }
+                    fieldWithPath(it.name)
+                        .description(it.description)
                 }
             )
         )
