@@ -3,8 +3,8 @@ package com.retoday.core.fixture
 import com.retoday.core.domain.history.dto.command.HistoryRecordCommand
 import com.retoday.core.domain.history.dto.projection.WebsiteStatWithCategory
 import com.retoday.core.domain.history.dto.projection.WebsiteStatWithVisitCount
-import com.retoday.core.domain.history.dto.query.GetMyWorkPatternQuery
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
+import com.retoday.core.domain.history.dto.query.GetMyWorkPatternQuery
 import com.retoday.core.domain.history.dto.result.GetMyCategoryAnalysesResult
 import com.retoday.core.domain.history.dto.result.GetMyFrequentlyVisitedWebsitesResult
 import com.retoday.core.domain.history.dto.result.GetMyLongestStayedWebsiteResult

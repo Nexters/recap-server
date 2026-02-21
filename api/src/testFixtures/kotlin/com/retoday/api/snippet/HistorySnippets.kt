@@ -12,8 +12,8 @@ import com.retoday.api.extension.fieldsOf
 import com.retoday.api.extension.listFieldsOf
 import com.retoday.api.extension.objectFieldsOf
 import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
-import com.retoday.core.domain.history.dto.query.GetMyLongestStayedWebsiteQuery
 import com.retoday.core.domain.history.dto.query.GetMyFrequentlyVisitedWebsitesQuery
+import com.retoday.core.domain.history.dto.query.GetMyLongestStayedWebsiteQuery
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.dto.query.GetMyWorkPatternQuery
 import com.retoday.core.domain.history.dto.result.GetMyCategoryAnalysesResult

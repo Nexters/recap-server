@@ -3,11 +3,11 @@ package com.retoday.api.domain.history
 import com.ninjasquad.springmockk.MockkBean
 import com.retoday.api.common.ControllerTest
 import com.retoday.api.domain.history.controller.HistoryController
+import com.retoday.api.domain.history.dto.response.*
 import com.retoday.api.domain.history.dto.response.GetMyCategoryAnalysesResponse
 import com.retoday.api.domain.history.dto.response.GetMyLongestStayedWebsiteResponse
 import com.retoday.api.domain.history.dto.response.GetMyScreenTimesResponse
 import com.retoday.api.domain.history.dto.response.HistoryRecordResponse
-import com.retoday.api.domain.history.dto.response.*
 import com.retoday.api.extension.*
 import com.retoday.api.fixture.HISTORY_DOMAIN
 import com.retoday.api.fixture.HISTORY_URL

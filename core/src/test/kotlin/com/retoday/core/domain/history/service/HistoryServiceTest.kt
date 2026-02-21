@@ -1,8 +1,8 @@
 package com.retoday.core.domain.history.service
 
 import com.retoday.core.domain.history.client.AICategoryClient
-import com.retoday.core.domain.history.dto.projection.WorkPatternHourlyCount
 import com.retoday.core.domain.history.dto.projection.WebsiteStat
+import com.retoday.core.domain.history.dto.projection.WorkPatternHourlyCount
 import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
 import com.retoday.core.domain.history.dto.query.GetMyFrequentlyVisitedWebsitesQuery
 import com.retoday.core.domain.history.dto.query.GetMyLongestStayedWebsiteQuery
