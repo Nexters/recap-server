@@ -1,0 +1,71 @@
+spring:
+  application:
+    name: retoday-api
+  main:
+    banner-mode: off
+  profiles:
+    include:
+    - auth
+    - db
+  web:
+    resources:
+      add-mappings: true
+springdoc:
+  swagger-ui:
+    url: /docs/api.yaml
+    path: /swagger-ui.html
+    disable-swagger-default-url: true
+  api-docs:
+    enabled: true
+server:
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+management:
+  endpoints:
+    access:
+      default: none
+    web:
+      exposure:
+        include: health
+    jmx:
+      exposure:
+        exclude: '*'
+  endpoint:
+    health:
+      access: read_only
+logging:
+  config: classpath:log4j2-${spring.profiles.active}.yaml
+gemini:
+  api:
+    key: ${GEMINI_API_KEY}
+    model: "gemini-2.5-flash"
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+server:
+  port: ${LOCAL_PORT:8080}
+web:
+  uris: http://localhost:3000
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  web:
+    resources:
+      add-mappings: false
+
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false

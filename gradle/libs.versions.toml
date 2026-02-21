@@ -1,0 +1,143 @@
+[versions]
+
+# Kotlin
+kotlin = "2.1.0"
+
+# Spring
+spring-boot = "3.5.3"
+
+# Kotest
+kotest = "5.9.1"
+
+# Mockk
+mockk = "1.14.4"
+
+# JWT
+jwt = "0.12.6"
+
+# Database
+mysql = "8.2.0"
+
+# JDSL
+jdsl = "3.7.2"
+
+# OpenAPI
+restdocs-api-spec = "0.19.4"
+
+[plugins]
+
+# Java
+java-library = { id = "java-library" }
+java-test-fixtures = { id = "java-test-fixtures" }
+
+# Kotlin
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
+kotlin-jpa = { id = "org.jetbrains.kotlin.plugin.jpa", version.ref = "kotlin" }
+kotlin-lint = { id = "org.jlleitschuh.gradle.ktlint", version = "13.0.0" }
+
+# Spring
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version = "1.1.7" }
+
+# OpenAPI
+restdocs-api-spec = { id = "com.epages.restdocs-api-spec", version.ref = "restdocs-api-spec" }
+
+[libraries]
+
+# Kotlin
+kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
+kotlin-logging = { group = "io.github.oshai", name = "kotlin-logging-jvm", version = "7.0.3" }
+
+# Spring
+spring-web = { group = "org.springframework.boot", name = "spring-boot-starter-web" }
+spring-data-jpa = { group = "org.springframework.boot", name = "spring-boot-starter-data-jpa" }
+spring-data-redis = { group = "org.springframework.boot", name = "spring-boot-starter-data-redis" }
+spring-validation = { group = "org.springframework.boot", name = "spring-boot-starter-validation" }
+spring-security = { group = "org.springframework.boot", name = "spring-boot-starter-security" }
+spring-security-test = { group = "org.springframework.security", name = "spring-security-test" }
+spring-log4j2 = { group = "org.springframework.boot", name = "spring-boot-starter-log4j2" }
+spring-test = { group = "org.springframework.boot", name = "spring-boot-starter-test" }
+spring-restdocs-webtestclient = { group = "org.springframework.restdocs", name = "spring-restdocs-webtestclient" }
+spring-batch = { group = "org.springframework.boot", name = "spring-boot-starter-batch" }
+spring-actuator = { group = "org.springframework.boot", name = "spring-boot-starter-actuator" }
+spring-testcontainers = { group = "org.springframework.boot", name = "spring-boot-testcontainers" }
+
+# JWT
+jjwt-api = { group = "io.jsonwebtoken", name = "jjwt-api", version.ref = "jwt" }
+jjwt-impl = { group = "io.jsonwebtoken", name = "jjwt-impl", version.ref = "jwt" }
+jjwt-jackson = { group = "io.jsonwebtoken", name = "jjwt-jackson", version.ref = "jwt" }
+
+# Kotest
+kotest = { group = "io.kotest", name = "kotest-assertions-core", version.ref = "kotest" }
+kotest-junit = { group = "io.kotest", name = "kotest-runner-junit5", version.ref = "kotest" }
+kotest-spring = { group = "io.kotest.extensions", name = "kotest-extensions-spring", version = "1.1.3" }
+
+# Jackson
+jackson-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin" }
+jackson-yaml = { group = "com.fasterxml.jackson.dataformat", name = "jackson-dataformat-yaml" }
+
+# Mockk
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+mockk-spring = { group = "com.ninja-squad", name = "springmockk", version = "4.0.2" }
+
+# Database
+mysql-connector = { group = "com.mysql", name = "mysql-connector-j", version.ref = "mysql" }
+h2 = { group = "com.h2database", name = "h2" }
+
+# Hibernate
+hypersistence-utils = { group = "io.hypersistence", name = "hypersistence-utils-hibernate-63", version = "3.14.1" }
+
+# JDSL
+jdsl-dsl = { group = "com.linecorp.kotlin-jdsl", name = "jpql-dsl", version.ref = "jdsl" }
+jdsl-render = { group = "com.linecorp.kotlin-jdsl", name = "jpql-render", version.ref = "jdsl" }
+jdsl-jpa = { group = "com.linecorp.kotlin-jdsl", name = "spring-data-jpa-support", version.ref = "jdsl" }
+
+# OpenAPI
+restdocs-api-spec = { group = "com.epages", name = "restdocs-api-spec", version.ref = "restdocs-api-spec" }
+restdocs-api-spec-webtestclient = { group = "com.epages", name = "restdocs-api-spec-webtestclient", version.ref = "restdocs-api-spec" }
+springdoc-openapi = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-ui", version = "2.8.9" }
+
+# Test Containers
+test-containers-junit = { group = "org.testcontainers", name = "junit-jupiter" }
+test-containers-mysql = { group = "org.testcontainers", name = "mysql" }
+
+# Google
+google-gemini = { group = "com.google.genai", name = "google-genai", version = "1.38.0" }
+
+[bundles]
+test = [
+    "kotest",
+    "kotest-junit",
+    "mockk"
+]
+spring-test = [
+    "spring-test",
+    "spring-security-test",
+    "kotest-spring",
+    "mockk-spring"
+]
+spring-restdocs = [
+    "spring-restdocs-webtestclient",
+    "restdocs-api-spec",
+    "restdocs-api-spec-webtestclient"
+]
+jwt = [
+    "jjwt-api",
+    "jjwt-impl",
+    "jjwt-jackson"
+]
+jackson = [
+    "jackson-kotlin",
+    "jackson-yaml"
+]
+jdsl = [
+    "jdsl-dsl",
+    "jdsl-render",
+    "jdsl-jpa"
+]
+test-containers = [
+    "spring-testcontainers",
+    "test-containers-junit",
+    "test-containers-mysql"
+]

@@ -1,0 +1,357 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options:
+        - dev
+        - prod
+        default: dev
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Deployment environment (dev/prod)'
+        required: true
+        type: string
+    secrets:
+      SERVER_HOST:
+        required: true
+      SERVER_PASSWORD:
+        required: true
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
+      DISCORD_WEBHOOK:
+        required: true
+      ENV_FILE_CONTENT:
+        required: true
+
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-push:
+    name: Build & Push
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.sha.outputs.short }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 21
+        cache: gradle
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Extract commit SHA
+      id: sha
+      run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+    - name: Run tests
+      run: ./gradlew clean test --no-daemon --info
+
+    - name: Build and push API
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        target: api
+        push: true
+        tags: |
+          ${{ secrets.DOCKERHUB_USERNAME }}/retoday-api:latest
+          ${{ secrets.DOCKERHUB_USERNAME }}/retoday-api:${{ steps.sha.outputs.short }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Build and push Batch
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        target: batch
+        push: true
+        tags: |
+          ${{ secrets.DOCKERHUB_USERNAME }}/retoday-batch:latest
+          ${{ secrets.DOCKERHUB_USERNAME }}/retoday-batch:${{ steps.sha.outputs.short }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Discord - Build
+      if: always()
+      uses: sarisia/actions-status-discord@v1
+      with:
+        webhook: ${{ secrets.DISCORD_WEBHOOK }}
+        status: ${{ job.status }}
+        title: "🔨 [${{ inputs.environment }}] Build"
+        description: |
+          **Status:** ${{ job.status == 'success' && '✅' || '❌' }}
+          **Branch:** `${{ github.ref_name }}`
+          **Commit:** `${{ steps.sha.outputs.short }}`
+        color: ${{ job.status == 'success' && '0x57F287' || '0xED4245' }}
+
+  deploy-dev:
+    name: Deploy (Dev)
+    needs: build-and-push
+    if: inputs.environment == 'dev'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup env file
+      uses: appleboy/ssh-action@v1.0.3
+      env:
+        ENV_CONTENT: ${{ secrets.ENV_FILE_CONTENT }}
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: root
+        password: ${{ secrets.SERVER_PASSWORD }}
+        envs: ENV_CONTENT
+        script: |
+          printf '%s\n' "$ENV_CONTENT" > ~/retoday/.env
+          chmod 600 ~/retoday/.env
+
+    - name: Copy files
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: root
+        password: ${{ secrets.SERVER_PASSWORD }}
+        source: "docker-compose.yml,nginx/nginx.conf.template,nginx/proxy.conf"
+        target: "~/retoday"
+        overwrite: true
+
+    - name: Deploy
+      uses: appleboy/ssh-action@v1.0.3
+      env:
+        DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+        SHA: ${{ needs.build-and-push.outputs.sha }}
+        DOMAIN: dev.re-today.com
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: root
+        password: ${{ secrets.SERVER_PASSWORD }}
+        envs: DOCKER_USER,SHA,DOMAIN
+        script: |
+          set -e
+          cd ~/retoday
+
+          [ -d nginx/nginx.conf ] && rm -rf nginx/nginx.conf
+          export DOMAIN="${DOMAIN}"
+          envsubst '${DOMAIN}' < nginx/nginx.conf.template > nginx/nginx.conf
+          [ -f nginx/nginx.conf ] && [ -s nginx/nginx.conf ] || { echo "❌ Failed to create nginx.conf"; exit 1; }
+
+          docker pull ${DOCKER_USER}/retoday-api:${SHA}
+          docker tag ${DOCKER_USER}/retoday-api:${SHA} retoday-api:latest
+          COMPOSE_PROFILES=dev docker compose up -d --force-recreate api
+
+          docker compose up -d --force-recreate nginx
+          sleep 3
+
+          for i in {1..30}; do
+            curl -sf http://localhost/actuator/health 2>/dev/null | grep -q '"status":"UP"' && break
+            [ $i -le 15 ] && sleep 3 || sleep 10
+            if [ $i -eq 30 ]; then
+              echo "❌ Health check failed"
+              docker logs retoday-api --tail 30
+              docker logs retoday-nginx --tail 20
+              exit 1
+            fi
+          done
+          echo "✅ API healthy"
+
+          docker pull ${DOCKER_USER}/retoday-batch:${SHA}
+          docker tag ${DOCKER_USER}/retoday-batch:${SHA} retoday-batch:latest
+          COMPOSE_PROFILES=dev docker compose up -d --force-recreate batch
+          sleep 5
+          docker ps --filter "name=retoday-batch" --filter "status=running" | grep -q retoday-batch || { docker logs retoday-batch --tail 30; exit 1; }
+          echo "✅ Batch running"
+
+          docker image prune -f --filter "dangling=true" || true
+
+    - name: Discord - Deploy
+      if: always()
+      uses: sarisia/actions-status-discord@v1
+      with:
+        webhook: ${{ secrets.DISCORD_WEBHOOK }}
+        status: ${{ job.status }}
+        title: "🚀 [dev] Deploy"
+        description: |
+          **Status:** ${{ job.status == 'success' && '✅' || '❌' }}
+          **Commit:** `${{ needs.build-and-push.outputs.sha }}`
+          **Actor:** ${{ github.actor }}
+        color: ${{ job.status == 'success' && '0x57F287' || '0xED4245' }}
+
+  deploy-prod:
+    name: Deploy (Prod)
+    needs: build-and-push
+    if: inputs.environment == 'prod'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup env file
+      uses: appleboy/ssh-action@v1.0.3
+      env:
+        ENV_CONTENT: ${{ secrets.ENV_FILE_CONTENT }}
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: root
+        password: ${{ secrets.SERVER_PASSWORD }}
+        envs: ENV_CONTENT
+        script: |
+          printf '%s\n' "$ENV_CONTENT" > ~/retoday/.env
+          chmod 600 ~/retoday/.env
+
+    - name: Copy files
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: root
+        password: ${{ secrets.SERVER_PASSWORD }}
+        source: "docker-compose.yml,nginx/nginx.conf.template,nginx/proxy.conf"
+        target: "~/retoday"
+        overwrite: true
+
+    - name: Blue-Green Deploy
+      uses: appleboy/ssh-action@v1.0.3
+      env:
+        DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+        SHA: ${{ needs.build-and-push.outputs.sha }}
+        DOMAIN: api.re-today.com
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: root
+        password: ${{ secrets.SERVER_PASSWORD }}
+        envs: DOCKER_USER,SHA,DOMAIN
+        script: |
+          set -e
+          cd ~/retoday
+
+          [ -d nginx/nginx.conf ] && rm -rf nginx/nginx.conf
+          export DOMAIN="${DOMAIN}"
+          envsubst '${DOMAIN}' < nginx/nginx.conf.template > nginx/nginx.conf
+          [ -f nginx/nginx.conf ] && [ -s nginx/nginx.conf ] || { echo "❌ Failed to create nginx.conf"; exit 1; }
+
+          # 활성 컨테이너 확인
+          if grep -q "api-blue" nginx/upstream.conf; then
+            CURRENT="blue"; TARGET="green"
+          else
+            CURRENT="green"; TARGET="blue"
+          fi
+          echo "📍 $CURRENT → $TARGET"
+
+          # 새 이미지 배포
+          docker pull ${DOCKER_USER}/retoday-api:${SHA}
+          docker tag ${DOCKER_USER}/retoday-api:${SHA} retoday-api:latest
+          COMPOSE_PROFILES=prod docker compose up -d --force-recreate api-$TARGET
+
+          for i in {1..20}; do
+            docker exec retoday-api-$TARGET curl -sf http://localhost:8080/actuator/health 2>/dev/null | grep -q '"status":"UP"' && break
+            [ $i -le 10 ] && sleep 3 || sleep 10
+            if [ $i -eq 20 ]; then
+              docker logs retoday-api-$TARGET --tail 30
+              exit 1
+            fi
+          done
+          echo "✅ api-$TARGET healthy"
+
+          # Upstream 전환
+          sed -i "s/api-$CURRENT/api-$TARGET/" nginx/upstream.conf
+
+          # Nginx reload
+          docker compose up -d nginx
+          for i in {1..10}; do
+            docker exec retoday-nginx nginx -t 2>/dev/null && break
+            sleep 1
+          done
+          docker exec retoday-nginx nginx -s reload
+
+          sleep 3
+          if ! curl -sf http://localhost/actuator/health | grep -q '"status":"UP"'; then
+            echo "❌ Rollback: switching back to api-$CURRENT"
+            docker compose start api-$CURRENT
+            for i in {1..20}; do
+              docker exec retoday-api-$CURRENT curl -sf http://localhost:8080/actuator/health 2>/dev/null | grep -q '"status":"UP"' && break
+              [ $i -le 10 ] && sleep 3 || sleep 10
+              if [ $i -eq 20 ]; then
+                echo "❌ Rollback failed: api-$CURRENT not healthy"
+                docker logs retoday-api-$CURRENT --tail 30
+                exit 1
+              fi
+            done
+            echo "✅ api-$CURRENT healthy"
+
+            sed -i "s/api-$TARGET/api-$CURRENT/" nginx/upstream.conf
+            docker exec retoday-nginx nginx -t || { echo "❌ Nginx config invalid"; exit 1; }
+            docker exec retoday-nginx nginx -s reload
+
+            sleep 3
+            if ! curl -sf http://localhost/actuator/health | grep -q '"status":"UP"'; then
+              echo "❌ Rollback verification failed"
+              docker logs retoday-nginx --tail 20
+              exit 1
+            fi
+            echo "✅ Rollback successful: api-$CURRENT serving traffic"
+
+            docker compose stop api-$TARGET
+            exit 1
+          fi
+          echo "✅ Switched to api-$TARGET"
+
+          # 이전 컨테이너 정지
+          docker compose stop api-$CURRENT || true
+
+    - name: Deploy Batch
+      uses: appleboy/ssh-action@v1.0.3
+      env:
+        DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+        SHA: ${{ needs.build-and-push.outputs.sha }}
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: root
+        password: ${{ secrets.SERVER_PASSWORD }}
+        envs: DOCKER_USER,SHA
+        script: |
+          set -e
+          cd ~/retoday
+          docker pull ${DOCKER_USER}/retoday-batch:${SHA}
+          docker tag ${DOCKER_USER}/retoday-batch:${SHA} retoday-batch:latest
+          docker compose up -d --force-recreate batch
+          sleep 5
+          docker ps --filter "name=retoday-batch" --filter "status=running" | grep -q retoday-batch || { docker logs retoday-batch --tail 30; exit 1; }
+          echo "✅ Batch running"
+          docker image prune -f --filter "dangling=true" || true
+
+    - name: Discord - Deploy
+      if: always()
+      uses: sarisia/actions-status-discord@v1
+      with:
+        webhook: ${{ secrets.DISCORD_WEBHOOK }}
+        status: ${{ job.status }}
+        title: "🚀 [prod] Deploy"
+        description: |
+          **Status:** ${{ job.status == 'success' && '✅' || '❌' }}
+          **Commit:** `${{ needs.build-and-push.outputs.sha }}`
+          **Strategy:** Blue-Green
+          **Actor:** ${{ github.actor }}
+        color: ${{ job.status == 'success' && '0x57F287' || '0xED4245' }}

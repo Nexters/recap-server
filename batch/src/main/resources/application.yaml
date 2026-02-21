@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: retoday-batch
+  main:
+    banner-mode: off
+  profiles:
+    include:
+    - core
+logging:
+  config: classpath:log4j2-${spring.profiles.active}.yaml
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+---
+spring:
+  config:
+    activate:
+      on-profile: prod

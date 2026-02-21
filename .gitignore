@@ -5,6 +5,7 @@ build/
 !**/src/test/**/build/
 .kotlin
 .env
+api.yaml
 
 # IntelliJ
 .idea
@@ -17,3 +18,5 @@ out/
 
 # OSX
 .DS_Store
+
+*~

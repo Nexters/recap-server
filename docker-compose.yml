@@ -1,0 +1,100 @@
+x-api-common: &api-common
+  image: retoday-api:latest
+  env_file:
+    - .env
+  depends_on:
+    mysql:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  restart: unless-stopped
+  healthcheck:
+    test: [ "CMD", "curl", "-sf", "http://localhost:8080/actuator/health" ]
+    interval: 5s
+    timeout: 3s
+    retries: 20
+    start_period: 45s
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: retoday-db
+    environment:
+    - MYSQL_ROOT_PASSWORD=${MAIN_DB_PASSWORD}
+    - MYSQL_DATABASE=${MAIN_DB_NAME:-retoday}
+    volumes:
+    - mysql-data:/var/lib/mysql
+    ports:
+    - "3306:3306"
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:alpine
+    container_name: retoday-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+    - redis-data:/data
+    ports:
+    - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  api:
+    <<: *api-common
+    container_name: retoday-api
+    profiles: ["dev"]
+
+  api-blue:
+    <<: *api-common
+    container_name: retoday-api-blue
+    profiles: ["prod"]
+
+  api-green:
+    <<: *api-common
+    container_name: retoday-api-green
+    profiles: ["prod"]
+
+  nginx:
+    image: nginx:alpine
+    container_name: retoday-nginx
+    ports:
+    - "80:80"
+    - "443:443"
+    volumes:
+    - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    - ./nginx/proxy.conf:/etc/nginx/proxy.conf:ro
+    - ./nginx/upstream.conf:/etc/nginx/upstream.conf
+    - /etc/letsencrypt:/etc/letsencrypt:ro
+    - /var/www/certbot:/var/www/certbot:ro
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "wget", "-qO-", "http://localhost/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  batch:
+    image: retoday-batch:latest
+    container_name: retoday-batch
+    env_file:
+    - .env
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
+  redis-data:
