@@ -7,7 +7,6 @@ data class HistoryRecordResponse(
     val historyId: Long,
     val pageId: Long,
     val websiteId: Long,
-    val stayDuration: Int,
     val recordedAt: Instant
 ) {
     companion object {
@@ -17,7 +16,6 @@ data class HistoryRecordResponse(
                     historyId = historyId,
                     pageId = pageId,
                     websiteId = websiteId,
-                    stayDuration = stayDuration,
                     recordedAt = recordedAt
                 )
             }

@@ -65,7 +65,6 @@ class HistoryService(
                     historyId = it.id!!,
                     pageId = page.id!!,
                     websiteId = website.id!!,
-                    stayDuration = it.stayDuration,
                     recordedAt = it.createdAt
                 )
             }
@@ -338,9 +337,6 @@ class HistoryService(
         pageId = pageId,
         visitedAt = command.visitedAt,
         closedAt = command.closedAt,
-        stayDuration = command.stayDuration,
-        visitedDate = command.visitedDate,
-        visitedHour = command.visitedHour,
         isClosed = command.isClosed,
         scrollDepth = command.scrollDepth
     )

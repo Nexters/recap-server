@@ -170,29 +170,25 @@ class HistoryServiceTest :
                         id = 1L,
                         websiteId = 101L,
                         visitedAt = Instant.parse("2026-02-12T15:30:00Z"),
-                        closedAt = Instant.parse("2026-02-12T17:00:00Z"),
-                        stayDuration = 5_400
+                        closedAt = Instant.parse("2026-02-12T17:00:00Z")
                     ),
                     createHistory(
                         id = 2L,
                         websiteId = 102L,
                         visitedAt = Instant.parse("2026-02-12T17:30:00Z"),
-                        closedAt = Instant.parse("2026-02-12T18:30:00Z"),
-                        stayDuration = 3_600
+                        closedAt = Instant.parse("2026-02-12T18:30:00Z")
                     ),
                     createHistory(
                         id = 3L,
                         websiteId = 103L,
                         visitedAt = Instant.parse("2026-02-13T01:00:00Z"),
-                        closedAt = Instant.parse("2026-02-13T02:30:00Z"),
-                        stayDuration = 5_400
+                        closedAt = Instant.parse("2026-02-13T02:30:00Z")
                     ),
                     createHistory(
                         id = 4L,
                         websiteId = 103L,
                         visitedAt = Instant.parse("2026-02-13T02:50:00Z"),
-                        closedAt = Instant.parse("2026-02-13T03:10:00Z"),
-                        stayDuration = 1_200
+                        closedAt = Instant.parse("2026-02-13T03:10:00Z")
                     )
                 )
 

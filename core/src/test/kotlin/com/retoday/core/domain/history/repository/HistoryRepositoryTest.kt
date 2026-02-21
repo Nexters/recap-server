@@ -7,7 +7,6 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.Instant
-import java.time.LocalDate
 
 class HistoryRepositoryTest : RepositoryTest() {
     @Autowired
@@ -217,10 +216,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = githubId,
                 pageId = 11L,
                 visitedAt = Instant.parse("2026-02-12T23:30:00Z"),
-                closedAt = Instant.parse("2026-02-13T00:30:00Z"),
-                stayDuration = 3_600,
-                visitedDate = LocalDate.parse("2026-02-12"),
-                visitedHour = 23
+                closedAt = Instant.parse("2026-02-13T00:30:00Z")
             ).save()
             createHistory(
                 id = null,
@@ -228,10 +224,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = githubId,
                 pageId = 12L,
                 visitedAt = Instant.parse("2026-02-13T01:00:00Z"),
-                closedAt = Instant.parse("2026-02-13T01:30:00Z"),
-                stayDuration = 1_800,
-                visitedDate = LocalDate.parse("2026-02-13"),
-                visitedHour = 1
+                closedAt = Instant.parse("2026-02-13T01:30:00Z")
             ).save()
             createHistory(
                 id = null,
@@ -239,10 +232,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = newsId,
                 pageId = 13L,
                 visitedAt = Instant.parse("2026-02-13T23:30:00Z"),
-                closedAt = Instant.parse("2026-02-14T00:30:00Z"),
-                stayDuration = 3_600,
-                visitedDate = LocalDate.parse("2026-02-13"),
-                visitedHour = 23
+                closedAt = Instant.parse("2026-02-14T00:30:00Z")
             ).save()
             createHistory(
                 id = null,
@@ -250,10 +240,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = newsId,
                 pageId = 14L,
                 visitedAt = Instant.parse("2026-02-14T01:00:00Z"),
-                closedAt = Instant.parse("2026-02-14T02:00:00Z"),
-                stayDuration = 3_600,
-                visitedDate = LocalDate.parse("2026-02-14"),
-                visitedHour = 1
+                closedAt = Instant.parse("2026-02-14T02:00:00Z")
             ).save()
             createHistory(
                 id = null,
@@ -261,10 +248,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 websiteId = githubId,
                 pageId = 15L,
                 visitedAt = Instant.parse("2026-02-13T02:00:00Z"),
-                closedAt = Instant.parse("2026-02-13T03:00:00Z"),
-                stayDuration = 3_600,
-                visitedDate = LocalDate.parse("2026-02-13"),
-                visitedHour = 2
+                closedAt = Instant.parse("2026-02-13T03:00:00Z")
             ).save()
 
             entityManager.flush()
