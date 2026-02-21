@@ -1,10 +1,11 @@
 package com.retoday.core.domain.recap.dto
 
-// 1 Today's Recap AI DTO
-data class UserActivityDto(
+import java.time.Instant
+
+class UserTimelineDto(
     val title: String?,
     val description: String?,
-    val domain: String,
     val categoryName: String?,
-    val stayDuration: Int
+    val visitedAt: Instant,
+    val closedAt: Instant
 )

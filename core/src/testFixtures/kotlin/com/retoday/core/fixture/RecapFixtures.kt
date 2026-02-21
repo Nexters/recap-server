@@ -1,15 +1,20 @@
 package com.retoday.core.fixture
 
 import com.retoday.core.domain.recap.dto.*
+import com.retoday.core.domain.recap.entity.RecapEntity
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 
 fun createUserActivities(): List<UserActivityDto> =
     listOf(
         UserActivityDto(
-            title = "Spring Boot 멀티 모듈 설정",
-            domain = "velog.io",
-            category = "개발",
-            duration = 1800,
-            description = "멀티 모듈 구조 정리"
+            title = "Spring Boot 멀티 모듈 설정", // p.title
+            description = "멀티 모듈 구조 정리", // p.description
+            domain = "velog.io", // w.domain
+            categoryName = "개발", // c.name
+            stayDuration = 1800 // h.stayDuration
         )
     )
 
@@ -54,3 +59,41 @@ fun createGeminiTopicResponse(): GeminiTopicResponse =
                 )
             )
     )
+
+fun createRecapEntity(
+    id: Long? = 100L, // 테스트에서 검증용으로 사용할 ID
+    userId: Long = 1L,
+    recapDate: LocalDate = LocalDate.now(),
+    title: String = "오늘의 보람찬 하루 요약",
+    summary: String = "오늘은 주로 개발 업무와 기술 블로그 탐독을 하며 시간을 보냈습니다.",
+    startAt: LocalDateTime = LocalDateTime.now().minusHours(9),
+    closeAt: LocalDateTime = LocalDateTime.now(),
+    model: String = "gemini-1.5-flash",
+    createdAt: Instant = Instant.now()
+): RecapEntity =
+    RecapEntity(
+        id = id,
+        userId = userId,
+        recapDate = recapDate,
+        title = title,
+        summary = summary,
+        startAt = startAt,
+        closeAt = closeAt,
+        model = model,
+        createdAt = createdAt
+    )
+
+fun createUserTimelineActivities(count: Int = 2): List<UserTimelineDto> {
+    val now = Instant.now()
+
+    return (1..count).map { i ->
+        UserTimelineDto(
+            title = "활동 제목 $i",
+            description = "상세 설명 $i",
+            categoryName = if (i % 2 == 0) "개발" else "커뮤니케이션",
+            // i에 따라 시간을 뒤로 밀어서 생성 (활동 1: 2시간 전, 활동 2: 1시간 전)
+            visitedAt = now.minus((count - i + 1).toLong(), ChronoUnit.HOURS),
+            closedAt = now.minus((count - i).toLong(), ChronoUnit.HOURS).minus(10, ChronoUnit.MINUTES)
+        )
+    }
+}

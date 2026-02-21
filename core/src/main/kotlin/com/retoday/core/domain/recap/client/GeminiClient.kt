@@ -7,6 +7,7 @@ import com.google.genai.types.Part
 import com.retoday.core.domain.recap.component.RecapPromptManager
 import com.retoday.core.domain.recap.component.RecapType
 import com.retoday.core.domain.recap.dto.UserActivityDto
+import com.retoday.core.domain.recap.dto.UserTimelineDto
 import com.retoday.core.domain.recap.exception.RecapGenerationException
 import com.retoday.core.domain.recap.exception.RecapParsingException
 import com.retoday.core.domain.recap.exception.RecapResponseEmptyException
@@ -26,16 +27,33 @@ class GeminiClient(
         const val RESPONSE_MIME_TYPE = "application/json"
     }
 
+    override val modelName: String = modelVersion
+
+    // 기본 활동 데이터용
     override fun <T> generate(
         type: RecapType,
         nickname: String,
         activities: List<UserActivityDto>,
         responseClass: Class<T>
-    ): T {
-        val instruction =
-            promptManager.getDailyRecapPrompt(type, mapOf("nickname" to nickname))
+    ): T = executeGeneration(type, nickname, activities, responseClass)
 
-        val userDataJson = objectMapper.writeValueAsString(activities)
+    // 타임라인 데이터용
+    override fun <T> generateTimeline(
+        type: RecapType,
+        nickname: String,
+        activities: List<UserTimelineDto>,
+        responseClass: Class<T>
+    ): T = executeGeneration(type, nickname, activities, responseClass)
+
+    // 공통
+    private fun <T, D> executeGeneration(
+        type: RecapType,
+        nickname: String,
+        dataList: List<D>,
+        responseClass: Class<T>
+    ): T {
+        val instruction = promptManager.getDailyRecapPrompt(type, mapOf("nickname" to nickname))
+        val userDataJson = objectMapper.writeValueAsString(dataList)
 
         val response =
             try {
@@ -57,7 +75,6 @@ class GeminiClient(
             }
 
         val jsonString = response.text() ?: throw RecapResponseEmptyException()
-
         val cleanedJson = jsonString.replace("```json", "").replace("```", "").trim()
 
         return try {
