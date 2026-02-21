@@ -1,5 +1,6 @@
 package com.retoday.core.domain.history.repository
 
+import com.retoday.core.domain.history.dto.projection.WebsiteStat
 import com.retoday.core.domain.history.dto.projection.WebsiteStatWithCategory
 import com.retoday.core.domain.history.dto.projection.WebsiteStatWithVisitCount
 import com.retoday.core.domain.history.dto.projection.WorkPatternHourlyCount
@@ -42,6 +43,40 @@ interface HistoryRepository : JpaRepository<History, Long> {
         @Param("startedAt")
         startedAt: Instant
     ): List<WorkPatternHourlyCount>
+
+    @Query(
+        """
+            SELECT
+                w.domain AS domain,
+                w.favicon_url AS faviconUrl,
+                CAST(
+                    SUM(
+                        TIMESTAMPDIFF(
+                            SECOND,
+                            GREATEST(h.visited_at, :startedAt),
+                            LEAST(h.closed_at, :endedAt)
+                        )
+                    ) AS SIGNED
+                ) AS stayDuration
+            FROM history h
+            JOIN website w ON w.id = h.website_id
+            WHERE h.user_id = :userId
+              AND h.visited_at BETWEEN DATE_SUB(:startedAt, INTERVAL 1 DAY) AND :endedAt
+              AND h.closed_at BETWEEN :startedAt AND DATE_ADD(:endedAt, INTERVAL 1 DAY)
+            GROUP BY h.website_id, w.domain, w.favicon_url
+            ORDER BY stayDuration DESC
+            LIMIT 1
+            """,
+        nativeQuery = true
+    )
+    fun findTopWebsiteStatByUserId(
+        @Param("userId")
+        userId: Long,
+        @Param("startedAt")
+        startedAt: Instant,
+        @Param("endedAt")
+        endedAt: Instant
+    ): WebsiteStat?
 
     @Query(
         """

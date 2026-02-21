@@ -3,11 +3,16 @@ package com.retoday.api.snippet
 import com.retoday.api.domain.history.dto.request.HistoryRecordRequest
 import com.retoday.api.domain.history.dto.request.PageMetadata
 import com.retoday.api.domain.history.dto.response.*
+import com.retoday.api.domain.history.dto.response.GetMyCategoryAnalysesResponse
+import com.retoday.api.domain.history.dto.response.GetMyLongestStayedWebsiteResponse
+import com.retoday.api.domain.history.dto.response.GetMyScreenTimesResponse
+import com.retoday.api.domain.history.dto.response.HistoryRecordResponse
 import com.retoday.api.extension.desc
 import com.retoday.api.extension.fieldsOf
 import com.retoday.api.extension.listFieldsOf
 import com.retoday.api.extension.objectFieldsOf
 import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
+import com.retoday.core.domain.history.dto.query.GetMyLongestStayedWebsiteQuery
 import com.retoday.core.domain.history.dto.query.GetMyFrequentlyVisitedWebsitesQuery
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.dto.query.GetMyWorkPatternQuery
@@ -113,4 +118,17 @@ val getMyWorkPatternResponseFields =
             GetMyWorkPatternQuery.TimeSlot.DAYTIME.name desc "점심/낮(12:00~17:59) 활동 기록 개수",
             GetMyWorkPatternQuery.TimeSlot.EVENING.name desc "저녁/밤(18:00~23:59) 활동 기록 개수"
         )
+    )
+
+val getMyLongestStayedWebsiteQueryFields =
+    fieldsOf(
+        GetMyLongestStayedWebsiteQuery::date desc "조회 기준 일자(yyyy-MM-dd)"
+    )
+
+val getMyLongestStayedWebsiteResponseFields =
+    fieldsOf(
+        GetMyLongestStayedWebsiteResponse::date desc "조회 기준 일자",
+        GetMyLongestStayedWebsiteResponse::domain desc "가장 오래 머문 도메인(기록이 없으면 null)",
+        GetMyLongestStayedWebsiteResponse::faviconUrl desc "도메인 파비콘 URL(기록이 없으면 null)",
+        GetMyLongestStayedWebsiteResponse::stayDuration desc "해당 도메인 체류 시간(초)"
     )

@@ -14,6 +14,65 @@ class HistoryRepositoryTest : RepositoryTest() {
     private lateinit var historyRepository: HistoryRepository
 
     init {
+        "findTopWebsiteStatByUserId()" {
+            val userId = 1L
+            val periodStartedAt = Instant.parse("2026-02-13T00:00:00Z")
+            val periodEndedAt = Instant.parse("2026-02-14T00:00:00Z")
+
+            val github = createWebsite(id = null, domain = DOMAIN, faviconUrl = FAVICON_URL).save()
+            val news = createWebsite(id = null, domain = USER_EX_DOMAIN, faviconUrl = null).save()
+            val githubId = github.id!!
+            val newsId = news.id!!
+
+            createHistory(
+                id = null,
+                userId = userId,
+                websiteId = githubId,
+                pageId = 11L,
+                visitedAt = Instant.parse("2026-02-13T01:00:00Z"),
+                closedAt = Instant.parse("2026-02-13T02:00:00Z"),
+                stayDuration = 3_600,
+                visitedDate = LocalDate.parse("2026-02-13"),
+                visitedHour = 1
+            ).save()
+            createHistory(
+                id = null,
+                userId = userId,
+                websiteId = githubId,
+                pageId = 12L,
+                visitedAt = Instant.parse("2026-02-13T10:00:00Z"),
+                closedAt = Instant.parse("2026-02-13T10:30:00Z"),
+                stayDuration = 1_800,
+                visitedDate = LocalDate.parse("2026-02-13"),
+                visitedHour = 10
+            ).save()
+            createHistory(
+                id = null,
+                userId = userId,
+                websiteId = newsId,
+                pageId = 13L,
+                visitedAt = Instant.parse("2026-02-13T23:30:00Z"),
+                closedAt = Instant.parse("2026-02-14T00:30:00Z"),
+                stayDuration = 3_600,
+                visitedDate = LocalDate.parse("2026-02-13"),
+                visitedHour = 23
+            ).save()
+
+            entityManager.flush()
+            entityManager.clear()
+
+            val topWebsite =
+                historyRepository.findTopWebsiteStatByUserId(
+                    userId = userId,
+                    startedAt = periodStartedAt,
+                    endedAt = periodEndedAt
+                )
+
+            topWebsite?.domain shouldBe DOMAIN
+            topWebsite?.faviconUrl shouldBe FAVICON_URL
+            topWebsite?.stayDuration shouldBe 5_400L
+        }
+
         "findHourlyHistoryCountsByUserId()" {
             val userId = 1L
             val startedAt = Instant.parse("2026-02-13T00:00:00Z")

@@ -7,6 +7,7 @@ import com.retoday.core.domain.history.dto.query.GetMyWorkPatternQuery
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.dto.result.GetMyCategoryAnalysesResult
 import com.retoday.core.domain.history.dto.result.GetMyFrequentlyVisitedWebsitesResult
+import com.retoday.core.domain.history.dto.result.GetMyLongestStayedWebsiteResult
 import com.retoday.core.domain.history.dto.result.GetMyScreenTimesResult
 import com.retoday.core.domain.history.dto.result.GetMyWorkPatternResult
 import com.retoday.core.domain.history.dto.result.HistoryRecordResult
@@ -172,6 +173,19 @@ fun createGetMyWorkPatternResult(
                 GetMyWorkPatternQuery.TimeSlot.DAYTIME to daytimeCount,
                 GetMyWorkPatternQuery.TimeSlot.EVENING to eveningCount
             )
+    )
+
+fun createGetMyLongestStayedWebsiteResult(
+    date: LocalDate = LocalDate.parse("2026-02-13"),
+    domain: String? = DOMAIN,
+    faviconUrl: String? = FAVICON_URL,
+    stayDuration: Long = 5_400L
+): GetMyLongestStayedWebsiteResult =
+    GetMyLongestStayedWebsiteResult(
+        date = date,
+        domain = domain,
+        faviconUrl = faviconUrl,
+        stayDuration = stayDuration
     )
 
 fun createWebsiteStatWithCategory(
