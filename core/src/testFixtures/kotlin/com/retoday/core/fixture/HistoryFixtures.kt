@@ -2,8 +2,10 @@ package com.retoday.core.fixture
 
 import com.retoday.core.domain.history.dto.command.HistoryRecordCommand
 import com.retoday.core.domain.history.dto.projection.WebsiteStatWithCategory
+import com.retoday.core.domain.history.dto.projection.WebsiteStatWithVisitCount
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.dto.result.GetMyCategoryAnalysesResult
+import com.retoday.core.domain.history.dto.result.GetMyFrequentlyVisitedWebsitesResult
 import com.retoday.core.domain.history.dto.result.GetMyScreenTimesResult
 import com.retoday.core.domain.history.dto.result.HistoryRecordResult
 import com.retoday.core.domain.history.entity.History
@@ -111,15 +113,43 @@ fun createGetMyCategoryAnalysisResult(date: LocalDate = LocalDate.parse("2026-02
                 ),
                 GetMyCategoryAnalysesResult.CategoryAnalysis(
                     categoryName = "기타",
-                    stayDuration = 1_800L,
+                    stayDuration = 1_800,
                     websiteAnalyses =
                         listOf(
                             GetMyCategoryAnalysesResult.WebsiteAnalysis(
                                 domain = "uncategorized.com",
                                 faviconUrl = "https://uncategorized.com/favicon.ico",
-                                stayDuration = 1_800L
+                                stayDuration = 1_800
                             )
                         )
+                )
+            )
+    )
+
+fun createGetMyFrequentlyVisitedWebsitesResult(
+    date: LocalDate = LocalDate.parse("2026-02-13")
+): GetMyFrequentlyVisitedWebsitesResult =
+    GetMyFrequentlyVisitedWebsitesResult(
+        date = date,
+        websiteAnalyses =
+            listOf(
+                GetMyFrequentlyVisitedWebsitesResult.WebsiteAnalysis(
+                    domain = DOMAIN,
+                    faviconUrl = FAVICON_URL,
+                    visitCount = 5L,
+                    stayDuration = 10_800L
+                ),
+                GetMyFrequentlyVisitedWebsitesResult.WebsiteAnalysis(
+                    domain = "youtube.com",
+                    faviconUrl = "https://www.youtube.com/favicon.ico",
+                    visitCount = 3L,
+                    stayDuration = 7_200L
+                ),
+                GetMyFrequentlyVisitedWebsitesResult.WebsiteAnalysis(
+                    domain = "stackoverflow.com",
+                    faviconUrl = "https://stackoverflow.com/favicon.ico",
+                    visitCount = 2L,
+                    stayDuration = 3_600L
                 )
             )
     )
@@ -134,6 +164,19 @@ fun createWebsiteStatWithCategory(
         domain = domain,
         faviconUrl = faviconUrl,
         categoryName = categoryName,
+        stayDuration = stayDuration
+    )
+
+fun createWebsiteStatWithVisitCount(
+    domain: String,
+    faviconUrl: String? = FAVICON_URL,
+    visitCount: Long,
+    stayDuration: Long
+): WebsiteStatWithVisitCount =
+    WebsiteStatWithVisitCount(
+        domain = domain,
+        faviconUrl = faviconUrl,
+        visitCount = visitCount,
         stayDuration = stayDuration
     )
 

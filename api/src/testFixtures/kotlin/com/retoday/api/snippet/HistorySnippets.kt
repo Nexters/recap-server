@@ -3,6 +3,7 @@ package com.retoday.api.snippet
 import com.retoday.api.domain.history.dto.request.HistoryRecordRequest
 import com.retoday.api.domain.history.dto.request.PageMetadata
 import com.retoday.api.domain.history.dto.response.GetMyCategoryAnalysesResponse
+import com.retoday.api.domain.history.dto.response.GetMyFrequentlyVisitedWebsitesResponse
 import com.retoday.api.domain.history.dto.response.GetMyScreenTimesResponse
 import com.retoday.api.domain.history.dto.response.HistoryRecordResponse
 import com.retoday.api.extension.desc
@@ -10,8 +11,10 @@ import com.retoday.api.extension.fieldsOf
 import com.retoday.api.extension.listFieldsOf
 import com.retoday.api.extension.objectFieldsOf
 import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
+import com.retoday.core.domain.history.dto.query.GetMyFrequentlyVisitedWebsitesQuery
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.dto.result.GetMyCategoryAnalysesResult
+import com.retoday.core.domain.history.dto.result.GetMyFrequentlyVisitedWebsitesResult
 
 val historyRecordRequestFields =
     fieldsOf(
@@ -76,5 +79,23 @@ val getMyCategoryAnalysesResponseFields =
                 GetMyCategoryAnalysesResult.WebsiteAnalysis::faviconUrl desc "파비콘 URL",
                 GetMyCategoryAnalysesResult.WebsiteAnalysis::stayDuration desc "도메인 체류 시간(초)"
             )
+        )
+    )
+
+val getMyFrequentlyVisitedWebsitesQueryFields =
+    fieldsOf(
+        GetMyFrequentlyVisitedWebsitesQuery::date desc "조회 기준 일자(yyyy-MM-dd)",
+        GetMyFrequentlyVisitedWebsitesQuery::limit desc "조회할 웹사이트 개수"
+    )
+
+val getMyFrequentlyVisitedWebsitesResponseFields =
+    fieldsOf(
+        GetMyFrequentlyVisitedWebsitesResponse::date desc "조회 기준 일자",
+        *listFieldsOf(
+            listField = GetMyFrequentlyVisitedWebsitesResponse::websiteAnalyses desc "자주 방문한 웹사이트 목록",
+            GetMyFrequentlyVisitedWebsitesResult.WebsiteAnalysis::domain desc "도메인",
+            GetMyFrequentlyVisitedWebsitesResult.WebsiteAnalysis::faviconUrl desc "파비콘 URL",
+            GetMyFrequentlyVisitedWebsitesResult.WebsiteAnalysis::visitCount desc "방문 횟수",
+            GetMyFrequentlyVisitedWebsitesResult.WebsiteAnalysis::stayDuration desc "체류 시간(초)"
         )
     )
