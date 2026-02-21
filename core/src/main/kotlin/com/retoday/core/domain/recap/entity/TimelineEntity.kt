@@ -15,6 +15,6 @@ class TimelineEntity(
     val startAt: String,
     val endAt: String,
     val title: String,
-    val duration: Int,
+    val durationMinutes: Int,
     val createdAt: Instant = Instant.now()
 )

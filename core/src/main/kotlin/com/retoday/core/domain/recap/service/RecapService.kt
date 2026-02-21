@@ -77,17 +77,20 @@ class RecapService(
         name: String,
         activities: List<UserTimelineDto>
     ) {
-        // generateTimeline은 이제 List<UserTimelineDto>를 명확히 받습니다.
+        // 2. 가공된 데이터(enrichedActivities)를 AI에게 전달
         val timelineResponse = generateTimeline(name, activities)
+
         val timelines =
-            timelineResponse.timelines.map {
+            timelineResponse.timelines.map { it ->
+                val duration = calculateDuration(it.startAt, it.endAt)
+
+                // 2. 엔티티 필드명에 정확히 매핑
                 TimelineEntity(
-                    recapId = recap.id!!,
+                    recapId = recap.id!!, // 필수 필드
                     startAt = it.startAt,
                     endAt = it.endAt,
                     title = it.title,
-                    duration = it.durationMinutes,
-                    createdAt = Instant.now()
+                    durationMinutes = duration
                 )
             }
         timelineRepository.saveAll(timelines)
@@ -111,6 +114,23 @@ class RecapService(
             }
         topicRepository.saveAll(topics)
     }
+
+    // 시간 계산 헬퍼 함수
+    private fun calculateDuration(
+        start: String,
+        end: String
+    ): Int =
+        try {
+            val startParts = start.split(":").map { it.toInt() }
+            val endParts = end.split(":").map { it.toInt() }
+
+            val startMinutes = startParts[0] * 60 + startParts[1]
+            val endMinutes = endParts[0] * 60 + endParts[1]
+
+            endMinutes - startMinutes
+        } catch (e: Exception) {
+            0 // 포맷이 잘못되었을 경우 기본값
+        }
 
     // AI Generation Methods
     fun generateRecap(
