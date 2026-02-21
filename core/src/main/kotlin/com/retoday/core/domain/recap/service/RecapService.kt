@@ -12,8 +12,8 @@ import com.retoday.core.domain.recap.repository.RecapRepository
 import com.retoday.core.domain.recap.repository.SectionRepository
 import com.retoday.core.domain.recap.repository.TimelineRepository
 import com.retoday.core.domain.recap.repository.TopicRepository
-import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -28,6 +28,7 @@ class RecapService(
     private val timelineRepository: TimelineRepository,
     private val historyRepository: HistoryRepository
 ) {
+    // 리캡 생성 로직
     @Transactional
     fun createDailyRecap(
         userId: Long,
@@ -70,6 +71,21 @@ class RecapService(
         if (timelineActivities.isNotEmpty()) {
             saveTimelinesInternal(recap, name, timelineActivities)
         }
+    }
+
+    // api 호출용 조회 로직
+    @Transactional(readOnly = true)
+    fun getRecapDetail(
+        userId: Long,
+        date: LocalDate
+    ): RecapDetailResponse? {
+        val recap = recapRepository.findByUserIdAndRecapDate(userId, date) ?: return null
+
+        val sections = sectionRepository.findAllByRecapId(recap.id!!)
+        val topics = topicRepository.findAllByRecapId(recap.id!!)
+        val timelines = timelineRepository.findAllByRecapId(recap.id!!)
+
+        return RecapDetailResponse.of(recap, sections, timelines, topics)
     }
 
     private fun saveTimelinesInternal(

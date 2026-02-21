@@ -10,7 +10,6 @@ class TopicEntity(
     @Id
     @Tsid
     val id: Long? = null,
-    @ManyToOne(fetch = FetchType.LAZY)
     val recapId: Long,
     val keyword: String,
     val title: String,
