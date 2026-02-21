@@ -11,21 +11,28 @@ import com.retoday.api.fixture.HISTORY_DOMAIN
 import com.retoday.api.fixture.HISTORY_URL
 import com.retoday.api.fixture.createHistoryRecordRequest
 import com.retoday.api.snippet.*
+import com.retoday.core.domain.history.dto.command.HistoryRecordCommand
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.exception.*
 import com.retoday.core.domain.history.service.HistoryService
 import com.retoday.core.fixture.createGetMyCategoryAnalysisResult
 import com.retoday.core.fixture.createGetMyScreenTimesResult
 import com.retoday.core.fixture.createHistoryRecordResult
+import com.retoday.core.global.ratelimit.RateLimiter
 import io.mockk.every
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.context.annotation.Import
 import java.time.Instant
 import java.time.LocalDate
 
 @WebMvcTest(HistoryController::class)
+@Import(GlobalExceptionHandler::class)
 class HistoryControllerTest : ControllerTest() {
     @MockkBean
     private lateinit var historyService: HistoryService
+
+    @MockkBean
+    private lateinit var rateLimiter: RateLimiter
 
     init {
         describe("recordHistory()는") {
@@ -42,6 +49,8 @@ class HistoryControllerTest : ControllerTest() {
             }
 
             context("유효한 요청이 주어진 경우") {
+                every { rateLimiter.checkHistoryExceeded(any()) } returns null
+
                 val result = createHistoryRecordResult()
 
                 every { historyService.recordHistory(any(), any()) } returns result
@@ -58,6 +67,8 @@ class HistoryControllerTest : ControllerTest() {
             }
 
             context("사용자가 제외한 도메인인 경우") {
+                every { rateLimiter.checkHistoryExceeded(any()) } returns null
+
                 every {
                     historyService.recordHistory(any(), any())
                 } throws WebsiteExcludedByUserException(HISTORY_DOMAIN)
@@ -73,6 +84,8 @@ class HistoryControllerTest : ControllerTest() {
             }
 
             context("유효하지 않은 URL이 주어진 경우") {
+                every { rateLimiter.checkHistoryExceeded(any()) } returns null
+
                 every {
                     historyService.recordHistory(any(), any())
                 } throws InvalidUrlException("invalid-url")
@@ -89,6 +102,8 @@ class HistoryControllerTest : ControllerTest() {
             }
 
             context("중복된 요청이 주어진 경우") {
+                every { rateLimiter.checkHistoryExceeded(any()) } returns null
+
                 every {
                     historyService.recordHistory(any(), any())
                 } throws DuplicateHistoryException(1, HISTORY_URL)
@@ -105,6 +120,8 @@ class HistoryControllerTest : ControllerTest() {
             }
 
             context("Rate Limit을 초과한 경우") {
+                every { rateLimiter.checkHistoryExceeded(any()) } returns 60L
+
                 every {
                     historyService.recordHistory(any(), any())
                 } throws RateLimitExceededException(1L, 60L)
@@ -121,6 +138,8 @@ class HistoryControllerTest : ControllerTest() {
             }
 
             context("Validation 실패 (closedAt < visitedAt)인 경우") {
+                every { rateLimiter.checkHistoryExceeded(any()) } returns null
+
                 val now = Instant.now()
 
                 every {
