@@ -108,7 +108,7 @@ class AuthService(
                         RefreshToken(
                             userId = id!!,
                             content = it,
-                            expiration = jwtProperties.refreshTokenExpiration
+                            expiration = jwtProperties.refreshTokenExpiration.seconds
                         )
                     )
                 }
