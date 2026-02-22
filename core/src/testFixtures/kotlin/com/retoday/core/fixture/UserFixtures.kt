@@ -55,12 +55,12 @@ fun createProfile(
 fun createUserExcludedWebsite(
     id: Long? = ID,
     userId: Long = ID,
-    websiteId: Long = ID
-): UserExcludedWebsite =
-    UserExcludedWebsite(
+    domain: String = USER_EX_DOMAIN
+): UserExcludedWebsiteDomain =
+    UserExcludedWebsiteDomain(
         id = id,
         userId = userId,
-        websiteId = websiteId
+        domain = domain
     )
 
 fun createProfileWithEmail(
