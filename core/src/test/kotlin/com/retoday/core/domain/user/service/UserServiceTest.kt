@@ -10,6 +10,7 @@ import io.kotest.matchers.equals.shouldBeEqual
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import org.springframework.dao.DataIntegrityViolationException
 
 class UserServiceTest : BehaviorSpec() {
     private val profileRepository = mockk<ProfileRepository>()
@@ -36,20 +37,20 @@ class UserServiceTest : BehaviorSpec() {
         }
 
         Given("사용자가 예외 도메인 추가를 요청하면") {
-            val domain = "github.com"
-            every { userExcludedWebsiteRepository.existsByUserIdAndDomain(any(), any()) } returns false
-            every { userExcludedWebsiteRepository.save(any()) } returns createUserExcludedWebsite()
+            val domain = "GitHub.COM"
+            val normalizedDomain = "github.com"
+            every { userExcludedWebsiteRepository.save(any()) } returns
+                createUserExcludedWebsite(domain = normalizedDomain)
 
             When("아직 예외 도메인에 없는 도메인이라면") {
                 userService.addMyExcludedDomain(ID, domain)
 
                 Then("사용자 예외 도메인으로 저장된다.") {
-                    verify(exactly = 1) { userExcludedWebsiteRepository.existsByUserIdAndDomain(ID, domain) }
                     verify(exactly = 1) {
                         userExcludedWebsiteRepository.save(
                             match {
                                 it.userId == ID &&
-                                    it.domain == domain
+                                    it.domain == normalizedDomain
                             }
                         )
                     }
@@ -58,13 +59,27 @@ class UserServiceTest : BehaviorSpec() {
         }
 
         Given("사용자가 이미 추가된 예외 도메인을 다시 요청하면") {
-            val domain = "github.com"
-            every { userExcludedWebsiteRepository.existsByUserIdAndDomain(any(), any()) } returns true
+            val domain = "GITHUB.COM"
+            val normalizedDomain = "github.com"
+            every { userExcludedWebsiteRepository.save(any()) } throws DataIntegrityViolationException("duplicate")
+            every { userExcludedWebsiteRepository.existsByUserIdAndDomain(ID, normalizedDomain) } returns true
 
             When("예외 도메인 추가를 요청하면") {
-                Then("중복 저장 없이 처리된다.") {
+                Then("중복 예외가 발생한다.") {
                     shouldThrow<ExcludedDomainAlreadyExistsException> { userService.addMyExcludedDomain(ID, domain) }
-                    verify(exactly = 0) { userExcludedWebsiteRepository.save(any()) }
+                    verify(exactly = 1) { userExcludedWebsiteRepository.existsByUserIdAndDomain(ID, normalizedDomain) }
+                }
+            }
+        }
+
+        Given("저장 중 예상하지 못한 무결성 예외가 발생하면") {
+            val domain = "github.com"
+            every { userExcludedWebsiteRepository.save(any()) } throws DataIntegrityViolationException("unexpected")
+            every { userExcludedWebsiteRepository.existsByUserIdAndDomain(ID, domain) } returns false
+
+            When("예외 도메인 추가를 요청하면") {
+                Then("원본 예외를 그대로 전달한다.") {
+                    shouldThrow<DataIntegrityViolationException> { userService.addMyExcludedDomain(ID, domain) }
                 }
             }
         }

@@ -5,6 +5,7 @@ import com.retoday.core.domain.user.entity.UserExcludedWebsiteDomain
 import com.retoday.core.domain.user.exception.ExcludedDomainAlreadyExistsException
 import com.retoday.core.domain.user.repository.ProfileRepository
 import com.retoday.core.domain.user.repository.UserExcludedWebsiteRepository
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -29,15 +30,24 @@ class UserService(
         userId: Long,
         domain: String
     ) {
-        if (userExcludedWebsiteRepository.existsByUserIdAndDomain(userId, domain)) {
-            throw ExcludedDomainAlreadyExistsException(domain)
-        }
+        val normalizedDomain =
+            domain
+                .trim()
+                .lowercase()
 
-        userExcludedWebsiteRepository.save(
-            UserExcludedWebsiteDomain(
-                userId = userId,
-                domain = domain
+        try {
+            userExcludedWebsiteRepository.save(
+                UserExcludedWebsiteDomain(
+                    userId = userId,
+                    domain = normalizedDomain
+                )
             )
-        )
+        } catch (exception: DataIntegrityViolationException) {
+            if (userExcludedWebsiteRepository.existsByUserIdAndDomain(userId, normalizedDomain)) {
+                throw ExcludedDomainAlreadyExistsException(normalizedDomain)
+            }
+
+            throw exception
+        }
     }
 }
