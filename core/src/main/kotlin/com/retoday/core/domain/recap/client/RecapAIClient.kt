@@ -1,8 +1,7 @@
 package com.retoday.core.domain.recap.client
 
 import com.retoday.core.domain.recap.component.RecapType
-import com.retoday.core.domain.recap.dto.UserActivityDto
-import com.retoday.core.domain.recap.dto.UserTimelineDto
+import com.retoday.core.domain.recap.dto.request.GenerateRecapRequest
 
 abstract class RecapAIClient(
     val provider: AIProvider
@@ -10,16 +9,7 @@ abstract class RecapAIClient(
     abstract val modelName: String
 
     abstract fun <T> generate(
-        type: RecapType,
-        nickname: String,
-        activities: List<UserActivityDto>,
-        responseClass: Class<T>
-    ): T
-
-    abstract fun <T> generateTimeline(
-        type: RecapType,
-        nickname: String,
-        activities: List<UserTimelineDto>,
+        request: GenerateRecapRequest,
         responseClass: Class<T>
     ): T
 }

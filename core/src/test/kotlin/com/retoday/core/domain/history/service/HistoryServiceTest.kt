@@ -1,7 +1,13 @@
 package com.retoday.core.domain.history.service
 
 import com.retoday.core.domain.history.client.AICategoryClient
+import com.retoday.core.domain.history.dto.projection.WebsiteStat
+import com.retoday.core.domain.history.dto.projection.WorkPatternHourlyCount
+import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
+import com.retoday.core.domain.history.dto.query.GetMyFrequentlyVisitedWebsitesQuery
+import com.retoday.core.domain.history.dto.query.GetMyLongestStayedWebsiteQuery
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
+import com.retoday.core.domain.history.dto.query.GetMyWorkPatternQuery
 import com.retoday.core.domain.history.entity.Website
 import com.retoday.core.domain.history.entity.WebsiteCategory
 import com.retoday.core.domain.history.exception.DuplicateHistoryException
@@ -20,6 +26,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import java.time.Instant
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 class HistoryServiceTest :
     BehaviorSpec({
@@ -63,7 +70,7 @@ class HistoryServiceTest :
                     result.historyId shouldBe history.id
                     result.pageId shouldBe page.id
                     result.websiteId shouldBe website.id
-                    result.stayDuration shouldBe 10
+                    result.recordedAt shouldBe history.createdAt
 
                     verify(exactly = 1) { websiteService.findOrCreate(DOMAIN, FAVICON_URL) }
                     verify(exactly = 1) { pageService.findOrCreate(any(), any(), any(), any()) }
@@ -163,29 +170,25 @@ class HistoryServiceTest :
                         id = 1L,
                         websiteId = 101L,
                         visitedAt = Instant.parse("2026-02-12T15:30:00Z"),
-                        closedAt = Instant.parse("2026-02-12T17:00:00Z"),
-                        stayDuration = 5_400
+                        closedAt = Instant.parse("2026-02-12T17:00:00Z")
                     ),
                     createHistory(
                         id = 2L,
                         websiteId = 102L,
                         visitedAt = Instant.parse("2026-02-12T17:30:00Z"),
-                        closedAt = Instant.parse("2026-02-12T18:30:00Z"),
-                        stayDuration = 3_600
+                        closedAt = Instant.parse("2026-02-12T18:30:00Z")
                     ),
                     createHistory(
                         id = 3L,
                         websiteId = 103L,
                         visitedAt = Instant.parse("2026-02-13T01:00:00Z"),
-                        closedAt = Instant.parse("2026-02-13T02:30:00Z"),
-                        stayDuration = 5_400
+                        closedAt = Instant.parse("2026-02-13T02:30:00Z")
                     ),
                     createHistory(
                         id = 4L,
                         websiteId = 103L,
                         visitedAt = Instant.parse("2026-02-13T02:50:00Z"),
-                        closedAt = Instant.parse("2026-02-13T03:10:00Z"),
-                        stayDuration = 1_200
+                        closedAt = Instant.parse("2026-02-13T03:10:00Z")
                     )
                 )
 
@@ -228,22 +231,19 @@ class HistoryServiceTest :
                         id = 11L,
                         websiteId = 201L,
                         visitedAt = Instant.parse("2026-02-07T15:30:00Z"),
-                        closedAt = Instant.parse("2026-02-07T16:30:00Z"),
-                        stayDuration = 3_600
+                        closedAt = Instant.parse("2026-02-07T16:30:00Z")
                     ),
                     createHistory(
                         id = 12L,
                         websiteId = 202L,
                         visitedAt = Instant.parse("2026-02-10T14:00:00Z"),
-                        closedAt = Instant.parse("2026-02-10T16:00:00Z"),
-                        stayDuration = 7_200
+                        closedAt = Instant.parse("2026-02-10T16:00:00Z")
                     ),
                     createHistory(
                         id = 13L,
                         websiteId = 203L,
                         visitedAt = Instant.parse("2026-02-13T01:00:00Z"),
-                        closedAt = Instant.parse("2026-02-13T03:30:00Z"),
-                        stayDuration = 9_000
+                        closedAt = Instant.parse("2026-02-13T03:30:00Z")
                     )
                 )
 
@@ -262,6 +262,193 @@ class HistoryServiceTest :
                 }
             }
         }
+
+        Given("일간 카테고리 분석 집계가 필요할 때") {
+            val targetDate = LocalDate.parse("2026-02-13")
+            val query =
+                GetMyCategoryAnalysisQuery(
+                    date = targetDate
+                )
+            val expectedResult = createGetMyCategoryAnalysisResult(date = targetDate)
+            val profile = createProfile()
+            val dayStartUtc = Instant.parse("2026-02-12T15:00:00Z")
+            val dayEndUtc = Instant.parse("2026-02-13T15:00:00Z")
+            every { profileRepository.findByUserId(userId) } returns profile
+            every {
+                historyRepository.findWebsiteStatsWithCategoryByUserId(
+                    userId = userId,
+                    startedAt = dayStartUtc,
+                    endedAt = dayEndUtc
+                )
+            } returns
+                expectedResult.categoryAnalyses
+                    .flatMap { categoryAnalysis ->
+                        categoryAnalysis.websiteAnalyses.map { websiteAnalysis ->
+                            createWebsiteStatWithCategory(
+                                domain = websiteAnalysis.domain,
+                                faviconUrl = websiteAnalysis.faviconUrl,
+                                categoryName =
+                                    if (categoryAnalysis.categoryName == "기타") {
+                                        null
+                                    } else {
+                                        categoryAnalysis.categoryName
+                                    },
+                                stayDuration = websiteAnalysis.stayDuration
+                            )
+                        }
+                    }
+
+            When("사용자가 본인 일간 카테고리 분석을 조회하면") {
+                val result = historyService.getMyCategoryAnalyses(userId, query)
+
+                Then("카테고리별 체류 시간과 도메인 목록이 정확하게 계산된다.") {
+                    result shouldBe expectedResult
+                    verify(exactly = 1) {
+                        historyRepository.findWebsiteStatsWithCategoryByUserId(
+                            userId = userId,
+                            startedAt = dayStartUtc,
+                            endedAt = dayEndUtc
+                        )
+                    }
+                }
+            }
+        }
+
+        Given("특정 일자 자주 방문한 웹사이트 집계가 필요할 때") {
+            val targetDate = LocalDate.parse("2026-02-13")
+            val query =
+                GetMyFrequentlyVisitedWebsitesQuery(
+                    date = targetDate,
+                    limit = 2
+                )
+            val profile = createProfile()
+            val dayStartUtc =
+                targetDate
+                    .atStartOfDay(profile.timeZone.id)
+                    .toInstant()
+            val dayEndUtc = dayStartUtc.plus(1, ChronoUnit.DAYS)
+            val expectedResult = createGetMyFrequentlyVisitedWebsitesResult(date = targetDate)
+
+            every { profileRepository.findByUserId(userId) } returns profile
+            every {
+                historyRepository.findWebsiteStatsWithVisitCountByUserId(
+                    userId = userId,
+                    startedAt = dayStartUtc,
+                    endedAt = dayEndUtc,
+                    limit = query.limit
+                )
+            } returns
+                expectedResult.websiteAnalyses.map {
+                    createWebsiteStatWithVisitCount(
+                        domain = it.domain,
+                        faviconUrl = it.faviconUrl,
+                        visitCount = it.visitCount,
+                        stayDuration = it.stayDuration
+                    )
+                }
+
+            When("사용자가 특정 일자의 자주 방문한 웹사이트를 조회하면") {
+                val result = historyService.getMyFrequentlyVisitedWebsites(userId, query)
+
+                Then("방문 횟수와 체류 시간 기준 목록이 반환된다.") {
+                    result shouldBe expectedResult
+                    verify(exactly = 1) {
+                        historyRepository.findWebsiteStatsWithVisitCountByUserId(
+                            userId = userId,
+                            startedAt = dayStartUtc,
+                            endedAt = dayEndUtc,
+                            limit = query.limit
+                        )
+                    }
+                }
+            }
+        }
+
+        Given("일간 작업 패턴 분석 집계가 필요할 때") {
+            val targetDate = LocalDate.parse("2026-02-13")
+            val query = GetMyWorkPatternQuery(date = targetDate)
+            val profile = createProfile()
+            val dayStartUtc = Instant.parse("2026-02-12T15:00:00Z")
+            val expectedResult =
+                createGetMyWorkPatternResult(
+                    date = targetDate,
+                    dawnCount = 2L,
+                    morningCount = 3L,
+                    daytimeCount = 5L,
+                    eveningCount = 4L
+                )
+
+            every { profileRepository.findByUserId(userId) } returns profile
+            every {
+                historyRepository.findHourlyHistoryCountsByUserId(
+                    userId = userId,
+                    startedAt = Instant.parse("2026-02-12T15:00:00Z")
+                )
+            } returns
+                listOf(
+                    WorkPatternHourlyCount(hour = 0L, count = 1L),
+                    WorkPatternHourlyCount(hour = 5L, count = 1L),
+                    WorkPatternHourlyCount(hour = 6L, count = 2L),
+                    WorkPatternHourlyCount(hour = 11L, count = 1L),
+                    WorkPatternHourlyCount(hour = 12L, count = 2L),
+                    WorkPatternHourlyCount(hour = 15L, count = 3L),
+                    WorkPatternHourlyCount(hour = 18L, count = 1L),
+                    WorkPatternHourlyCount(hour = 23L, count = 3L)
+                )
+
+            When("사용자가 본인 일간 작업 패턴 분석을 조회하면") {
+                val result = historyService.getMyWorkPattern(userId, query)
+
+                Then("시간대별 활동 기록 개수가 정확하게 계산된다.") {
+                    result shouldBe expectedResult
+                    verify(exactly = 1) {
+                        historyRepository.findHourlyHistoryCountsByUserId(
+                            userId = userId,
+                            startedAt = dayStartUtc
+                        )
+                    }
+                }
+            }
+        }
+
+        Given("가장 오래 머문 웹사이트 조회가 필요할 때") {
+            val targetDate = LocalDate.parse("2026-02-13")
+            val query = GetMyLongestStayedWebsiteQuery(date = targetDate)
+            val profile = createProfile()
+            val dayStartUtc = Instant.parse("2026-02-12T15:00:00Z")
+            val dayEndUtc = Instant.parse("2026-02-13T15:00:00Z")
+            val expectedResult = createGetMyLongestStayedWebsiteResult(date = targetDate, stayDuration = 5_400L)
+
+            every { profileRepository.findByUserId(userId) } returns profile
+            every {
+                historyRepository.findTopWebsiteStatByUserId(
+                    userId = userId,
+                    startedAt = dayStartUtc,
+                    endedAt = dayEndUtc
+                )
+            } returns
+                WebsiteStat(
+                    domain = expectedResult.domain!!,
+                    faviconUrl = expectedResult.faviconUrl,
+                    stayDuration = expectedResult.stayDuration
+                )
+
+            When("사용자가 본인의 최장 체류 웹사이트를 조회하면") {
+                val result = historyService.getMyLongestStayedWebsite(userId, query)
+
+                Then("최장 체류 웹사이트 정보가 반환된다.") {
+                    result shouldBe expectedResult
+                    verify(exactly = 1) {
+                        historyRepository.findTopWebsiteStatByUserId(
+                            userId = userId,
+                            startedAt = dayStartUtc,
+                            endedAt = dayEndUtc
+                        )
+                    }
+                }
+            }
+        }
+
         Given("웹사이트 도메인 카테고리 분류가 필요할 때") {
             val domain = "hackers.com"
             val studyCategory = WebsiteCategory(id = 10L, name = "학습")

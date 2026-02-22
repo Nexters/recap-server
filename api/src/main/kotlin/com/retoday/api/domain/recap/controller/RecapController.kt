@@ -1,6 +1,7 @@
 package com.retoday.api.domain.recap.controller
 
-import com.retoday.core.domain.recap.dto.RecapDetailResponse
+import com.retoday.api.global.annotation.AuthenticationId
+import com.retoday.core.domain.recap.dto.response.RecapDetailResponse
 import com.retoday.core.domain.recap.service.RecapService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -13,18 +14,14 @@ class RecapController(
 ) {
     @PostMapping("/generate")
     fun generateDailyRecap(
-        @RequestParam userId: Long,
-        @RequestParam nickname: String,
+        @AuthenticationId
+        userId: Long,
         @RequestParam date: LocalDate?
     ): ResponseEntity<RecapDetailResponse> {
         val targetDate = date ?: LocalDate.now().minusDays(1)
 
-        // 1. 생성 (Write)
-        recapService.createDailyRecap(userId, nickname, targetDate)
-
-        // 2. 조회 (Read)
         val response =
-            recapService.getRecapDetail(userId, targetDate)
+            recapService.generateDailyRecap(userId, targetDate)
                 ?: return ResponseEntity.noContent().build()
 
         return ResponseEntity.ok(response)

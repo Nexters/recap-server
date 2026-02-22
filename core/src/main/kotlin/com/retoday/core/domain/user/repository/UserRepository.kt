@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface UserRepository : JpaRepository<User, Long> {
-    @EntityGraph(attributePaths = ["profile"])
     fun findAllByIsActiveTrue(): List<User>
 
     fun findBySocialIdAndProvider(
