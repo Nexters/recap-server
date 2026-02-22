@@ -1,6 +1,5 @@
 package com.retoday.core.domain.recap.client
 
-import com.retoday.core.domain.recap.component.RecapType
 import com.retoday.core.domain.recap.dto.request.GenerateRecapRequest
 
 abstract class RecapAIClient(

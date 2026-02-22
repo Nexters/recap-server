@@ -161,14 +161,14 @@ interface HistoryRepository : JpaRepository<History, Long> {
             p.description,
             w.domain,
             c.name,
-            h.stayDuration
+            CAST((function('time_to_sec', function('timediff', h.closedAt, h.visitedAt)) / 60) AS integer)
         )
         FROM History h
         JOIN Page p ON h.pageId = p.id
         JOIN Website w ON h.websiteId = w.id
         LEFT JOIN WebsiteCategory c ON w.categoryId = c.id
         WHERE h.userId = :userId
-          AND h.visitedDate = :date
+          AND function('date', h.visitedAt) = :date
     """
     )
     fun findUserActivitiesForRecap(
@@ -191,7 +191,7 @@ interface HistoryRepository : JpaRepository<History, Long> {
         JOIN Website w ON h.websiteId = w.id
         LEFT JOIN WebsiteCategory c ON w.categoryId = c.id
         WHERE h.userId = :userId
-          AND h.visitedDate = :date
+          AND function('date', h.visitedAt) = :date
         ORDER BY h.visitedAt ASC
     """
     )
@@ -202,11 +202,33 @@ interface HistoryRepository : JpaRepository<History, Long> {
 
     // (임시) Recap의 startAt, closeAt을 채우기 위해 해당 날짜의 첫 방문과 마지막 종료 시간 조회
     // 전날부터 이어지는 활동에 대한 조건 추가 예정
+    @Query(
+        value = """
+            SELECT *
+            FROM history h
+            WHERE h.user_id = :userId
+              AND DATE(h.visited_at) = :date
+            ORDER BY h.visited_at ASC
+            LIMIT 1
+        """,
+        nativeQuery = true
+    )
     fun findFirstByUserIdAndVisitedDateOrderByVisitedAtAsc(
         userId: Long,
         date: LocalDate
     ): History?
 
+    @Query(
+        value = """
+            SELECT *
+            FROM history h
+            WHERE h.user_id = :userId
+              AND DATE(h.visited_at) = :date
+            ORDER BY h.closed_at DESC
+            LIMIT 1
+        """,
+        nativeQuery = true
+    )
     fun findFirstByUserIdAndVisitedDateOrderByClosedAtDesc(
         userId: Long,
         date: LocalDate
