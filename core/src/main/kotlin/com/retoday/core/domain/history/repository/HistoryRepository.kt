@@ -11,7 +11,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import java.time.Instant
-import java.time.LocalDate
 
 interface HistoryRepository : JpaRepository<History, Long> {
     fun findByUserIdAndPageIdAndVisitedAtAfter(
@@ -168,12 +167,14 @@ interface HistoryRepository : JpaRepository<History, Long> {
         JOIN Website w ON h.websiteId = w.id
         LEFT JOIN WebsiteCategory c ON w.categoryId = c.id
         WHERE h.userId = :userId
-          AND function('date', h.visitedAt) = :date
+          AND h.visitedAt >= :startedAt
+          AND h.visitedAt < :endedAt
     """
     )
     fun findUserActivitiesForRecap(
         @Param("userId") userId: Long,
-        @Param("date") date: LocalDate
+        @Param("startedAt") startedAt: Instant,
+        @Param("endedAt") endedAt: Instant
     ): List<UserActivityProjection>
 
     // UserTimeline
@@ -191,46 +192,26 @@ interface HistoryRepository : JpaRepository<History, Long> {
         JOIN Website w ON h.websiteId = w.id
         LEFT JOIN WebsiteCategory c ON w.categoryId = c.id
         WHERE h.userId = :userId
-          AND function('date', h.visitedAt) = :date
+          AND h.visitedAt >= :startedAt
+          AND h.visitedAt < :endedAt
         ORDER BY h.visitedAt ASC
     """
     )
     fun findUserTimelinesForRecap(
         @Param("userId") userId: Long,
-        @Param("date") date: LocalDate
+        @Param("startedAt") startedAt: Instant,
+        @Param("endedAt") endedAt: Instant
     ): List<UserTimelineProjection>
 
-    // (임시) Recap의 startAt, closeAt을 채우기 위해 해당 날짜의 첫 방문과 마지막 종료 시간 조회
-    // 전날부터 이어지는 활동에 대한 조건 추가 예정
-    @Query(
-        value = """
-            SELECT *
-            FROM history h
-            WHERE h.user_id = :userId
-              AND DATE(h.visited_at) = :date
-            ORDER BY h.visited_at ASC
-            LIMIT 1
-        """,
-        nativeQuery = true
-    )
-    fun findFirstByUserIdAndVisitedDateOrderByVisitedAtAsc(
+    fun findFirstByUserIdAndVisitedAtGreaterThanEqualAndVisitedAtLessThanOrderByVisitedAtAsc(
         userId: Long,
-        date: LocalDate
+        startedAt: Instant,
+        endedAt: Instant
     ): History?
 
-    @Query(
-        value = """
-            SELECT *
-            FROM history h
-            WHERE h.user_id = :userId
-              AND DATE(h.visited_at) = :date
-            ORDER BY h.closed_at DESC
-            LIMIT 1
-        """,
-        nativeQuery = true
-    )
-    fun findFirstByUserIdAndVisitedDateOrderByClosedAtDesc(
+    fun findFirstByUserIdAndVisitedAtGreaterThanEqualAndVisitedAtLessThanOrderByClosedAtDesc(
         userId: Long,
-        date: LocalDate
+        startedAt: Instant,
+        endedAt: Instant
     ): History?
 }

@@ -27,7 +27,7 @@ class RecapControllerTest : ControllerTest() {
                 val yesterday = LocalDate.now().minusDays(1)
                 val result = createRecapDetailResponse(yesterday)
 
-                every { recapService.generateDailyRecap(any(), yesterday) } returns result
+                every { recapService.generateDailyRecap(any(), null) } returns result
 
                 it("상태 코드 200과 RecapDetailResponse를 반환한다.") {
                     webClient

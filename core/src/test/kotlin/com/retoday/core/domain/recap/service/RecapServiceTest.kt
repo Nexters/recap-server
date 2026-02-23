@@ -16,7 +16,9 @@ import com.retoday.core.domain.user.repository.ProfileRepository
 import com.retoday.core.fixture.*
 import io.kotest.core.spec.style.BehaviorSpec
 import io.mockk.*
+import java.time.Duration
 import java.time.LocalDate
+import java.time.ZoneOffset
 
 class RecapServiceTest :
     BehaviorSpec({
@@ -45,6 +47,8 @@ class RecapServiceTest :
         val userId = 1L
         val nickname = "민주"
         val date = LocalDate.now()
+        val startedAt = date.atStartOfDay().toInstant(ZoneOffset.UTC)
+        val endedAt = startedAt.plus(Duration.ofDays(1))
         val activities = createUserActivities()
         val activityRequests = createUserActivityRequests(activities)
         val timelineActivities = createUserTimelineActivities()
@@ -54,10 +58,22 @@ class RecapServiceTest :
 
             // DB 조회 Mocking
             every { recapRepository.existsByUserIdAndRecapDate(userId, date) } returns false
-            every { historyRepository.findUserActivitiesForRecap(userId, date) } returns activities
-            every { historyRepository.findUserTimelinesForRecap(userId, date) } returns timelineActivities
-            every { historyRepository.findFirstByUserIdAndVisitedDateOrderByVisitedAtAsc(userId, date) } returns null
-            every { historyRepository.findFirstByUserIdAndVisitedDateOrderByClosedAtDesc(userId, date) } returns null
+            every { historyRepository.findUserActivitiesForRecap(userId, startedAt, endedAt) } returns activities
+            every { historyRepository.findUserTimelinesForRecap(userId, startedAt, endedAt) } returns timelineActivities
+            every {
+                historyRepository.findFirstByUserIdAndVisitedAtGreaterThanEqualAndVisitedAtLessThanOrderByVisitedAtAsc(
+                    userId,
+                    startedAt,
+                    endedAt
+                )
+            } returns null
+            every {
+                historyRepository.findFirstByUserIdAndVisitedAtGreaterThanEqualAndVisitedAtLessThanOrderByClosedAtDesc(
+                    userId,
+                    startedAt,
+                    endedAt
+                )
+            } returns null
             every { profileRepository.findByUserId(userId) } returns
                 createProfile(
                     userId = userId,
