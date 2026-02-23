@@ -1,9 +1,9 @@
 package com.retoday.core.domain.history.repository
 
-import com.retoday.core.domain.history.dto.projection.WebsiteStat
-import com.retoday.core.domain.history.dto.projection.WebsiteStatWithCategory
-import com.retoday.core.domain.history.dto.projection.WebsiteStatWithVisitCount
-import com.retoday.core.domain.history.dto.projection.WorkPatternHourlyCount
+import com.retoday.core.domain.history.dto.projection.WebsiteStatProjection
+import com.retoday.core.domain.history.dto.projection.WebsiteStatWithCategoryProjection
+import com.retoday.core.domain.history.dto.projection.WebsiteStatWithVisitCountProjection
+import com.retoday.core.domain.history.dto.projection.WorkPatternHourlyCountProjection
 import com.retoday.core.domain.history.entity.History
 import com.retoday.core.domain.recap.dto.projection.UserActivityProjection
 import com.retoday.core.domain.recap.dto.projection.UserTimelineProjection
@@ -56,7 +56,7 @@ interface HistoryRepository : JpaRepository<History, Long> {
         userId: Long,
         @Param("startedAt")
         startedAt: Instant
-    ): List<WorkPatternHourlyCount>
+    ): List<WorkPatternHourlyCountProjection>
 
     @Query(
         """
@@ -90,7 +90,7 @@ interface HistoryRepository : JpaRepository<History, Long> {
         startedAt: Instant,
         @Param("endedAt")
         endedAt: Instant
-    ): WebsiteStat?
+    ): WebsiteStatProjection?
 
     @Query(
         """
@@ -125,7 +125,7 @@ interface HistoryRepository : JpaRepository<History, Long> {
         startedAt: Instant,
         @Param("endedAt")
         endedAt: Instant
-    ): List<WebsiteStatWithCategory>
+    ): List<WebsiteStatWithCategoryProjection>
 
     @Query(
         """
@@ -162,7 +162,7 @@ interface HistoryRepository : JpaRepository<History, Long> {
         endedAt: Instant,
         @Param("limit")
         limit: Int
-    ): List<WebsiteStatWithVisitCount>
+    ): List<WebsiteStatWithVisitCountProjection>
 
     @Query(
         """

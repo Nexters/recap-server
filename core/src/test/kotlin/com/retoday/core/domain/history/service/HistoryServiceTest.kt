@@ -1,8 +1,8 @@
 package com.retoday.core.domain.history.service
 
 import com.retoday.core.domain.history.client.AICategoryClient
-import com.retoday.core.domain.history.dto.projection.WebsiteStat
-import com.retoday.core.domain.history.dto.projection.WorkPatternHourlyCount
+import com.retoday.core.domain.history.dto.projection.WebsiteStatProjection
+import com.retoday.core.domain.history.dto.projection.WorkPatternHourlyCountProjection
 import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
 import com.retoday.core.domain.history.dto.query.GetMyFrequentlyVisitedWebsitesQuery
 import com.retoday.core.domain.history.dto.query.GetMyLongestStayedWebsiteQuery
@@ -284,7 +284,7 @@ class HistoryServiceTest :
                 expectedResult.categoryAnalyses
                     .flatMap { categoryAnalysis ->
                         categoryAnalysis.websiteAnalyses.map { websiteAnalysis ->
-                            createWebsiteStatWithCategory(
+                            createWebsiteStatWithCategoryProjection(
                                 domain = websiteAnalysis.domain,
                                 faviconUrl = websiteAnalysis.faviconUrl,
                                 categoryName =
@@ -339,7 +339,7 @@ class HistoryServiceTest :
                 )
             } returns
                 expectedResult.websiteAnalyses.map {
-                    createWebsiteStatWithVisitCount(
+                    createWebsiteStatWithVisitCountProjection(
                         domain = it.domain,
                         faviconUrl = it.faviconUrl,
                         visitCount = it.visitCount,
@@ -386,14 +386,14 @@ class HistoryServiceTest :
                 )
             } returns
                 listOf(
-                    WorkPatternHourlyCount(hour = 0L, count = 1L),
-                    WorkPatternHourlyCount(hour = 5L, count = 1L),
-                    WorkPatternHourlyCount(hour = 6L, count = 2L),
-                    WorkPatternHourlyCount(hour = 11L, count = 1L),
-                    WorkPatternHourlyCount(hour = 12L, count = 2L),
-                    WorkPatternHourlyCount(hour = 15L, count = 3L),
-                    WorkPatternHourlyCount(hour = 18L, count = 1L),
-                    WorkPatternHourlyCount(hour = 23L, count = 3L)
+                    WorkPatternHourlyCountProjection(hour = 0L, count = 1L),
+                    WorkPatternHourlyCountProjection(hour = 5L, count = 1L),
+                    WorkPatternHourlyCountProjection(hour = 6L, count = 2L),
+                    WorkPatternHourlyCountProjection(hour = 11L, count = 1L),
+                    WorkPatternHourlyCountProjection(hour = 12L, count = 2L),
+                    WorkPatternHourlyCountProjection(hour = 15L, count = 3L),
+                    WorkPatternHourlyCountProjection(hour = 18L, count = 1L),
+                    WorkPatternHourlyCountProjection(hour = 23L, count = 3L)
                 )
 
             When("사용자가 본인 일간 작업 패턴 분석을 조회하면") {
@@ -427,7 +427,7 @@ class HistoryServiceTest :
                     endedAt = dayEndUtc
                 )
             } returns
-                WebsiteStat(
+                WebsiteStatProjection(
                     domain = expectedResult.domain!!,
                     faviconUrl = expectedResult.faviconUrl,
                     stayDuration = expectedResult.stayDuration

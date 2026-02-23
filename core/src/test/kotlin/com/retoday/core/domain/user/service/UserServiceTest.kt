@@ -19,7 +19,7 @@ class UserServiceTest : BehaviorSpec() {
 
     init {
         Given("가입한 사용자가") {
-            every { profileRepository.findByUserIdWithEmail(any()) } returns createProfileWithEmail()
+            every { profileRepository.findByUserIdWithEmail(any()) } returns createProfileWithEmailProjection()
             every { websiteRepository.findAllExcludedDomainsByUserId(any()) } returns listOf(USER_EX_DOMAIN)
 
             When("본인의 프로필을 조회하면") {
