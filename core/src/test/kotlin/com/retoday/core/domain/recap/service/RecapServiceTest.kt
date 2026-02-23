@@ -1,46 +1,168 @@
 package com.retoday.core.domain.recap.service
 
+import com.retoday.core.common.ServiceTest
+import com.retoday.core.domain.history.repository.HistoryRepository
 import com.retoday.core.domain.recap.client.RecapAIClient
 import com.retoday.core.domain.recap.component.RecapType
-import com.retoday.core.domain.recap.dto.GeminiRecapResponse
-import com.retoday.core.fixture.createGeminiRecapResponse
-import com.retoday.core.fixture.createUserActivities
-import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.matchers.shouldBe
+import com.retoday.core.domain.recap.dto.request.GenerateRecapRequest
+import com.retoday.core.domain.recap.dto.request.RecapPayload
+import com.retoday.core.domain.recap.dto.response.GeminiRecapResponse
+import com.retoday.core.domain.recap.dto.response.GeminiTimelineResponse
+import com.retoday.core.domain.recap.dto.response.GeminiTopicResponse
+import com.retoday.core.domain.recap.entity.Section
+import com.retoday.core.domain.recap.entity.Timeline
+import com.retoday.core.domain.recap.entity.Topic
+import com.retoday.core.domain.recap.repository.RecapRepository
+import com.retoday.core.domain.recap.repository.SectionRepository
+import com.retoday.core.domain.recap.repository.TimelineRepository
+import com.retoday.core.domain.recap.repository.TopicRepository
+import com.retoday.core.domain.user.repository.ProfileRepository
+import com.retoday.core.fixture.*
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
+import java.time.Duration
+import java.time.LocalDate
 
-class RecapServiceTest :
-    BehaviorSpec({
+class RecapServiceTest : ServiceTest() {
+    private val recapAIClient = mockk<RecapAIClient>()
+    private val recapRepository = mockk<RecapRepository>()
+    private val sectionRepository = mockk<SectionRepository>()
+    private val topicRepository = mockk<TopicRepository>()
+    private val timelineRepository = mockk<TimelineRepository>()
+    private val historyRepository = mockk<HistoryRepository>()
+    private val profileRepository = mockk<ProfileRepository>()
 
-        val recapAIClient = mockk<RecapAIClient>()
-        val recapService = RecapService(recapAIClient)
+    private val recapService =
+        RecapService(
+            recapAIClient = recapAIClient,
+            recapRepository = recapRepository,
+            sectionRepository = sectionRepository,
+            topicRepository = topicRepository,
+            timelineRepository = timelineRepository,
+            historyRepository = historyRepository,
+            profileRepository = profileRepository,
+            transactionManager = transactionManager
+        )
 
-        val nickname = "민주"
-        val activities = createUserActivities()
+    init {
+        Given("사용자가 특정 날짜에 활동 기록을 가지고 있을 때") {
+            val userId = ID
+            val date = LocalDate.parse("2026-02-23")
+            val profile =
+                createProfile(
+                    userId = userId,
+                    firstName = "민주"
+                )
+            val startedAt = date.atStartOfDay(profile.timeZone.id).toInstant()
+            val endedAt = startedAt.plus(Duration.ofDays(1))
+            val activities = createUserActivities()
+            val activityRequests = createUserActivityRequests(activities)
+            val timelineActivities = createUserTimelineActivities()
+            val timelineRequests = createUserTimelineRequests(timelineActivities)
 
-        Given("사용자가 활동 데이터를 가지고 있을 때") {
+            // DB 조회 Mocking
+            every { recapRepository.existsByUserIdAndRecapDate(userId, date) } returns false
+            every { historyRepository.findUserActivitiesForRecap(userId, startedAt, endedAt) } returns activities
+            every { historyRepository.findUserTimelinesForRecap(userId, startedAt, endedAt) } returns timelineActivities
+            every {
+                historyRepository.findFirstByUserIdAndVisitedAtGreaterThanEqualAndVisitedAtLessThanOrderByVisitedAtAsc(
+                    userId,
+                    startedAt,
+                    endedAt
+                )
+            } returns null
+            every {
+                historyRepository.findFirstByUserIdAndVisitedAtGreaterThanEqualAndVisitedAtLessThanOrderByClosedAtDesc(
+                    userId,
+                    startedAt,
+                    endedAt
+                )
+            } returns null
+            every { profileRepository.findByUserId(userId) } returns profile
 
-            And("오늘 리캡 생성을 요청하면") {
+            // AI 응답 Mocking
+            val recapResponse = createGeminiRecapResponse()
+            val topicResponse = createGeminiTopicResponse()
+            val timelineResponse = createGeminiTimelineResponse()
 
-                val recapResponse = createGeminiRecapResponse()
+            every { recapAIClient.modelName } returns "gemini-pro"
+            every {
+                recapAIClient.generate(
+                    GenerateRecapRequest(
+                        type = RecapType.TODAY_RECAP,
+                        nickname = profile.firstName,
+                        payload = RecapPayload.Activities(activityRequests)
+                    ),
+                    GeminiRecapResponse::class.java
+                )
+            } returns recapResponse
+            every {
+                recapAIClient.generate(
+                    GenerateRecapRequest(
+                        type = RecapType.TOPIC,
+                        nickname = profile.firstName,
+                        payload = RecapPayload.Activities(activityRequests)
+                    ),
+                    GeminiTopicResponse::class.java
+                )
+            } returns topicResponse
+            every {
+                recapAIClient.generate(
+                    GenerateRecapRequest(
+                        type = RecapType.TIMELINE,
+                        nickname = profile.firstName,
+                        payload = RecapPayload.Timelines(timelineRequests)
+                    ),
+                    GeminiTimelineResponse::class.java
+                )
+            } returns timelineResponse
 
-                every {
-                    recapAIClient.generate(
-                        RecapType.TODAY_RECAP,
-                        nickname,
-                        activities,
-                        GeminiRecapResponse::class.java
-                    )
-                } returns recapResponse
+            // Entity 저장 Mocking
+            val savedRecap = createRecap(id = 100L)
+            every { recapRepository.save(any()) } returns savedRecap
+            every { sectionRepository.saveAll(any<List<Section>>()) } returns emptyList()
+            every { topicRepository.saveAll(any<List<Topic>>()) } returns emptyList()
+            every { timelineRepository.saveAll(any<List<Timeline>>()) } returns emptyList()
 
-                When("generateRecap을 호출하면") {
-                    val result = recapService.generateRecap(nickname, activities)
+            When("createDailyRecap을 호출하여 리캡 생성을 수행하면") {
+                recapService.createDailyRecap(userId, date)
 
-                    Then("AIClient를 통해 응답을 받아 반환한다") {
-                        result shouldBe recapResponse
+                Then("부모 Recap이 저장되고, 파생되는 모든 엔티티들이 recapId(100L)를 가지고 저장된다") {
+                    // 1. 부모 리캡 저장 확인
+                    verify(exactly = 1) { recapRepository.save(any()) }
+
+                    // 2. 섹션 저장 확인
+                    verify(exactly = 1) {
+                        sectionRepository.saveAll(
+                            match<List<Section>> { sections ->
+                                // 타입을 명시적으로 지정
+                                sections.all { it.recapId == 100L }
+                            }
+                        )
+                    }
+
+                    // 3. 토픽 저장 확인
+                    verify(exactly = 1) {
+                        topicRepository.saveAll(
+                            match<List<Topic>> { topics ->
+                                // 타입을 명시적으로 지정
+                                topics.all { it.recapId == 100L }
+                            }
+                        )
+                    }
+
+                    // 4. 타임라인 저장 확인
+                    verify(exactly = 1) {
+                        timelineRepository.saveAll(
+                            match<List<Timeline>> { timelines ->
+                                // 타입을 명시적으로 지정
+                                timelines.all { it.recapId == 100L }
+                            }
+                        )
                     }
                 }
             }
         }
-    })
+    }
+}

@@ -1,8 +1,8 @@
 package com.retoday.core.domain.history.service
 
 import com.retoday.core.domain.history.client.AICategoryClient
-import com.retoday.core.domain.history.dto.projection.WebsiteStat
-import com.retoday.core.domain.history.dto.projection.WorkPatternHourlyCount
+import com.retoday.core.domain.history.dto.projection.WebsiteStatProjection
+import com.retoday.core.domain.history.dto.projection.WorkPatternHourlyCountProjection
 import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
 import com.retoday.core.domain.history.dto.query.GetMyFrequentlyVisitedWebsitesQuery
 import com.retoday.core.domain.history.dto.query.GetMyLongestStayedWebsiteQuery
@@ -39,9 +39,9 @@ class HistoryServiceTest :
         val historyService =
             HistoryService(
                 historyRepository = historyRepository,
-                profileRepository = profileRepository,
                 websiteService = websiteService,
                 pageService = pageService,
+                profileRepository = profileRepository,
                 categoryRepository = categoryRepository,
                 aiClient = aiClient
             )
@@ -70,6 +70,7 @@ class HistoryServiceTest :
                     result.historyId shouldBe history.id
                     result.pageId shouldBe page.id
                     result.websiteId shouldBe website.id
+                    result.recordedAt shouldBe history.createdAt
 
                     verify(exactly = 1) { websiteService.findOrCreate(DOMAIN, FAVICON_URL) }
                     verify(exactly = 1) { pageService.findOrCreate(any(), any(), any(), any()) }
@@ -262,40 +263,6 @@ class HistoryServiceTest :
             }
         }
 
-        Given("웹사이트 도메인 카테고리 분류가 필요할 때") {
-            val domain = "hackers.com"
-            val studyCategory = WebsiteCategory(id = 10L, name = "학습")
-            val categoryList = listOf(studyCategory)
-            val categoryNames = listOf("학습")
-
-            When("카테고리가 할당되지 않은 도메인인 경우") {
-                val targetWebsite = Website(id = 1L, domain = domain, categoryId = null)
-                every { categoryRepository.findAll() } returns categoryList
-                every { aiClient.classify(domain, categoryNames) } returns "학습"
-                every { categoryRepository.findByName("학습") } returns studyCategory
-
-                historyService.classifyCategory(targetWebsite, domain)
-
-                Then("AI 결과에 따라 웹사이트의 카테고리가 업데이트되어야 한다") {
-                    targetWebsite.categoryId shouldBe 10L
-                    verify(exactly = 1) { aiClient.classify(domain, any()) }
-                }
-            }
-
-            When("AI가 분류한 카테고리가 DB에 존재하지 않는 이름이라면") {
-                val freshWebsite = Website(id = 2L, domain = domain, categoryId = null)
-                every { categoryRepository.findAll() } returns categoryList
-                every { aiClient.classify(domain, categoryNames) } returns "잘못된카테고리"
-                every { categoryRepository.findByName("잘못된카테고리") } returns null
-
-                Then("InvalidCategoryException이 발생해야 한다") {
-                    shouldThrow<InvalidCategoryException> {
-                        historyService.classifyCategory(freshWebsite, domain)
-                    }
-                }
-            }
-        }
-
         Given("일간 카테고리 분석 집계가 필요할 때") {
             val targetDate = LocalDate.parse("2026-02-13")
             val query =
@@ -317,7 +284,7 @@ class HistoryServiceTest :
                 expectedResult.categoryAnalyses
                     .flatMap { categoryAnalysis ->
                         categoryAnalysis.websiteAnalyses.map { websiteAnalysis ->
-                            createWebsiteStatWithCategory(
+                            createWebsiteStatWithCategoryProjection(
                                 domain = websiteAnalysis.domain,
                                 faviconUrl = websiteAnalysis.faviconUrl,
                                 categoryName =
@@ -372,7 +339,7 @@ class HistoryServiceTest :
                 )
             } returns
                 expectedResult.websiteAnalyses.map {
-                    createWebsiteStatWithVisitCount(
+                    createWebsiteStatWithVisitCountProjection(
                         domain = it.domain,
                         faviconUrl = it.faviconUrl,
                         visitCount = it.visitCount,
@@ -419,14 +386,14 @@ class HistoryServiceTest :
                 )
             } returns
                 listOf(
-                    WorkPatternHourlyCount(hour = 0L, count = 1L),
-                    WorkPatternHourlyCount(hour = 5L, count = 1L),
-                    WorkPatternHourlyCount(hour = 6L, count = 2L),
-                    WorkPatternHourlyCount(hour = 11L, count = 1L),
-                    WorkPatternHourlyCount(hour = 12L, count = 2L),
-                    WorkPatternHourlyCount(hour = 15L, count = 3L),
-                    WorkPatternHourlyCount(hour = 18L, count = 1L),
-                    WorkPatternHourlyCount(hour = 23L, count = 3L)
+                    WorkPatternHourlyCountProjection(hour = 0L, count = 1L),
+                    WorkPatternHourlyCountProjection(hour = 5L, count = 1L),
+                    WorkPatternHourlyCountProjection(hour = 6L, count = 2L),
+                    WorkPatternHourlyCountProjection(hour = 11L, count = 1L),
+                    WorkPatternHourlyCountProjection(hour = 12L, count = 2L),
+                    WorkPatternHourlyCountProjection(hour = 15L, count = 3L),
+                    WorkPatternHourlyCountProjection(hour = 18L, count = 1L),
+                    WorkPatternHourlyCountProjection(hour = 23L, count = 3L)
                 )
 
             When("사용자가 본인 일간 작업 패턴 분석을 조회하면") {
@@ -460,7 +427,7 @@ class HistoryServiceTest :
                     endedAt = dayEndUtc
                 )
             } returns
-                WebsiteStat(
+                WebsiteStatProjection(
                     domain = expectedResult.domain!!,
                     faviconUrl = expectedResult.faviconUrl,
                     stayDuration = expectedResult.stayDuration
@@ -477,6 +444,40 @@ class HistoryServiceTest :
                             startedAt = dayStartUtc,
                             endedAt = dayEndUtc
                         )
+                    }
+                }
+            }
+        }
+
+        Given("웹사이트 도메인 카테고리 분류가 필요할 때") {
+            val domain = "hackers.com"
+            val studyCategory = WebsiteCategory(id = 10L, name = "학습")
+            val categoryList = listOf(studyCategory)
+            val categoryNames = listOf("학습")
+
+            When("카테고리가 할당되지 않은 도메인인 경우") {
+                val targetWebsite = Website(id = 1L, domain = domain, categoryId = null)
+                every { categoryRepository.findAll() } returns categoryList
+                every { aiClient.classify(domain, categoryNames) } returns "학습"
+                every { categoryRepository.findByName("학습") } returns studyCategory
+
+                historyService.classifyCategory(targetWebsite, domain)
+
+                Then("AI 결과에 따라 웹사이트의 카테고리가 업데이트되어야 한다") {
+                    targetWebsite.categoryId shouldBe 10L
+                    verify(exactly = 1) { aiClient.classify(domain, any()) }
+                }
+            }
+
+            When("AI가 분류한 카테고리가 DB에 존재하지 않는 이름이라면") {
+                val freshWebsite = Website(id = 2L, domain = domain, categoryId = null)
+                every { categoryRepository.findAll() } returns categoryList
+                every { aiClient.classify(domain, categoryNames) } returns "잘못된카테고리"
+                every { categoryRepository.findByName("잘못된카테고리") } returns null
+
+                Then("InvalidCategoryException이 발생해야 한다") {
+                    shouldThrow<InvalidCategoryException> {
+                        historyService.classifyCategory(freshWebsite, domain)
                     }
                 }
             }

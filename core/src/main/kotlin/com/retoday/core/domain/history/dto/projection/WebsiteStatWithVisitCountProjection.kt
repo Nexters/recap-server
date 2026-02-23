@@ -1,8 +1,8 @@
 package com.retoday.core.domain.history.dto.projection
 
-data class WebsiteStatWithCategory(
+data class WebsiteStatWithVisitCountProjection(
     val domain: String,
     val faviconUrl: String?,
-    val categoryName: String?,
+    val visitCount: Long,
     val stayDuration: Long
 )

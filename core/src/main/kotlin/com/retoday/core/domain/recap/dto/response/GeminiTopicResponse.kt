@@ -1,4 +1,4 @@
-package com.retoday.core.domain.recap.dto
+package com.retoday.core.domain.recap.dto.response
 
 // 3번: 많이 둘러본 주제
 data class GeminiTopicResponse(
