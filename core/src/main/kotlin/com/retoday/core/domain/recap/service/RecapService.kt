@@ -13,17 +13,19 @@ import com.retoday.core.domain.recap.dto.response.GeminiRecapResponse
 import com.retoday.core.domain.recap.dto.response.GeminiTimelineResponse
 import com.retoday.core.domain.recap.dto.response.GeminiTopicResponse
 import com.retoday.core.domain.recap.dto.response.RecapDetailResponse
+import com.retoday.core.domain.recap.entity.Recap
+import com.retoday.core.domain.recap.entity.Section
+import com.retoday.core.domain.recap.entity.Timeline
+import com.retoday.core.domain.recap.entity.Topic
 import com.retoday.core.domain.recap.repository.RecapRepository
 import com.retoday.core.domain.recap.repository.SectionRepository
 import com.retoday.core.domain.recap.repository.TimelineRepository
 import com.retoday.core.domain.recap.repository.TopicRepository
 import com.retoday.core.domain.user.repository.ProfileRepository
+import com.retoday.core.global.extension.transaction
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
-import java.time.Duration
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
+import java.time.*
+import java.time.format.DateTimeFormatter
 
 @Service
 class RecapService(
@@ -33,16 +35,19 @@ class RecapService(
     private val topicRepository: TopicRepository,
     private val timelineRepository: TimelineRepository,
     private val historyRepository: HistoryRepository,
-    private val profileRepository: ProfileRepository,
-    private val recapSaveService: RecapSaveService
+    private val profileRepository: ProfileRepository
 ) {
+    private companion object {
+        val TIMELINE_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
+    }
 
     fun generateDailyRecap(
         userId: Long,
         date: LocalDate?
     ): RecapDetailResponse? {
-        val targetDate = resolveTargetDate(date)
+        val targetDate = date ?: LocalDate.now().minusDays(1)
         createDailyRecap(userId, targetDate)
+
         return getRecapDetail(userId, targetDate)
     }
 
@@ -51,7 +56,10 @@ class RecapService(
         userId: Long,
         date: LocalDate
     ) {
-        val startedAt = date.atStartOfDay().toInstant(ZoneOffset.UTC)
+        val startedAt =
+            date
+                .atStartOfDay()
+                .toInstant(ZoneOffset.UTC)
         val endedAt = startedAt.plus(Duration.ofDays(1))
 
         if (recapRepository.existsByUserIdAndRecapDate(userId, date)) return
@@ -85,38 +93,79 @@ class RecapService(
             timelineResponse = generateTimeline(name, timelineRequests)
         }
 
-        recapSaveService.save(
-            PreparedRecapContent(
-                userId = userId,
-                recapDate = date,
-                title = recapResponse.title,
-                summary = recapResponse.dailySummary,
-                startedAt = firstHistory?.visitedAt ?: Instant.now(),
-                closedAt = lastHistory?.closedAt ?: Instant.now(),
-                model = recapAIClient.modelName,
-                sections = recapResponse.sections,
-                topics = topicResponse.topics,
-                timelines = timelineResponse.timelines
-            )
-        )
+        transaction {
+            val recap =
+                Recap(
+                    userId = userId,
+                    recapDate = date,
+                    title = recapResponse.title,
+                    summary = recapResponse.dailySummary,
+                    startedAt = firstHistory?.visitedAt ?: Instant.now(),
+                    closedAt = lastHistory?.closedAt ?: Instant.now(),
+                    model = recapAIClient.modelName
+                ).let { recapRepository.save(it) }
+
+            val sections =
+                recapResponse.sections
+                    .map {
+                        Section(
+                            recapId = recap.id!!,
+                            title = it.title,
+                            content = it.content
+                        )
+                    }.let { sectionRepository.saveAll(it) }
+
+            val topics =
+                topicResponse.topics
+                    .map {
+                        Topic(
+                            recapId = recap.id!!,
+                            keyword = it.keyword,
+                            title = it.title,
+                            content = it.content
+                        )
+                    }.let { topicRepository.saveAll(it) }
+
+            if (timelineResponse.timelines.isEmpty()) return@transaction
+
+            val timelines =
+                timelineResponse.timelines
+                    .map { item ->
+                        val startedAt = LocalTime.parse(item.startedAt, TIMELINE_TIME_FORMATTER)
+                        val endedAt = LocalTime.parse(item.endedAt, TIMELINE_TIME_FORMATTER)
+                        val duration =
+                            Duration
+                                .between(startedAt, endedAt)
+                                .toMinutes()
+                                .toInt()
+
+                        Timeline(
+                            recapId = recap.id!!,
+                            startedAt = startedAt,
+                            endedAt = endedAt,
+                            title = item.title,
+                            durationMinutes = duration
+                        )
+                    }.let { timelineRepository.saveAll(it) }
+        }
     }
 
     // api 호출용 조회 로직
-    @Transactional(readOnly = true)
     fun getRecapDetail(
         userId: Long,
         date: LocalDate
-    ): RecapDetailResponse? {
-        val recap = recapRepository.findByUserIdAndRecapDate(userId, date) ?: return null
+    ): RecapDetailResponse? =
+        transaction(readOnly = true) {
+            recapRepository
+                .findByUserIdAndRecapDate(userId, date)
+                ?.let {
+                    val sections = sectionRepository.findAllByRecapId(it.id!!)
+                    val topics = topicRepository.findAllByRecapId(it.id!!)
+                    val timelines = timelineRepository.findAllByRecapId(it.id!!)
 
-        val sections = sectionRepository.findAllByRecapId(recap.id!!)
-        val topics = topicRepository.findAllByRecapId(recap.id!!)
-        val timelines = timelineRepository.findAllByRecapId(recap.id!!)
-
-        return RecapDetailResponse.of(recap, sections, timelines, topics)
-    }
-
-    private fun resolveTargetDate(date: LocalDate?): LocalDate = date ?: LocalDate.now().minusDays(1)
+                    RecapDetailResponse.of(it, sections, timelines, topics)
+                }
+        }
 
     // AI Generation Methods
     fun generateRecap(

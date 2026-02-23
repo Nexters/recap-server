@@ -1,5 +1,6 @@
 package com.retoday.core.domain.recap.service
 
+import com.retoday.core.common.ServiceTest
 import com.retoday.core.domain.history.repository.HistoryRepository
 import com.retoday.core.domain.recap.client.RecapAIClient
 import com.retoday.core.domain.recap.component.RecapType
@@ -11,46 +12,40 @@ import com.retoday.core.domain.recap.dto.response.GeminiTopicResponse
 import com.retoday.core.domain.recap.entity.Section
 import com.retoday.core.domain.recap.entity.Timeline
 import com.retoday.core.domain.recap.entity.Topic
-import com.retoday.core.domain.recap.repository.*
+import com.retoday.core.domain.recap.repository.RecapRepository
+import com.retoday.core.domain.recap.repository.SectionRepository
+import com.retoday.core.domain.recap.repository.TimelineRepository
+import com.retoday.core.domain.recap.repository.TopicRepository
 import com.retoday.core.domain.user.repository.ProfileRepository
 import com.retoday.core.fixture.*
-import io.kotest.core.spec.style.BehaviorSpec
-import io.mockk.*
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
 import java.time.Duration
 import java.time.LocalDate
 import java.time.ZoneOffset
 
-class RecapServiceTest :
-    BehaviorSpec({
+class RecapServiceTest : ServiceTest() {
+    private val recapAIClient = mockk<RecapAIClient>()
+    private val recapRepository = mockk<RecapRepository>()
+    private val sectionRepository = mockk<SectionRepository>()
+    private val topicRepository = mockk<TopicRepository>()
+    private val timelineRepository = mockk<TimelineRepository>()
+    private val historyRepository = mockk<HistoryRepository>()
+    private val profileRepository = mockk<ProfileRepository>()
 
-        // 1. 모든 의존성 Mocking
-        val recapAIClient = mockk<RecapAIClient>()
-        val recapRepository = mockk<RecapRepository>()
-        val sectionRepository = mockk<SectionRepository>()
-        val topicRepository = mockk<TopicRepository>()
-        val timelineRepository = mockk<TimelineRepository>()
-        val historyRepository = mockk<HistoryRepository>()
-        val profileRepository = mockk<ProfileRepository>()
-        val recapSaveService =
-            RecapSaveService(
-                recapRepository = recapRepository,
-                sectionRepository = sectionRepository,
-                topicRepository = topicRepository,
-                timelineRepository = timelineRepository
-            )
+    private val recapService =
+        RecapService(
+            recapAIClient = recapAIClient,
+            recapRepository = recapRepository,
+            sectionRepository = sectionRepository,
+            topicRepository = topicRepository,
+            timelineRepository = timelineRepository,
+            historyRepository = historyRepository,
+            profileRepository = profileRepository
+        )
 
-        val recapService =
-            RecapService(
-                recapAIClient,
-                recapRepository,
-                sectionRepository,
-                topicRepository,
-                timelineRepository,
-                historyRepository,
-                profileRepository,
-                recapSaveService
-            )
-
+    init {
         // 공통 데이터 설정
         val userId = 1L
         val nickname = "민주"
@@ -63,7 +58,6 @@ class RecapServiceTest :
         val timelineRequests = createUserTimelineRequests(timelineActivities)
 
         Given("사용자가 특정 날짜에 활동 기록을 가지고 있을 때") {
-
             // DB 조회 Mocking
             every { recapRepository.existsByUserIdAndRecapDate(userId, date) } returns false
             every { historyRepository.findUserActivitiesForRecap(userId, startedAt, endedAt) } returns activities
@@ -171,4 +165,5 @@ class RecapServiceTest :
                 }
             }
         }
-    })
+    }
+}
