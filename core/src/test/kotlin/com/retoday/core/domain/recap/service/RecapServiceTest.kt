@@ -31,6 +31,13 @@ class RecapServiceTest :
         val timelineRepository = mockk<TimelineRepository>()
         val historyRepository = mockk<HistoryRepository>()
         val profileRepository = mockk<ProfileRepository>()
+        val recapSaveService =
+            RecapSaveService(
+                recapRepository = recapRepository,
+                sectionRepository = sectionRepository,
+                topicRepository = topicRepository,
+                timelineRepository = timelineRepository
+            )
 
         val recapService =
             RecapService(
@@ -40,7 +47,8 @@ class RecapServiceTest :
                 topicRepository,
                 timelineRepository,
                 historyRepository,
-                profileRepository
+                profileRepository,
+                recapSaveService
             )
 
         // 공통 데이터 설정

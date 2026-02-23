@@ -13,10 +13,6 @@ import com.retoday.core.domain.recap.dto.response.GeminiRecapResponse
 import com.retoday.core.domain.recap.dto.response.GeminiTimelineResponse
 import com.retoday.core.domain.recap.dto.response.GeminiTopicResponse
 import com.retoday.core.domain.recap.dto.response.RecapDetailResponse
-import com.retoday.core.domain.recap.entity.Recap
-import com.retoday.core.domain.recap.entity.Section
-import com.retoday.core.domain.recap.entity.Timeline
-import com.retoday.core.domain.recap.entity.Topic
 import com.retoday.core.domain.recap.repository.RecapRepository
 import com.retoday.core.domain.recap.repository.SectionRepository
 import com.retoday.core.domain.recap.repository.TimelineRepository
@@ -27,9 +23,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
-import java.time.LocalTime
 import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 @Service
 class RecapService(
@@ -39,11 +33,9 @@ class RecapService(
     private val topicRepository: TopicRepository,
     private val timelineRepository: TimelineRepository,
     private val historyRepository: HistoryRepository,
-    private val profileRepository: ProfileRepository
+    private val profileRepository: ProfileRepository,
+    private val recapSaveService: RecapSaveService
 ) {
-    private companion object {
-        val TIMELINE_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
-    }
 
     fun generateDailyRecap(
         userId: Long,
@@ -55,7 +47,6 @@ class RecapService(
     }
 
     // 리캡 생성 로직
-    @Transactional
     fun createDailyRecap(
         userId: Long,
         date: LocalDate
@@ -83,32 +74,31 @@ class RecapService(
                 endedAt
             )
 
-        val response = generateRecap(name, activityRequests)
-        val recap =
-            Recap(
-                userId = userId,
-                recapDate = date,
-                title = response.title,
-                summary = response.dailySummary,
-                startedAt = firstHistory?.visitedAt ?: Instant.now(),
-                closedAt = lastHistory?.closedAt ?: Instant.now(),
-                model = recapAIClient.modelName
-            ).let { recapRepository.save(it) }
-
-        val sections =
-            response.sections.map {
-                Section(recapId = recap.id!!, title = it.title, content = it.content)
-            }
-        sectionRepository.saveAll(sections)
-
-        saveTopicsInternal(recap, name, activityRequests)
+        val recapResponse = generateRecap(name, activityRequests)
+        val topicResponse = generateTopics(name, activityRequests)
 
         // 타임라인 전용 데이터 조회 및 저장
+        var timelineResponse = GeminiTimelineResponse()
         val timelineProjections = historyRepository.findUserTimelinesForRecap(userId, startedAt, endedAt)
         if (timelineProjections.isNotEmpty()) {
             val timelineRequests = timelineProjections.map { it.toRequest() }
-            saveTimelinesInternal(recap, name, timelineRequests)
+            timelineResponse = generateTimeline(name, timelineRequests)
         }
+
+        recapSaveService.save(
+            PreparedRecapContent(
+                userId = userId,
+                recapDate = date,
+                title = recapResponse.title,
+                summary = recapResponse.dailySummary,
+                startedAt = firstHistory?.visitedAt ?: Instant.now(),
+                closedAt = lastHistory?.closedAt ?: Instant.now(),
+                model = recapAIClient.modelName,
+                sections = recapResponse.sections,
+                topics = topicResponse.topics,
+                timelines = timelineResponse.timelines
+            )
+        )
     }
 
     // api 호출용 조회 로직
@@ -125,56 +115,6 @@ class RecapService(
 
         return RecapDetailResponse.of(recap, sections, timelines, topics)
     }
-
-    private fun saveTimelinesInternal(
-        recap: Recap,
-        name: String,
-        activities: List<UserTimelineRequest>
-    ) {
-        // 2. 가공된 데이터(enrichedActivities)를 AI에게 전달
-        val timelineResponse = generateTimeline(name, activities)
-
-        val timelines =
-            timelineResponse.timelines.map { it ->
-                val startedAt = LocalTime.parse(it.startedAt, TIMELINE_TIME_FORMATTER)
-                val endedAt = LocalTime.parse(it.endedAt, TIMELINE_TIME_FORMATTER)
-                val duration = calculateDuration(startedAt, endedAt)
-
-                // 2. 엔티티 필드명에 정확히 매핑
-                Timeline(
-                    recapId = recap.id!!, // 필수 필드
-                    startedAt = startedAt,
-                    endedAt = endedAt,
-                    title = it.title,
-                    durationMinutes = duration
-                )
-            }
-        timelineRepository.saveAll(timelines)
-    }
-
-    private fun saveTopicsInternal(
-        recap: Recap,
-        name: String,
-        activities: List<UserActivityRequest>
-    ) {
-        val topicResponse = generateTopics(name, activities)
-        val topics =
-            topicResponse.topics.map {
-                Topic(
-                    recapId = recap.id!!,
-                    keyword = it.keyword,
-                    title = it.title,
-                    content = it.content
-                )
-            }
-        topicRepository.saveAll(topics)
-    }
-
-    // 시간 계산 헬퍼 함수
-    private fun calculateDuration(
-        startedAt: LocalTime,
-        endedAt: LocalTime
-    ): Int = Duration.between(startedAt, endedAt).toMinutes().toInt()
 
     private fun resolveTargetDate(date: LocalDate?): LocalDate = date ?: LocalDate.now().minusDays(1)
 
