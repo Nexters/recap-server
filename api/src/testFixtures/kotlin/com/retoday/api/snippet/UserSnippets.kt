@@ -1,8 +1,14 @@
 package com.retoday.api.snippet
 
+import com.retoday.api.domain.user.dto.request.AddMyExcludedDomainRequest
 import com.retoday.api.domain.user.dto.response.GetMyProfileResponse
 import com.retoday.api.extension.desc
 import com.retoday.api.extension.fieldsOf
+
+val addMyExcludedDomainRequestFields =
+    fieldsOf(
+        AddMyExcludedDomainRequest::domain desc "예외 처리할 도메인"
+    )
 
 val getMyProfileResponseFields =
     fieldsOf(

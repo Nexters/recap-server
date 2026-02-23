@@ -19,6 +19,7 @@ enum class ErrorType(
 
     // User
     USER_NOT_FOUND("존재하지 않는 사용자입니다.", HttpStatus.NOT_FOUND),
+    EXCLUDED_DOMAIN_ALREADY_EXISTS("이미 예외 도메인으로 등록된 도메인입니다.", HttpStatus.CONFLICT),
 
     // History
     DUPLICATE_HISTORY("이미 저장된 히스토리입니다.", HttpStatus.CONFLICT),
