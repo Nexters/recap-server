@@ -8,11 +8,11 @@ import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
 
 @Entity
-@Table(uniqueConstraints = [UniqueConstraint(columnNames = ["user_id", "website_id"])])
-class UserExcludedWebsite(
+@Table(uniqueConstraints = [UniqueConstraint(columnNames = ["user_id", "domain"])])
+class UserExcludedWebsiteDomain(
     @Id
     @Tsid
     val id: Long? = null,
     val userId: Long,
-    val websiteId: Long
+    val domain: String
 ) : BaseEntity()
