@@ -17,9 +17,11 @@ import com.retoday.core.domain.history.entity.Website
 import com.retoday.core.domain.history.exception.DuplicateHistoryException
 import com.retoday.core.domain.history.exception.InvalidCategoryException
 import com.retoday.core.domain.history.exception.InvalidTimeRangeException
+import com.retoday.core.domain.history.exception.WebsiteExcludedByUserException
 import com.retoday.core.domain.history.repository.HistoryRepository
 import com.retoday.core.domain.history.repository.WebsiteCategoryRepository
 import com.retoday.core.domain.user.repository.ProfileRepository
+import com.retoday.core.domain.user.service.ExcludedDomainCacheService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -32,7 +34,8 @@ class HistoryService(
     private val websiteService: WebsiteService,
     private val pageService: PageService,
     private val categoryRepository: WebsiteCategoryRepository,
-    private val aiClient: AICategoryClient
+    private val aiClient: AICategoryClient,
+    private val excludedDomainCacheService: ExcludedDomainCacheService
 ) {
     private companion object {
         private const val DEFAULT_CATEGORY_NAME = "기타"
@@ -45,6 +48,10 @@ class HistoryService(
     ): HistoryRecordResult {
         require(command.closedAt.isAfter(command.visitedAt)) {
             throw InvalidTimeRangeException("closedAt은 visitedAt보다 이후여야 합니다")
+        }
+
+        if (excludedDomainCacheService.isExcluded(userId, command.domain)) {
+            throw WebsiteExcludedByUserException(command.domain)
         }
 
         val website = websiteService.findOrCreate(command.domain, command.faviconUrl)

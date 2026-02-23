@@ -12,7 +12,8 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class UserService(
     private val profileRepository: ProfileRepository,
-    private val userExcludedWebsiteRepository: UserExcludedWebsiteRepository
+    private val userExcludedWebsiteRepository: UserExcludedWebsiteRepository,
+    private val excludedDomainCacheService: ExcludedDomainCacheService
 ) {
     @Transactional(readOnly = true)
     fun getMyProfile(userId: Long): GetMyProfileResult {
@@ -49,5 +50,8 @@ class UserService(
 
             throw exception
         }
+
+        // TODO: 추후 예외도메인 삭제 API에도 캐시 무효화 필요
+        excludedDomainCacheService.invalidate(userId)
     }
 }
