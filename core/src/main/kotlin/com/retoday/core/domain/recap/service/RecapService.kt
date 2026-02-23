@@ -24,9 +24,11 @@ import com.retoday.core.domain.recap.repository.TopicRepository
 import com.retoday.core.domain.user.repository.ProfileRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 @Service
@@ -43,13 +45,13 @@ class RecapService(
         val TIMELINE_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
     }
 
-    @Transactional
     fun generateDailyRecap(
         userId: Long,
-        date: LocalDate
+        date: LocalDate?
     ): RecapDetailResponse? {
-        createDailyRecap(userId, date)
-        return getRecapDetail(userId, date)
+        val targetDate = resolveTargetDate(date)
+        createDailyRecap(userId, targetDate)
+        return getRecapDetail(userId, targetDate)
     }
 
     // 리캡 생성 로직
@@ -58,15 +60,28 @@ class RecapService(
         userId: Long,
         date: LocalDate
     ) {
+        val startedAt = date.atStartOfDay().toInstant(ZoneOffset.UTC)
+        val endedAt = startedAt.plus(Duration.ofDays(1))
+
         if (recapRepository.existsByUserIdAndRecapDate(userId, date)) return
-        val activityProjections = historyRepository.findUserActivitiesForRecap(userId, date)
+        val activityProjections = historyRepository.findUserActivitiesForRecap(userId, startedAt, endedAt)
         if (activityProjections.isEmpty()) return
         val activityRequests = activityProjections.map { it.toRequest() }
         val profile = profileRepository.findByUserId(userId)!!
         val name = profile.firstName
 
-        val firstHistory = historyRepository.findFirstByUserIdAndVisitedDateOrderByVisitedAtAsc(userId, date)
-        val lastHistory = historyRepository.findFirstByUserIdAndVisitedDateOrderByClosedAtDesc(userId, date)
+        val firstHistory =
+            historyRepository.findFirstByUserIdAndVisitedAtGreaterThanEqualAndVisitedAtLessThanOrderByVisitedAtAsc(
+                userId,
+                startedAt,
+                endedAt
+            )
+        val lastHistory =
+            historyRepository.findFirstByUserIdAndVisitedAtGreaterThanEqualAndVisitedAtLessThanOrderByClosedAtDesc(
+                userId,
+                startedAt,
+                endedAt
+            )
 
         val response = generateRecap(name, activityRequests)
         val recap =
@@ -89,7 +104,7 @@ class RecapService(
         saveTopicsInternal(recap, name, activityRequests)
 
         // 타임라인 전용 데이터 조회 및 저장
-        val timelineProjections = historyRepository.findUserTimelinesForRecap(userId, date)
+        val timelineProjections = historyRepository.findUserTimelinesForRecap(userId, startedAt, endedAt)
         if (timelineProjections.isNotEmpty()) {
             val timelineRequests = timelineProjections.map { it.toRequest() }
             saveTimelinesInternal(recap, name, timelineRequests)
@@ -159,7 +174,9 @@ class RecapService(
     private fun calculateDuration(
         startedAt: LocalTime,
         endedAt: LocalTime
-    ): Int = endedAt.toSecondOfDay() / 60 - startedAt.toSecondOfDay() / 60
+    ): Int = Duration.between(startedAt, endedAt).toMinutes().toInt()
+
+    private fun resolveTargetDate(date: LocalDate?): LocalDate = date ?: LocalDate.now().minusDays(1)
 
     // AI Generation Methods
     fun generateRecap(

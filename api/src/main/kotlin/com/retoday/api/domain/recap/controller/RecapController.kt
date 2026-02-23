@@ -18,10 +18,8 @@ class RecapController(
         userId: Long,
         @RequestParam date: LocalDate?
     ): ResponseEntity<RecapDetailResponse> {
-        val targetDate = date ?: LocalDate.now().minusDays(1)
-
         val response =
-            recapService.generateDailyRecap(userId, targetDate)
+            recapService.generateDailyRecap(userId, date)
                 ?: return ResponseEntity.noContent().build()
 
         return ResponseEntity.ok(response)
