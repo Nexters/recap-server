@@ -24,7 +24,11 @@ import com.retoday.core.domain.recap.repository.TopicRepository
 import com.retoday.core.domain.user.repository.ProfileRepository
 import com.retoday.core.global.extension.transaction
 import org.springframework.stereotype.Service
-import java.time.*
+import org.springframework.transaction.PlatformTransactionManager
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 @Service
@@ -35,7 +39,8 @@ class RecapService(
     private val topicRepository: TopicRepository,
     private val timelineRepository: TimelineRepository,
     private val historyRepository: HistoryRepository,
-    private val profileRepository: ProfileRepository
+    private val profileRepository: ProfileRepository,
+    private val transactionManager: PlatformTransactionManager
 ) {
     private companion object {
         val TIMELINE_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
@@ -56,17 +61,17 @@ class RecapService(
         userId: Long,
         date: LocalDate
     ) {
+        val profile = profileRepository.findByUserId(userId)!!
         val startedAt =
             date
-                .atStartOfDay()
-                .toInstant(ZoneOffset.UTC)
+                .atStartOfDay(profile.timeZone.id)
+                .toInstant()
         val endedAt = startedAt.plus(Duration.ofDays(1))
 
         if (recapRepository.existsByUserIdAndRecapDate(userId, date)) return
         val activityProjections = historyRepository.findUserActivitiesForRecap(userId, startedAt, endedAt)
         if (activityProjections.isEmpty()) return
         val activityRequests = activityProjections.map { it.toRequest() }
-        val profile = profileRepository.findByUserId(userId)!!
         val name = profile.firstName
 
         val firstHistory =
@@ -93,7 +98,7 @@ class RecapService(
             timelineResponse = generateTimeline(name, timelineRequests)
         }
 
-        transaction {
+        transactionManager.transaction {
             val recap =
                 Recap(
                     userId = userId,
@@ -155,7 +160,7 @@ class RecapService(
         userId: Long,
         date: LocalDate
     ): RecapDetailResponse? =
-        transaction(readOnly = true) {
+        transactionManager.transaction(readOnly = true) {
             recapRepository
                 .findByUserIdAndRecapDate(userId, date)
                 ?.let {

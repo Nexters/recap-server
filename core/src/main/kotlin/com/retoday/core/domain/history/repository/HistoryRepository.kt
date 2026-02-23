@@ -25,6 +25,18 @@ interface HistoryRepository : JpaRepository<History, Long> {
         closedAt: Instant
     ): List<History>
 
+    fun findFirstByUserIdAndVisitedAtGreaterThanEqualAndVisitedAtLessThanOrderByVisitedAtAsc(
+        userId: Long,
+        startedAt: Instant,
+        endedAt: Instant
+    ): History?
+
+    fun findFirstByUserIdAndVisitedAtGreaterThanEqualAndVisitedAtLessThanOrderByClosedAtDesc(
+        userId: Long,
+        startedAt: Instant,
+        endedAt: Instant
+    ): History?
+
     @Query(
         """
             SELECT
@@ -68,7 +80,7 @@ interface HistoryRepository : JpaRepository<History, Long> {
             GROUP BY h.website_id, w.domain, w.favicon_url
             ORDER BY stayDuration DESC
             LIMIT 1
-            """,
+        """,
         nativeQuery = true
     )
     fun findTopWebsiteStatByUserId(
@@ -103,7 +115,7 @@ interface HistoryRepository : JpaRepository<History, Long> {
               AND h.closed_at BETWEEN :startedAt AND DATE_ADD(:endedAt, INTERVAL 1 DAY)
             GROUP BY h.website_id, w.domain, w.favicon_url, wc.name
             ORDER BY stayDuration DESC
-            """,
+        """,
         nativeQuery = true
     )
     fun findWebsiteStatsWithCategoryByUserId(
@@ -138,7 +150,7 @@ interface HistoryRepository : JpaRepository<History, Long> {
             GROUP BY h.website_id, w.domain, w.favicon_url
             ORDER BY visitCount DESC, stayDuration DESC
             LIMIT :limit
-            """,
+        """,
         nativeQuery = true
     )
     fun findWebsiteStatsWithVisitCountByUserId(
@@ -152,66 +164,58 @@ interface HistoryRepository : JpaRepository<History, Long> {
         limit: Int
     ): List<WebsiteStatWithVisitCount>
 
-    // UserActivity
     @Query(
         """
-        SELECT new com.retoday.core.domain.recap.dto.projection.UserActivityProjection(
-            p.title,
-            p.description,
-            w.domain,
-            c.name,
-            CAST((function('time_to_sec', function('timediff', h.closedAt, h.visitedAt)) / 60) AS integer)
-        )
-        FROM History h
-        JOIN Page p ON h.pageId = p.id
-        JOIN Website w ON h.websiteId = w.id
-        LEFT JOIN WebsiteCategory c ON w.categoryId = c.id
-        WHERE h.userId = :userId
-          AND h.visitedAt >= :startedAt
-          AND h.visitedAt < :endedAt
-    """
+            SELECT
+                p.title AS title,
+                p.description AS description,
+                w.domain AS domain,
+                wc.name AS categoryName,
+                CAST(TIMESTAMPDIFF(MINUTE, h.visited_at, h.closed_at) AS SIGNED) AS stayDuration
+            FROM history h
+            JOIN page p ON p.id = h.page_id
+            JOIN website w ON w.id = h.website_id
+            LEFT JOIN website_category wc ON wc.id = w.category_id
+            WHERE h.user_id = :userId
+              AND h.visited_at >= :startedAt
+              AND h.visited_at < :endedAt
+        """,
+        nativeQuery = true
     )
     fun findUserActivitiesForRecap(
-        @Param("userId") userId: Long,
-        @Param("startedAt") startedAt: Instant,
-        @Param("endedAt") endedAt: Instant
+        @Param("userId")
+        userId: Long,
+        @Param("startedAt")
+        startedAt: Instant,
+        @Param("endedAt")
+        endedAt: Instant
     ): List<UserActivityProjection>
 
-    // UserTimeline
     @Query(
         """
-        SELECT new com.retoday.core.domain.recap.dto.projection.UserTimelineProjection(
-            p.title,
-            p.description,
-            c.name,
-            h.visitedAt,
-            h.closedAt
-        )
-        FROM History h
-        JOIN Page p ON h.pageId = p.id
-        JOIN Website w ON h.websiteId = w.id
-        LEFT JOIN WebsiteCategory c ON w.categoryId = c.id
-        WHERE h.userId = :userId
-          AND h.visitedAt >= :startedAt
-          AND h.visitedAt < :endedAt
-        ORDER BY h.visitedAt ASC
-    """
+            SELECT
+                p.title AS title,
+                p.description AS description,
+                wc.name AS categoryName,
+                h.visited_at AS visitedAt,
+                h.closed_at AS closedAt
+            FROM history h
+            JOIN page p ON p.id = h.page_id
+            JOIN website w ON w.id = h.website_id
+            LEFT JOIN website_category wc ON wc.id = w.category_id
+            WHERE h.user_id = :userId
+              AND h.visited_at >= :startedAt
+              AND h.visited_at < :endedAt
+            ORDER BY h.visited_at
+        """,
+        nativeQuery = true
     )
     fun findUserTimelinesForRecap(
-        @Param("userId") userId: Long,
-        @Param("startedAt") startedAt: Instant,
-        @Param("endedAt") endedAt: Instant
+        @Param("userId")
+        userId: Long,
+        @Param("startedAt")
+        startedAt: Instant,
+        @Param("endedAt")
+        endedAt: Instant
     ): List<UserTimelineProjection>
-
-    fun findFirstByUserIdAndVisitedAtGreaterThanEqualAndVisitedAtLessThanOrderByVisitedAtAsc(
-        userId: Long,
-        startedAt: Instant,
-        endedAt: Instant
-    ): History?
-
-    fun findFirstByUserIdAndVisitedAtGreaterThanEqualAndVisitedAtLessThanOrderByClosedAtDesc(
-        userId: Long,
-        startedAt: Instant,
-        endedAt: Instant
-    ): History?
 }

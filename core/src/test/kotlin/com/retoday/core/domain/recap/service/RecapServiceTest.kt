@@ -23,7 +23,6 @@ import io.mockk.mockk
 import io.mockk.verify
 import java.time.Duration
 import java.time.LocalDate
-import java.time.ZoneOffset
 
 class RecapServiceTest : ServiceTest() {
     private val recapAIClient = mockk<RecapAIClient>()
@@ -42,22 +41,26 @@ class RecapServiceTest : ServiceTest() {
             topicRepository = topicRepository,
             timelineRepository = timelineRepository,
             historyRepository = historyRepository,
-            profileRepository = profileRepository
+            profileRepository = profileRepository,
+            transactionManager = transactionManager
         )
 
     init {
-        // 공통 데이터 설정
-        val userId = 1L
-        val nickname = "민주"
-        val date = LocalDate.now()
-        val startedAt = date.atStartOfDay().toInstant(ZoneOffset.UTC)
-        val endedAt = startedAt.plus(Duration.ofDays(1))
-        val activities = createUserActivities()
-        val activityRequests = createUserActivityRequests(activities)
-        val timelineActivities = createUserTimelineActivities()
-        val timelineRequests = createUserTimelineRequests(timelineActivities)
-
         Given("사용자가 특정 날짜에 활동 기록을 가지고 있을 때") {
+            val userId = ID
+            val date = LocalDate.parse("2026-02-23")
+            val profile =
+                createProfile(
+                    userId = userId,
+                    firstName = "민주"
+                )
+            val startedAt = date.atStartOfDay(profile.timeZone.id).toInstant()
+            val endedAt = startedAt.plus(Duration.ofDays(1))
+            val activities = createUserActivities()
+            val activityRequests = createUserActivityRequests(activities)
+            val timelineActivities = createUserTimelineActivities()
+            val timelineRequests = createUserTimelineRequests(timelineActivities)
+
             // DB 조회 Mocking
             every { recapRepository.existsByUserIdAndRecapDate(userId, date) } returns false
             every { historyRepository.findUserActivitiesForRecap(userId, startedAt, endedAt) } returns activities
@@ -76,11 +79,7 @@ class RecapServiceTest : ServiceTest() {
                     endedAt
                 )
             } returns null
-            every { profileRepository.findByUserId(userId) } returns
-                createProfile(
-                    userId = userId,
-                    firstName = nickname
-                )
+            every { profileRepository.findByUserId(userId) } returns profile
 
             // AI 응답 Mocking
             val recapResponse = createGeminiRecapResponse()
@@ -92,7 +91,7 @@ class RecapServiceTest : ServiceTest() {
                 recapAIClient.generate(
                     GenerateRecapRequest(
                         type = RecapType.TODAY_RECAP,
-                        nickname = nickname,
+                        nickname = profile.firstName,
                         payload = RecapPayload.Activities(activityRequests)
                     ),
                     GeminiRecapResponse::class.java
@@ -102,7 +101,7 @@ class RecapServiceTest : ServiceTest() {
                 recapAIClient.generate(
                     GenerateRecapRequest(
                         type = RecapType.TOPIC,
-                        nickname = nickname,
+                        nickname = profile.firstName,
                         payload = RecapPayload.Activities(activityRequests)
                     ),
                     GeminiTopicResponse::class.java
@@ -112,7 +111,7 @@ class RecapServiceTest : ServiceTest() {
                 recapAIClient.generate(
                     GenerateRecapRequest(
                         type = RecapType.TIMELINE,
-                        nickname = nickname,
+                        nickname = profile.firstName,
                         payload = RecapPayload.Timelines(timelineRequests)
                     ),
                     GeminiTimelineResponse::class.java
