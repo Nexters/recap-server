@@ -47,7 +47,8 @@ data class RecapDetailResponse(
             recap: Recap,
             sections: List<Section>,
             timelines: List<Timeline>,
-            topics: List<Topic>
+            topics: List<Topic>,
+            zoneId: ZoneId
         ): RecapDetailResponse =
             RecapDetailResponse(
                 id = recap.id!!,
@@ -56,8 +57,8 @@ data class RecapDetailResponse(
                 title = recap.title,
                 summary = recap.summary,
                 imageUrl = recap.imageUrl,
-                startedAt = LocalDateTime.ofInstant(recap.startedAt, ZoneId.systemDefault()),
-                closedAt = LocalDateTime.ofInstant(recap.closedAt, ZoneId.systemDefault()),
+                startedAt = LocalDateTime.ofInstant(recap.startedAt, zoneId),
+                closedAt = LocalDateTime.ofInstant(recap.closedAt, zoneId),
                 sections = sections.map { SectionResponse(it.title, it.content) },
                 timelines =
                     timelines.map {

@@ -180,8 +180,9 @@ class RecapService(
                     val sections = sectionRepository.findAllByRecapId(it.id!!)
                     val topics = topicRepository.findAllByRecapId(it.id!!)
                     val timelines = timelineRepository.findAllByRecapId(it.id!!)
+                    val zoneId = profileRepository.findByUserId(userId)!!.timeZone.id
 
-                    RecapDetailResponse.of(it, sections, timelines, topics)
+                    RecapDetailResponse.of(it, sections, timelines, topics, zoneId)
                 }
         }
 
