@@ -12,7 +12,7 @@ import java.time.LocalDate
 class RecapController(
     private val recapService: RecapService
 ) {
-    @PostMapping("/generate")
+    @GetMapping("/generate")
     fun generateDailyRecap(
         @AuthenticationId
         userId: Long,

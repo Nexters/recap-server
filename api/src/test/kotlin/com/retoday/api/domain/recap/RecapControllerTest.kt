@@ -31,7 +31,7 @@ class RecapControllerTest : ControllerTest() {
 
                 it("상태 코드 200과 RecapDetailResponse를 반환한다.") {
                     webClient
-                        .post()
+                        .get()
                         .uri("/recaps/generate")
                         .withAuthentication()
                         .exchange()
@@ -51,7 +51,7 @@ class RecapControllerTest : ControllerTest() {
 
                 it("상태 코드 200과 RecapDetailResponse를 반환한다.") {
                     webClient
-                        .post()
+                        .get()
                         .uri("/recaps/generate?date=$targetDate")
                         .withAuthentication()
                         .exchange()
@@ -70,7 +70,7 @@ class RecapControllerTest : ControllerTest() {
 
                 it("상태 코드 204를 반환한다.") {
                     webClient
-                        .post()
+                        .get()
                         .uri("/recaps/generate?date=$targetDate")
                         .withAuthentication()
                         .exchange()

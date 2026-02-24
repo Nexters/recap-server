@@ -17,6 +17,7 @@ val recapDetailResponseFields =
         RecapDetailResponse::recapDate desc "리캡 대상 일자",
         RecapDetailResponse::title desc "리캡 제목",
         RecapDetailResponse::summary desc "리캡 요약",
+        RecapDetailResponse::imageUrl desc "리캡 이미지 URL",
         RecapDetailResponse::startedAt desc "리캡 시작 시각",
         RecapDetailResponse::closedAt desc "리캡 종료 시각",
         *listFieldsOf(

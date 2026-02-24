@@ -21,6 +21,7 @@ class Recap(
     val recapDate: LocalDate,
     var title: String,
     var summary: String,
+    var imageUrl: String? = null,
     var startedAt: Instant,
     var closedAt: Instant,
     var model: String,
