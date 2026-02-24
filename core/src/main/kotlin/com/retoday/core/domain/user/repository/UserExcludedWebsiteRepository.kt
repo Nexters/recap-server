@@ -12,4 +12,9 @@ interface UserExcludedWebsiteRepository : JpaRepository<UserExcludedWebsiteDomai
         userId: Long,
         domain: String
     ): Boolean
+
+    fun deleteByUserIdAndDomain(
+        userId: Long,
+        domain: String
+    ): Long
 }

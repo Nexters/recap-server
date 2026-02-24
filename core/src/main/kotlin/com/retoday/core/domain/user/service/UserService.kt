@@ -53,4 +53,15 @@ class UserService(
             throw exception
         }
     }
+
+    @CacheEvict(cacheNames = ["excluded-domains"], key = "#userId")
+    @Transactional
+    fun deleteMyExcludedDomain(
+        userId: Long,
+        domain: String
+    ) {
+        val normalizedDomain = domain.trim().lowercase()
+
+        userExcludedWebsiteRepository.deleteByUserIdAndDomain(userId, normalizedDomain)
+    }
 }

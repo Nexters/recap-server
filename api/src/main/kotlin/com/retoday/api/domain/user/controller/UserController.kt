@@ -1,10 +1,12 @@
 package com.retoday.api.domain.user.controller
 
 import com.retoday.api.domain.user.dto.request.AddMyExcludedDomainRequest
+import com.retoday.api.domain.user.dto.request.DeleteMyExcludedDomainRequest
 import com.retoday.api.domain.user.dto.response.GetMyProfileResponse
 import com.retoday.api.global.annotation.AuthenticationId
 import com.retoday.core.domain.user.service.UserService
 import jakarta.validation.Valid
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -34,5 +36,16 @@ class UserController(
         request: AddMyExcludedDomainRequest
     ) {
         userService.addMyExcludedDomain(userId, request.domain)
+    }
+
+    @DeleteMapping("/me/excluded-domains")
+    fun deleteMyExcludedDomain(
+        @AuthenticationId
+        userId: Long,
+        @Valid
+        @RequestBody
+        request: DeleteMyExcludedDomainRequest
+    ) {
+        userService.deleteMyExcludedDomain(userId, request.domain)
     }
 }
