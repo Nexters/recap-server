@@ -96,6 +96,7 @@ class RecapServiceTest : ServiceTest() {
                     recapStartedAt = any(),
                     zoneId = any(),
                     topCategoryName = any(),
+                    categoryCount = any(),
                     activities = activities
                 )
             } returns "images/11.png"

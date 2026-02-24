@@ -91,14 +91,14 @@ class RecapService(
         }
         val recapStartedAt = timelineProjections.mapNotNull { it.visitedAt }.minOrNull() ?: startedAt
         val recapClosedAt = timelineProjections.mapNotNull { it.closedAt }.maxOrNull() ?: endedAt
-        val topCategoryName =
+        val categoryAnalyses =
             historyService
                 .getMyCategoryAnalyses(
                     userId = userId,
                     query = GetMyCategoryAnalysisQuery(date = date)
                 ).categoryAnalyses
-                .firstOrNull()
-                ?.categoryName
+        val topCategoryName = categoryAnalyses.firstOrNull()?.categoryName
+        val categoryCount = categoryAnalyses.count { it.stayDuration > 0L }
 
         val imageUrl =
             imagePolicyResolver.resolveImageUrl(
@@ -106,6 +106,7 @@ class RecapService(
                 recapStartedAt = recapStartedAt,
                 zoneId = zoneId,
                 topCategoryName = topCategoryName,
+                categoryCount = categoryCount,
                 activities = activityProjections
             )
 

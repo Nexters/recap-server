@@ -16,11 +16,19 @@ class ImagePolicyResolver(
         recapStartedAt: Instant,
         zoneId: ZoneId,
         topCategoryName: String?,
+        categoryCount: Int,
         activities: List<UserActivityProjection>
     ): String {
         val fileName =
             ImagePolicyMapper.toImageFileName(
-                resolvePolicy(userId, recapStartedAt, zoneId, topCategoryName, activities)
+                resolvePolicy(
+                    userId = userId,
+                    recapStartedAt = recapStartedAt,
+                    zoneId = zoneId,
+                    topCategoryName = topCategoryName,
+                    categoryCount = categoryCount,
+                    activities = activities
+                )
             )
         return "${recapImageProperties.baseUrl.trimEnd('/')}/$fileName"
     }
@@ -30,6 +38,7 @@ class ImagePolicyResolver(
         recapStartedAt: Instant,
         zoneId: ZoneId,
         topCategoryName: String?,
+        categoryCount: Int,
         activities: List<UserActivityProjection>
     ): ImagePolicyType {
         normalizeCategory(topCategoryName)?.let { topCategory ->
@@ -52,7 +61,6 @@ class ImagePolicyResolver(
         if (totalDurationMinutes >= 12 * 60) return ImagePolicyType.IMAGE_12_SCREEN_TIME_OVER_12H
         if (totalDurationMinutes < 60) return ImagePolicyType.IMAGE_13_SCREEN_TIME_UNDER_1H
 
-        val categoryCount = activities.mapNotNull { normalizeCategory(it.categoryName) }.toSet().size
         if (categoryCount >= 5) return ImagePolicyType.IMAGE_14_CATEGORY_OVER_5
         if (categoryCount == 1) return ImagePolicyType.IMAGE_15_CATEGORY_ONLY_1
 
