@@ -93,7 +93,7 @@ class RecapServiceTest : ServiceTest() {
             every {
                 imagePolicyResolver.resolveImageUrl(
                     userId = userId,
-                    recapStartedAt = any(),
+                    firstVisitedAt = any(),
                     zoneId = any(),
                     topCategoryName = any(),
                     categoryCount = any(),

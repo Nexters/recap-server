@@ -97,7 +97,7 @@ class RecapService(
             val timelineRequests = timelineProjections.map { it.toRequest() }
             timelineResponse = generateTimeline(name, timelineRequests)
         }
-        val recapStartedAt = timelineProjections.mapNotNull { it.visitedAt }.minOrNull() ?: startedAt
+        val firstVisitedAt = timelineProjections.mapNotNull { it.visitedAt }.minOrNull() ?: startedAt
         val recapClosedAt = timelineProjections.mapNotNull { it.closedAt }.maxOrNull() ?: endedAt
         val categoryAnalyses =
             historyService
@@ -111,7 +111,7 @@ class RecapService(
         val imageUrl =
             imagePolicyResolver.resolveImageUrl(
                 userId = userId,
-                recapStartedAt = recapStartedAt,
+                firstVisitedAt = firstVisitedAt,
                 zoneId = zoneId,
                 topCategoryName = topCategoryName,
                 categoryCount = categoryCount,
@@ -126,7 +126,7 @@ class RecapService(
                     title = recapResponse.title,
                     summary = recapResponse.dailySummary,
                     imageUrl = imageUrl,
-                    startedAt = recapStartedAt,
+                    startedAt = firstVisitedAt,
                     closedAt = recapClosedAt,
                     model = recapAIClient.modelName
                 ).let { recapRepository.save(it) }
