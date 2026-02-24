@@ -12,7 +12,7 @@ import java.time.LocalDate
 class RecapController(
     private val recapService: RecapService
 ) {
-    @GetMapping("/generate")
+    @PostMapping("/generate")
     fun generateDailyRecap(
         @AuthenticationId
         userId: Long,
@@ -20,6 +20,19 @@ class RecapController(
     ): ResponseEntity<RecapDetailResponse> {
         val response =
             recapService.generateDailyRecap(userId, date)
+                ?: return ResponseEntity.noContent().build()
+
+        return ResponseEntity.ok(response)
+    }
+
+    @GetMapping
+    fun getDailyRecap(
+        @AuthenticationId
+        userId: Long,
+        @RequestParam date: LocalDate?
+    ): ResponseEntity<RecapDetailResponse> {
+        val response =
+            recapService.getDailyRecap(userId, date)
                 ?: return ResponseEntity.noContent().build()
 
         return ResponseEntity.ok(response)

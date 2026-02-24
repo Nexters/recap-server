@@ -22,17 +22,17 @@ class RecapControllerTest : ControllerTest() {
     private lateinit var recapService: RecapService
 
     init {
-        describe("generateDailyRecap()은") {
+        describe("getDailyRecap()은") {
             context("날짜 없이 유효한 요청이 주어진 경우") {
                 val yesterday = LocalDate.now().minusDays(1)
                 val result = createRecapDetailResponse(yesterday)
 
-                every { recapService.generateDailyRecap(any(), null) } returns result
+                every { recapService.getDailyRecap(any(), null) } returns result
 
                 it("상태 코드 200과 RecapDetailResponse를 반환한다.") {
                     webClient
                         .get()
-                        .uri("/recaps/generate")
+                        .uri("/recaps")
                         .withAuthentication()
                         .exchange()
                         .expectStatus(200)
@@ -47,12 +47,12 @@ class RecapControllerTest : ControllerTest() {
                 val targetDate = LocalDate.parse("2026-02-21")
                 val result = createRecapDetailResponse(targetDate)
 
-                every { recapService.generateDailyRecap(any(), targetDate) } returns result
+                every { recapService.getDailyRecap(any(), targetDate) } returns result
 
                 it("상태 코드 200과 RecapDetailResponse를 반환한다.") {
                     webClient
                         .get()
-                        .uri("/recaps/generate?date=$targetDate")
+                        .uri("/recaps?date=$targetDate")
                         .withAuthentication()
                         .exchange()
                         .expectStatus(200)
@@ -66,15 +66,34 @@ class RecapControllerTest : ControllerTest() {
 
             context("리캡 생성을 위한 데이터가 없는 경우") {
                 val targetDate = LocalDate.parse("2026-02-21")
-                every { recapService.generateDailyRecap(any(), targetDate) } returns null
+                every { recapService.getDailyRecap(any(), targetDate) } returns null
 
                 it("상태 코드 204를 반환한다.") {
                     webClient
                         .get()
-                        .uri("/recaps/generate?date=$targetDate")
+                        .uri("/recaps?date=$targetDate")
                         .withAuthentication()
                         .exchange()
                         .expectStatus(204)
+                }
+            }
+        }
+
+        describe("generateDailyRecap()은") {
+            context("유효한 요청이 주어진 경우") {
+                val targetDate = LocalDate.parse("2026-02-21")
+                val result = createRecapDetailResponse(targetDate)
+
+                every { recapService.generateDailyRecap(any(), targetDate) } returns result
+
+                it("POST 요청에 대해 상태 코드 200과 RecapDetailResponse를 반환한다.") {
+                    webClient
+                        .post()
+                        .uri("/recaps/generate?date=$targetDate")
+                        .withAuthentication()
+                        .exchange()
+                        .expectStatus(200)
+                        .expectBody(result)
                 }
             }
         }

@@ -60,6 +60,14 @@ class RecapService(
         return getRecapDetail(userId, targetDate)
     }
 
+    fun getDailyRecap(
+        userId: Long,
+        date: LocalDate?
+    ): RecapDetailResponse? {
+        val targetDate = date ?: LocalDate.now().minusDays(1)
+        return getRecapDetail(userId, targetDate)
+    }
+
     // 리캡 생성 로직
     fun createDailyRecap(
         userId: Long,
