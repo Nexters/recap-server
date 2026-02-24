@@ -15,12 +15,10 @@ import org.springframework.dao.DataIntegrityViolationException
 class UserServiceTest : BehaviorSpec() {
     private val profileRepository = mockk<ProfileRepository>()
     private val userExcludedWebsiteRepository = mockk<UserExcludedWebsiteRepository>()
-    private val excludedDomainCacheService = mockk<ExcludedDomainCacheService>()
     private val userService =
         UserService(
             profileRepository = profileRepository,
-            userExcludedWebsiteRepository = userExcludedWebsiteRepository,
-            excludedDomainCacheService = excludedDomainCacheService
+            userExcludedWebsiteRepository = userExcludedWebsiteRepository
         )
 
     init {
@@ -43,7 +41,6 @@ class UserServiceTest : BehaviorSpec() {
             val normalizedDomain = "github.com"
             every { userExcludedWebsiteRepository.save(any()) } returns
                 createUserExcludedWebsite(domain = normalizedDomain)
-            every { excludedDomainCacheService.invalidate(any()) } returns Unit
 
             When("아직 예외 도메인에 없는 도메인이라면") {
                 userService.addMyExcludedDomain(ID, domain)

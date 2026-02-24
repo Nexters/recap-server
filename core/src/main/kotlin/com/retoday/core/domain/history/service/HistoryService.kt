@@ -21,7 +21,7 @@ import com.retoday.core.domain.history.exception.WebsiteExcludedByUserException
 import com.retoday.core.domain.history.repository.HistoryRepository
 import com.retoday.core.domain.history.repository.WebsiteCategoryRepository
 import com.retoday.core.domain.user.repository.ProfileRepository
-import com.retoday.core.domain.user.service.ExcludedDomainCacheService
+import com.retoday.core.domain.user.service.UserService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -35,7 +35,7 @@ class HistoryService(
     private val pageService: PageService,
     private val categoryRepository: WebsiteCategoryRepository,
     private val aiClient: AICategoryClient,
-    private val excludedDomainCacheService: ExcludedDomainCacheService
+    private val userService: UserService
 ) {
     private companion object {
         private const val DEFAULT_CATEGORY_NAME = "기타"
@@ -50,8 +50,12 @@ class HistoryService(
             throw InvalidTimeRangeException("closedAt은 visitedAt보다 이후여야 합니다")
         }
 
-        if (excludedDomainCacheService.isExcluded(userId, command.domain)) {
-            throw WebsiteExcludedByUserException(command.domain)
+        val domain = command.domain
+        if (userService.getExcludedDomains(userId).any { excluded ->
+                domain == excluded || domain.endsWith(".$excluded")
+            }
+        ) {
+            throw WebsiteExcludedByUserException(domain)
         }
 
         val website = websiteService.findOrCreate(command.domain, command.faviconUrl)
