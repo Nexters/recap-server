@@ -29,7 +29,6 @@ import com.retoday.core.global.extension.transaction
 import org.springframework.stereotype.Service
 import org.springframework.transaction.PlatformTransactionManager
 import java.time.Duration
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -80,19 +79,6 @@ class RecapService(
         val name = profile.firstName
         val zoneId = profile.timeZone.id
 
-        val firstHistory =
-            historyRepository.findFirstByUserIdAndVisitedAtGreaterThanEqualAndVisitedAtLessThanOrderByVisitedAtAsc(
-                userId,
-                startedAt,
-                endedAt
-            )
-        val lastHistory =
-            historyRepository.findFirstByUserIdAndVisitedAtGreaterThanEqualAndVisitedAtLessThanOrderByClosedAtDesc(
-                userId,
-                startedAt,
-                endedAt
-            )
-
         val recapResponse = generateRecap(name, activityRequests)
         val topicResponse = generateTopics(name, activityRequests)
 
@@ -103,6 +89,8 @@ class RecapService(
             val timelineRequests = timelineProjections.map { it.toRequest() }
             timelineResponse = generateTimeline(name, timelineRequests)
         }
+        val recapStartedAt = timelineProjections.mapNotNull { it.visitedAt }.minOrNull() ?: startedAt
+        val recapClosedAt = timelineProjections.mapNotNull { it.closedAt }.maxOrNull() ?: endedAt
         val topCategoryName =
             historyService
                 .getMyCategoryAnalyses(
@@ -115,7 +103,7 @@ class RecapService(
         val imageUrl =
             imagePolicyResolver.resolveImageUrl(
                 userId = userId,
-                recapStartedAt = firstHistory?.visitedAt ?: startedAt,
+                recapStartedAt = recapStartedAt,
                 zoneId = zoneId,
                 topCategoryName = topCategoryName,
                 activities = activityProjections
@@ -129,8 +117,8 @@ class RecapService(
                     title = recapResponse.title,
                     summary = recapResponse.dailySummary,
                     imageUrl = imageUrl,
-                    startedAt = firstHistory?.visitedAt ?: Instant.now(),
-                    closedAt = lastHistory?.closedAt ?: Instant.now(),
+                    startedAt = recapStartedAt,
+                    closedAt = recapClosedAt,
                     model = recapAIClient.modelName
                 ).let { recapRepository.save(it) }
 

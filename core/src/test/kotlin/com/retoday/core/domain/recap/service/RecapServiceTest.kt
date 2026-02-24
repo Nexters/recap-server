@@ -72,20 +72,6 @@ class RecapServiceTest : ServiceTest() {
             every { recapRepository.existsByUserIdAndRecapDate(userId, date) } returns false
             every { historyRepository.findUserActivitiesForRecap(userId, startedAt, endedAt) } returns activities
             every { historyRepository.findUserTimelinesForRecap(userId, startedAt, endedAt) } returns timelineActivities
-            every {
-                historyRepository.findFirstByUserIdAndVisitedAtGreaterThanEqualAndVisitedAtLessThanOrderByVisitedAtAsc(
-                    userId,
-                    startedAt,
-                    endedAt
-                )
-            } returns null
-            every {
-                historyRepository.findFirstByUserIdAndVisitedAtGreaterThanEqualAndVisitedAtLessThanOrderByClosedAtDesc(
-                    userId,
-                    startedAt,
-                    endedAt
-                )
-            } returns null
             every { profileRepository.findByUserId(userId) } returns
                 createProfile(
                     userId = userId,
