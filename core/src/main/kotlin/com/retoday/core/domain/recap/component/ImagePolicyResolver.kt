@@ -13,7 +13,7 @@ class ImagePolicyResolver(
 ) {
     fun resolveImageUrl(
         userId: Long,
-        recapStartedAt: Instant,
+        firstVisitedAt: Instant,
         zoneId: ZoneId,
         topCategoryName: String?,
         categoryCount: Int,
@@ -23,7 +23,7 @@ class ImagePolicyResolver(
             ImagePolicyMapper.toImageFileName(
                 resolvePolicy(
                     userId = userId,
-                    recapStartedAt = recapStartedAt,
+                    firstVisitedAt = firstVisitedAt,
                     zoneId = zoneId,
                     topCategoryName = topCategoryName,
                     categoryCount = categoryCount,
@@ -35,7 +35,7 @@ class ImagePolicyResolver(
 
     private fun resolvePolicy(
         userId: Long,
-        recapStartedAt: Instant,
+        firstVisitedAt: Instant,
         zoneId: ZoneId,
         topCategoryName: String?,
         categoryCount: Int,
@@ -64,7 +64,7 @@ class ImagePolicyResolver(
         if (categoryCount >= 5) return ImagePolicyType.IMAGE_14_CATEGORY_OVER_5
         if (categoryCount == 1) return ImagePolicyType.IMAGE_15_CATEGORY_ONLY_1
 
-        val startedHour = recapStartedAt.atZone(zoneId).hour
+        val startedHour = firstVisitedAt.atZone(zoneId).hour
         if (startedHour >= 21) return ImagePolicyType.IMAGE_16_START_AFTER_9PM
         if (startedHour < 9) return ImagePolicyType.IMAGE_17_START_BEFORE_9AM
 
@@ -72,7 +72,7 @@ class ImagePolicyResolver(
             ImagePolicyType.IMAGE_18_RANDOM_1,
             ImagePolicyType.IMAGE_19_RANDOM_2,
             ImagePolicyType.IMAGE_20_RANDOM_3
-        )[Random(userId xor recapStartedAt.epochSecond).nextInt(3)]
+        )[Random(userId xor firstVisitedAt.epochSecond).nextInt(3)]
     }
 
     private fun normalizeCategory(raw: String?): Category? =
