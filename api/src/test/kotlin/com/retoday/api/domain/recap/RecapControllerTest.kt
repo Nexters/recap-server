@@ -104,12 +104,49 @@ class RecapControllerTest : ControllerTest() {
             id = 100L,
             userId = 1L,
             recapDate = date,
-            title = "오늘의 리캡",
-            summary = "요약 내용입니다.",
+            title = "집중적인 연구의 하루",
+            summary = "취업준비와 개발공부를 병행하며 열심히 앞으로 나아갔어요. 앞으로도 꾸준히 작업하다보면 원하는 결과를 얻을 수 있을거에요!",
             startedAt = LocalDateTime.parse("2026-02-21T09:00:00"),
-            closedAt = LocalDateTime.parse("2026-02-21T18:00:00"),
-            sections = listOf(RecapDetailResponse.SectionResponse("섹션 제목", "섹션 내용")),
-            timelines = listOf(RecapDetailResponse.TimelineResponse("09:00", "10:30", "집중 작업", 90)),
-            topics = listOf(RecapDetailResponse.TopicResponse("개발", "핵심 주제", "토픽 내용"))
+            closedAt = LocalDateTime.parse("2026-02-21T22:30:00"),
+            sections =
+                listOf(
+                    RecapDetailResponse.SectionResponse(
+                        "개발하며 고군분투한 하루",
+                        "오늘은 주로 개발과 학습에 집중하셨네요. 오전 10시부터 오후 3시까지 가장 활발한 활동을 보였으며, 오늘은 주로 개발과 학습에 집중하셨네요."
+                    ),
+                    RecapDetailResponse.SectionResponse(
+                        "업무 효율화를 위한 여정",
+                        "AI와 피그마를 연결하거나, 디자인 시스템 정비를 위한 MCP(Model Context Protocol) 활용법 등 최신 AI 툴을 업무에 녹여내려 노력했어요."
+                    )
+                ),
+            timelines =
+                listOf(
+                    RecapDetailResponse.TimelineResponse("09:00", "10:30", "신발 쇼핑하기", 90),
+                    RecapDetailResponse.TimelineResponse("11:00", "11:30", "스포츠 뉴스 보기", 30),
+                    RecapDetailResponse.TimelineResponse("12:15", "13:30", "신발 쇼핑하기", 75),
+                    RecapDetailResponse.TimelineResponse("14:00", "15:30", "신발 쇼핑하기", 90),
+                    RecapDetailResponse.TimelineResponse("16:00", "17:30", "신발 쇼핑하기", 90),
+                    RecapDetailResponse.TimelineResponse("18:00", "19:30", "신발 쇼핑하기", 90),
+                    RecapDetailResponse.TimelineResponse("20:00", "20:35", "신발 쇼핑하기", 35),
+                    RecapDetailResponse.TimelineResponse("21:00", "22:30", "신발 쇼핑하기", 90)
+                ),
+            topics =
+                listOf(
+                    RecapDetailResponse.TopicResponse(
+                        "손흥민",
+                        "손흥민 & 주식시장",
+                        "오늘은 스포츠 뉴스와 주식 정보를 자주 확인하셨네요. 시장 동향에 관심이 많으신 것 같습니다."
+                    ),
+                    RecapDetailResponse.TopicResponse(
+                        "학습",
+                        "개발 스택",
+                        "React와 TypeScript 관련 자료를 집중적으로 탐색했습니다. 새로운 프로젝트를 시작하셨나요?"
+                    ),
+                    RecapDetailResponse.TopicResponse(
+                        "주식시장",
+                        "손흥민 & 주식시장",
+                        "오늘은 스포츠 뉴스와 주식 정보를 자주 확인하셨네요. 시장 동향에 관심이 많으신 것 같습니다."
+                    )
+                )
         )
 }
