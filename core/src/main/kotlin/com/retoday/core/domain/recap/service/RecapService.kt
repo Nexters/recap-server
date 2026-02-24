@@ -98,7 +98,7 @@ class RecapService(
             timelineResponse = generateTimeline(name, timelineRequests)
         }
         val firstVisitedAt = timelineProjections.mapNotNull { it.visitedAt }.minOrNull() ?: startedAt
-        val recapClosedAt = timelineProjections.mapNotNull { it.closedAt }.maxOrNull() ?: endedAt
+        val lastClosedAt = timelineProjections.mapNotNull { it.closedAt }.maxOrNull() ?: endedAt
         val categoryAnalyses =
             historyService
                 .getMyCategoryAnalyses(
@@ -127,7 +127,7 @@ class RecapService(
                     summary = recapResponse.dailySummary,
                     imageUrl = imageUrl,
                     startedAt = firstVisitedAt,
-                    closedAt = recapClosedAt,
+                    closedAt = lastClosedAt,
                     model = recapAIClient.modelName
                 ).let { recapRepository.save(it) }
 
