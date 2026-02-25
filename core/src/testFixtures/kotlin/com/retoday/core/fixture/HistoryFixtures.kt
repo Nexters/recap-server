@@ -15,6 +15,7 @@ import com.retoday.core.domain.history.entity.History
 import com.retoday.core.domain.history.entity.Page
 import com.retoday.core.domain.history.entity.Website
 import com.retoday.core.domain.history.entity.WebsiteCategory
+import com.retoday.core.domain.history.entity.WebsiteCategoryCode
 import java.time.Instant
 import java.time.LocalDate
 
@@ -227,10 +228,12 @@ fun createWebsite(
 
 fun createWebsiteCategory(
     id: Long? = ID,
+    code: WebsiteCategoryCode = WebsiteCategoryCode.DEVELOPMENT,
     name: String = "개발"
 ): WebsiteCategory =
     WebsiteCategory(
         id = id,
+        code = code,
         name = name
     )
 

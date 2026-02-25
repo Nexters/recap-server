@@ -14,6 +14,7 @@ import com.retoday.core.domain.history.dto.result.GetMyScreenTimesResult
 import com.retoday.core.domain.history.dto.result.HistoryRecordResult
 import com.retoday.core.domain.history.entity.History
 import com.retoday.core.domain.history.entity.Website
+import com.retoday.core.domain.history.entity.WebsiteCategoryCode
 import com.retoday.core.domain.history.exception.DuplicateHistoryException
 import com.retoday.core.domain.history.exception.InvalidCategoryException
 import com.retoday.core.domain.history.exception.InvalidTimeRangeException
@@ -346,19 +347,22 @@ class HistoryService(
         website: Website,
         domain: String
     ) {
-        val categories =
+        val categoryCodes =
             categoryRepository
                 .findAll()
-                .map { it.name }
+                .map { it.code.name }
 
-        val predictedName =
-            aiClient.classify(domain, categories)
+        val predictedCode =
+            aiClient.classify(domain, categoryCodes).trim().uppercase()
 
         val category =
             categoryRepository
-                .findByName(predictedName)
+                .findByCode(predictedCode.toCategoryCodeOrNull() ?: throw InvalidCategoryException())
                 ?: throw InvalidCategoryException()
 
         website.updateCategory(category.id!!)
     }
+
+    private fun String.toCategoryCodeOrNull(): WebsiteCategoryCode? =
+        runCatching { WebsiteCategoryCode.valueOf(this) }.getOrNull()
 }
