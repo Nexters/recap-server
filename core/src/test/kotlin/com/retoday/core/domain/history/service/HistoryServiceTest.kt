@@ -1,5 +1,6 @@
 package com.retoday.core.domain.history.service
 
+import com.retoday.core.common.ServiceTest
 import com.retoday.core.domain.history.client.AICategoryClient
 import com.retoday.core.domain.history.dto.projection.WebsiteStatProjection
 import com.retoday.core.domain.history.dto.projection.WorkPatternHourlyCountProjection
@@ -21,8 +22,9 @@ import com.retoday.core.domain.history.repository.WebsiteCategoryRepository
 import com.retoday.core.domain.user.repository.ProfileRepository
 import com.retoday.core.domain.user.service.UserService
 import com.retoday.core.fixture.*
+import com.retoday.core.global.alert.DiscordAlertService
+import com.retoday.core.global.ratelimit.RateLimiter
 import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
@@ -31,8 +33,8 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
-class HistoryServiceTest :
-    BehaviorSpec({
+class HistoryServiceTest : ServiceTest() {
+    init {
         val historyRepository = mockk<HistoryRepository>()
         val websiteService = mockk<WebsiteService>()
         val pageService = mockk<PageService>()
@@ -40,6 +42,8 @@ class HistoryServiceTest :
         val categoryRepository = mockk<WebsiteCategoryRepository>()
         val aiClient = mockk<AICategoryClient>()
         val userService = mockk<UserService>()
+        val rateLimiter = mockk<RateLimiter>()
+        val alertService = mockk<DiscordAlertService>()
         val historyService =
             HistoryService(
                 historyRepository = historyRepository,
@@ -48,7 +52,10 @@ class HistoryServiceTest :
                 profileRepository = profileRepository,
                 categoryRepository = categoryRepository,
                 aiClient = aiClient,
-                userService = userService
+                userService = userService,
+                rateLimiter = rateLimiter,
+                alertService = alertService,
+                transactionManager = transactionManager
             )
 
         val userId = ID
@@ -58,10 +65,11 @@ class HistoryServiceTest :
 
         fun setupSuccessfulRecordMocks(faviconUrl: String? = FAVICON_URL) {
             every { userService.getExcludedDomains(any()) } returns emptyList()
-            every { websiteService.findOrCreate(any(), faviconUrl) } returns website
+            every { websiteService.findOrCreate(any(), any()) } returns website
             every { pageService.findOrCreate(any(), any(), any(), any()) } returns page
             every { historyRepository.findByUserIdAndPageIdAndVisitedAtAfter(any(), any(), any()) } returns null
             every { historyRepository.save(any()) } returns history
+            every { rateLimiter.shouldAlertHistoryFailure() } returns false
         }
 
         Given("사용자가 페이지를 방문했을 때") {
@@ -94,7 +102,7 @@ class HistoryServiceTest :
                     isClosed = false
                 )
 
-            setupSuccessfulRecordMocks(faviconUrl = null)
+            setupSuccessfulRecordMocks()
             every {
                 historyRepository.findByUserIdAndPageIdAndVisitedAtAfter(any(), any(), any())
             } returns createHistory()
@@ -110,6 +118,8 @@ class HistoryServiceTest :
 
         Given("유효하지 않은 URL로") {
             val command = createHistoryRecordCommand(url = "invalid-url")
+
+            setupSuccessfulRecordMocks()
 
             When("히스토리 기록을 요청하면") {
                 Then("요청이 거부된다") {
@@ -127,6 +137,8 @@ class HistoryServiceTest :
                     visitedAt = now,
                     closedAt = now.minusSeconds(10)
                 )
+
+            setupSuccessfulRecordMocks()
 
             When("히스토리 기록을 요청하면") {
                 Then("요청이 거부된다") {
@@ -156,6 +168,7 @@ class HistoryServiceTest :
         Given("사용자가 예외 도메인으로 등록한 사이트에 방문했을 때") {
             val command = createHistoryRecordCommand()
 
+            setupSuccessfulRecordMocks()
             every { userService.getExcludedDomains(userId) } returns listOf(command.domain)
 
             When("히스토리 기록을 요청하면") {
@@ -170,6 +183,7 @@ class HistoryServiceTest :
         Given("사용자가 예외 도메인의 서브도메인에 방문했을 때") {
             val command = createHistoryRecordCommand(url = "https://mail.google.com")
 
+            setupSuccessfulRecordMocks()
             every { userService.getExcludedDomains(userId) } returns listOf("google.com")
 
             When("히스토리 기록을 요청하면") {
@@ -515,4 +529,5 @@ class HistoryServiceTest :
                 }
             }
         }
-    })
+    }
+}
