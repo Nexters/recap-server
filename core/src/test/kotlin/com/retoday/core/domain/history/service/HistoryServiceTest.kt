@@ -14,9 +14,11 @@ import com.retoday.core.domain.history.exception.DuplicateHistoryException
 import com.retoday.core.domain.history.exception.InvalidCategoryException
 import com.retoday.core.domain.history.exception.InvalidTimeRangeException
 import com.retoday.core.domain.history.exception.InvalidUrlException
+import com.retoday.core.domain.history.exception.WebsiteExcludedByUserException
 import com.retoday.core.domain.history.repository.HistoryRepository
 import com.retoday.core.domain.history.repository.WebsiteCategoryRepository
 import com.retoday.core.domain.user.repository.ProfileRepository
+import com.retoday.core.domain.user.service.UserService
 import com.retoday.core.fixture.*
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
@@ -36,6 +38,7 @@ class HistoryServiceTest :
         val profileRepository = mockk<ProfileRepository>()
         val categoryRepository = mockk<WebsiteCategoryRepository>()
         val aiClient = mockk<AICategoryClient>()
+        val userService = mockk<UserService>()
         val historyService =
             HistoryService(
                 historyRepository = historyRepository,
@@ -43,7 +46,8 @@ class HistoryServiceTest :
                 pageService = pageService,
                 profileRepository = profileRepository,
                 categoryRepository = categoryRepository,
-                aiClient = aiClient
+                aiClient = aiClient,
+                userService = userService
             )
 
         val userId = ID
@@ -52,6 +56,7 @@ class HistoryServiceTest :
         val history = createHistory()
 
         fun setupSuccessfulRecordMocks(faviconUrl: String? = FAVICON_URL) {
+            every { userService.getExcludedDomains(any()) } returns emptyList()
             every { websiteService.findOrCreate(any(), faviconUrl) } returns website
             every { pageService.findOrCreate(any(), any(), any(), any()) } returns page
             every { historyRepository.findByUserIdAndPageIdAndVisitedAtAfter(any(), any(), any()) } returns null
@@ -143,6 +148,34 @@ class HistoryServiceTest :
                     result.historyId shouldBe history.id
 
                     verify(exactly = 1) { historyRepository.save(any()) }
+                }
+            }
+        }
+
+        Given("사용자가 예외 도메인으로 등록한 사이트에 방문했을 때") {
+            val command = createHistoryRecordCommand()
+
+            every { userService.getExcludedDomains(userId) } returns listOf(command.domain)
+
+            When("히스토리 기록을 요청하면") {
+                Then("예외 도메인으로 거부된다") {
+                    shouldThrow<WebsiteExcludedByUserException> {
+                        historyService.recordHistory(userId, command)
+                    }
+                }
+            }
+        }
+
+        Given("사용자가 예외 도메인의 서브도메인에 방문했을 때") {
+            val command = createHistoryRecordCommand(url = "https://mail.google.com")
+
+            every { userService.getExcludedDomains(userId) } returns listOf("google.com")
+
+            When("히스토리 기록을 요청하면") {
+                Then("서브도메인도 예외 도메인으로 거부된다") {
+                    shouldThrow<WebsiteExcludedByUserException> {
+                        historyService.recordHistory(userId, command)
+                    }
                 }
             }
         }
