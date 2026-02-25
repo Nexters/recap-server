@@ -2,6 +2,7 @@ package com.retoday.core.global.alert
 
 import com.retoday.core.global.extension.getLogger
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 
@@ -14,6 +15,7 @@ class DiscordAlertService(
         val logger = getLogger()
     }
 
+    @Async("alertTaskExecutor")
     fun send(message: String) {
         if (webhookUrl.isBlank()) return
 
