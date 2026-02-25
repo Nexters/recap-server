@@ -41,6 +41,12 @@ gemini:
   api:
     key: ${GEMINI_API_KEY}
     model: "gemini-2.5-flash"
+recap:
+  image:
+    base-url: ${RECAP_IMAGE_BASE_URL}
+discord:
+  alert:
+    webhook-url: ${DISCORD_ALERT_WEBHOOK_URL:}
 ---
 spring:
   config:

@@ -1,4 +1,4 @@
-package com.retoday.core.domain.recap.dto
+package com.retoday.core.domain.recap.dto.response
 
 // 1번: Today's Recap
 data class GeminiRecapResponse(

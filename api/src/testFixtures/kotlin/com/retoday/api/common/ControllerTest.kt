@@ -1,5 +1,7 @@
 package com.retoday.api.common
 
+import com.ninjasquad.springmockk.MockkBean
+import com.retoday.core.global.alert.DiscordAlertService
 import io.kotest.core.spec.style.DescribeSpec
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs
@@ -12,6 +14,9 @@ import org.springframework.web.context.WebApplicationContext
 abstract class ControllerTest(
     private val version: Int = 1
 ) : DescribeSpec() {
+    @MockkBean(relaxed = true)
+    lateinit var discordAlertService: DiscordAlertService
+
     @Autowired
     private lateinit var webApplicationContext: WebApplicationContext
 

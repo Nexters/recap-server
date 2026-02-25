@@ -1,7 +1,7 @@
 package com.retoday.core.domain.history.repository
 
 import com.retoday.core.common.RepositoryTest
-import com.retoday.core.domain.history.dto.projection.WorkPatternHourlyCount
+import com.retoday.core.domain.history.dto.projection.WorkPatternHourlyCountProjection
 import com.retoday.core.fixture.*
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -155,11 +155,11 @@ class HistoryRepositoryTest : RepositoryTest() {
 
             counts shouldBe
                 listOf(
-                    WorkPatternHourlyCount(hour = 0L, count = 2L),
-                    WorkPatternHourlyCount(hour = 6L, count = 1L),
-                    WorkPatternHourlyCount(hour = 11L, count = 1L),
-                    WorkPatternHourlyCount(hour = 12L, count = 1L),
-                    WorkPatternHourlyCount(hour = 23L, count = 1L)
+                    WorkPatternHourlyCountProjection(hour = 0L, count = 2L),
+                    WorkPatternHourlyCountProjection(hour = 6L, count = 1L),
+                    WorkPatternHourlyCountProjection(hour = 11L, count = 1L),
+                    WorkPatternHourlyCountProjection(hour = 12L, count = 1L),
+                    WorkPatternHourlyCountProjection(hour = 23L, count = 1L)
                 )
         }
 

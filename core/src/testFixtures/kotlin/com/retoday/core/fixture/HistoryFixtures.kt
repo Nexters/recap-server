@@ -1,8 +1,8 @@
 package com.retoday.core.fixture
 
 import com.retoday.core.domain.history.dto.command.HistoryRecordCommand
-import com.retoday.core.domain.history.dto.projection.WebsiteStatWithCategory
-import com.retoday.core.domain.history.dto.projection.WebsiteStatWithVisitCount
+import com.retoday.core.domain.history.dto.projection.WebsiteStatWithCategoryProjection
+import com.retoday.core.domain.history.dto.projection.WebsiteStatWithVisitCountProjection
 import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.dto.query.GetMyWorkPatternQuery
 import com.retoday.core.domain.history.dto.result.GetMyCategoryAnalysesResult
@@ -15,6 +15,7 @@ import com.retoday.core.domain.history.entity.History
 import com.retoday.core.domain.history.entity.Page
 import com.retoday.core.domain.history.entity.Website
 import com.retoday.core.domain.history.entity.WebsiteCategory
+import com.retoday.core.domain.history.entity.WebsiteCategoryCode
 import java.time.Instant
 import java.time.LocalDate
 
@@ -186,26 +187,26 @@ fun createGetMyLongestStayedWebsiteResult(
         stayDuration = stayDuration
     )
 
-fun createWebsiteStatWithCategory(
+fun createWebsiteStatWithCategoryProjection(
     domain: String,
     faviconUrl: String? = FAVICON_URL,
     categoryName: String? = null,
     stayDuration: Long
-): WebsiteStatWithCategory =
-    WebsiteStatWithCategory(
+): WebsiteStatWithCategoryProjection =
+    WebsiteStatWithCategoryProjection(
         domain = domain,
         faviconUrl = faviconUrl,
         categoryName = categoryName,
         stayDuration = stayDuration
     )
 
-fun createWebsiteStatWithVisitCount(
+fun createWebsiteStatWithVisitCountProjection(
     domain: String,
     faviconUrl: String? = FAVICON_URL,
     visitCount: Long,
     stayDuration: Long
-): WebsiteStatWithVisitCount =
-    WebsiteStatWithVisitCount(
+): WebsiteStatWithVisitCountProjection =
+    WebsiteStatWithVisitCountProjection(
         domain = domain,
         faviconUrl = faviconUrl,
         visitCount = visitCount,
@@ -227,10 +228,12 @@ fun createWebsite(
 
 fun createWebsiteCategory(
     id: Long? = ID,
+    code: WebsiteCategoryCode = WebsiteCategoryCode.DEVELOPMENT,
     name: String = "개발"
 ): WebsiteCategory =
     WebsiteCategory(
         id = id,
+        code = code,
         name = name
     )
 

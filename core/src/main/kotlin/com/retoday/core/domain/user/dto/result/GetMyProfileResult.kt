@@ -1,6 +1,6 @@
 package com.retoday.core.domain.user.dto.result
 
-import com.retoday.core.domain.user.dto.projection.ProfileWithEmail
+import com.retoday.core.domain.user.dto.projection.ProfileWithEmailProjection
 import com.retoday.core.domain.user.entity.TimeZone
 import java.time.LocalTime
 
@@ -16,7 +16,7 @@ data class GetMyProfileResult(
 ) {
     companion object {
         fun of(
-            profileWithEmail: ProfileWithEmail,
+            profileWithEmail: ProfileWithEmailProjection,
             excludedDomains: List<String>
         ): GetMyProfileResult =
             with(profileWithEmail.profile) {

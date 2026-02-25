@@ -4,7 +4,7 @@ import com.retoday.core.common.RepositoryTest
 import com.retoday.core.domain.user.entity.Profile
 import com.retoday.core.domain.user.entity.User
 import com.retoday.core.fixture.createProfile
-import com.retoday.core.fixture.createProfileWithEmail
+import com.retoday.core.fixture.createProfileWithEmailProjection
 import com.retoday.core.fixture.createUser
 import io.kotest.core.test.TestCase
 import io.kotest.matchers.equality.shouldBeEqualToComparingFields
@@ -32,7 +32,7 @@ class CustomProfileRepositoryTest : RepositoryTest() {
 
             profileWithEmail
                 .shouldNotBeNull()
-                .shouldBeEqualToComparingFields(createProfileWithEmail(profile = profile))
+                .shouldBeEqualToComparingFields(createProfileWithEmailProjection(profile = profile))
         }
     }
 }
