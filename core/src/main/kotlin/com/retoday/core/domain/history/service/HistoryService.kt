@@ -23,6 +23,9 @@ import com.retoday.core.domain.history.repository.HistoryRepository
 import com.retoday.core.domain.history.repository.WebsiteCategoryRepository
 import com.retoday.core.domain.user.repository.ProfileRepository
 import com.retoday.core.domain.user.service.UserService
+import com.retoday.core.global.alert.DiscordAlertService
+import com.retoday.core.global.extension.getLogger
+import com.retoday.core.global.ratelimit.RateLimiter
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -36,10 +39,13 @@ class HistoryService(
     private val pageService: PageService,
     private val categoryRepository: WebsiteCategoryRepository,
     private val aiClient: AICategoryClient,
-    private val userService: UserService
+    private val userService: UserService,
+    private val rateLimiter: RateLimiter,
+    private val alertService: DiscordAlertService
 ) {
     private companion object {
         private const val DEFAULT_CATEGORY_NAME = "기타"
+        val logger = getLogger()
     }
 
     @Transactional
@@ -70,16 +76,23 @@ class HistoryService(
 
         checkDuplicateHistory(userId, page.id!!, command.visitedAt, command.tabId, command.normalizedUrl)
 
-        return historyRepository
-            .save(createHistory(userId, website.id!!, page.id!!, command))
-            .let {
-                HistoryRecordResult(
-                    historyId = it.id!!,
-                    pageId = page.id!!,
-                    websiteId = website.id!!,
-                    recordedAt = it.createdAt
-                )
+        return runCatching {
+            historyRepository
+                .save(createHistory(userId, website.id!!, page.id!!, command))
+                .let {
+                    HistoryRecordResult(
+                        historyId = it.id!!,
+                        pageId = page.id!!,
+                        websiteId = website.id!!,
+                        recordedAt = it.createdAt
+                    )
+                }
+        }.onFailure { e ->
+            logger.error(e) { "Failed to save history. userId=$userId, domain=$domain" }
+            if (rateLimiter.shouldAlertHistoryFailure()) {
+                alertService.send("🔴 **[PROD] 방문기록 저장 실패 급증**\n1분 내 반복 실패 감지")
             }
+        }.getOrThrow()
     }
 
     @Transactional(readOnly = true)

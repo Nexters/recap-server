@@ -44,6 +44,9 @@ gemini:
 recap:
   image:
     base-url: ${RECAP_IMAGE_BASE_URL}
+discord:
+  alert:
+    webhook-url: ${DISCORD_ALERT_WEBHOOK_URL:}
 ---
 spring:
   config:
