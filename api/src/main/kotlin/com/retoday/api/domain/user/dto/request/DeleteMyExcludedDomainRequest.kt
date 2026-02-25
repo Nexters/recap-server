@@ -4,7 +4,7 @@ import com.retoday.api.global.validation.Domain
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 
-data class AddMyExcludedDomainRequest(
+data class DeleteMyExcludedDomainRequest(
     @field:NotBlank
     @field:Size(max = 255)
     @field:Domain

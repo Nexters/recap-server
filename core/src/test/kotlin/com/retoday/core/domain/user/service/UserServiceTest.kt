@@ -83,5 +83,21 @@ class UserServiceTest : BehaviorSpec() {
                 }
             }
         }
+
+        Given("사용자가 예외 도메인 삭제를 요청하면") {
+            val domain = " GitHub.COM "
+            val normalizedDomain = "github.com"
+            every { userExcludedWebsiteRepository.deleteByUserIdAndDomain(ID, normalizedDomain) } returns 1L
+
+            When("예외 도메인 삭제를 수행하면") {
+                userService.deleteMyExcludedDomain(ID, domain)
+
+                Then("정규화된 도메인으로 삭제가 수행된다.") {
+                    verify(exactly = 1) {
+                        userExcludedWebsiteRepository.deleteByUserIdAndDomain(ID, normalizedDomain)
+                    }
+                }
+            }
+        }
     }
 }
