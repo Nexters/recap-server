@@ -15,6 +15,7 @@ data class RecapDetailResponse(
     val recapDate: LocalDate,
     val title: String,
     val summary: String,
+    val imageUrl: String? = null,
     val startedAt: LocalDateTime,
     val closedAt: LocalDateTime,
     val sections: List<SectionResponse>,
@@ -46,7 +47,8 @@ data class RecapDetailResponse(
             recap: Recap,
             sections: List<Section>,
             timelines: List<Timeline>,
-            topics: List<Topic>
+            topics: List<Topic>,
+            zoneId: ZoneId
         ): RecapDetailResponse =
             RecapDetailResponse(
                 id = recap.id!!,
@@ -54,8 +56,9 @@ data class RecapDetailResponse(
                 recapDate = recap.recapDate,
                 title = recap.title,
                 summary = recap.summary,
-                startedAt = LocalDateTime.ofInstant(recap.startedAt, ZoneId.systemDefault()),
-                closedAt = LocalDateTime.ofInstant(recap.closedAt, ZoneId.systemDefault()),
+                imageUrl = recap.imageUrl,
+                startedAt = LocalDateTime.ofInstant(recap.startedAt, zoneId),
+                closedAt = LocalDateTime.ofInstant(recap.closedAt, zoneId),
                 sections = sections.map { SectionResponse(it.title, it.content) },
                 timelines =
                     timelines.map {

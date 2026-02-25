@@ -10,6 +10,7 @@ import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
 import com.retoday.core.domain.history.dto.query.GetMyWorkPatternQuery
 import com.retoday.core.domain.history.entity.Website
 import com.retoday.core.domain.history.entity.WebsiteCategory
+import com.retoday.core.domain.history.entity.WebsiteCategoryCode
 import com.retoday.core.domain.history.exception.DuplicateHistoryException
 import com.retoday.core.domain.history.exception.InvalidCategoryException
 import com.retoday.core.domain.history.exception.InvalidTimeRangeException
@@ -484,15 +485,15 @@ class HistoryServiceTest :
 
         Given("웹사이트 도메인 카테고리 분류가 필요할 때") {
             val domain = "hackers.com"
-            val studyCategory = WebsiteCategory(id = 10L, name = "학습")
+            val studyCategory = WebsiteCategory(id = 10L, code = WebsiteCategoryCode.STUDY, name = "학습")
             val categoryList = listOf(studyCategory)
-            val categoryNames = listOf("학습")
+            val categoryCodes = listOf("STUDY")
 
             When("카테고리가 할당되지 않은 도메인인 경우") {
                 val targetWebsite = Website(id = 1L, domain = domain, categoryId = null)
                 every { categoryRepository.findAll() } returns categoryList
-                every { aiClient.classify(domain, categoryNames) } returns "학습"
-                every { categoryRepository.findByName("학습") } returns studyCategory
+                every { aiClient.classify(domain, categoryCodes) } returns "STUDY"
+                every { categoryRepository.findByCode(WebsiteCategoryCode.STUDY) } returns studyCategory
 
                 historyService.classifyCategory(targetWebsite, domain)
 
@@ -505,8 +506,7 @@ class HistoryServiceTest :
             When("AI가 분류한 카테고리가 DB에 존재하지 않는 이름이라면") {
                 val freshWebsite = Website(id = 2L, domain = domain, categoryId = null)
                 every { categoryRepository.findAll() } returns categoryList
-                every { aiClient.classify(domain, categoryNames) } returns "잘못된카테고리"
-                every { categoryRepository.findByName("잘못된카테고리") } returns null
+                every { aiClient.classify(domain, categoryCodes) } returns "INVALID_CODE"
 
                 Then("InvalidCategoryException이 발생해야 한다") {
                     shouldThrow<InvalidCategoryException> {

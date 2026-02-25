@@ -24,4 +24,17 @@ class RecapController(
 
         return ResponseEntity.ok(response)
     }
+
+    @GetMapping
+    fun getDailyRecap(
+        @AuthenticationId
+        userId: Long,
+        @RequestParam date: LocalDate?
+    ): ResponseEntity<RecapDetailResponse> {
+        val response =
+            recapService.getDailyRecap(userId, date)
+                ?: return ResponseEntity.noContent().build()
+
+        return ResponseEntity.ok(response)
+    }
 }

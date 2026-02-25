@@ -1,7 +1,10 @@
 package com.retoday.core.domain.recap.service
 
+import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
 import com.retoday.core.domain.history.repository.HistoryRepository
+import com.retoday.core.domain.history.service.HistoryService
 import com.retoday.core.domain.recap.client.RecapAIClient
+import com.retoday.core.domain.recap.component.ImagePolicyResolver
 import com.retoday.core.domain.recap.component.RecapType
 import com.retoday.core.domain.recap.dto.projection.UserActivityProjection
 import com.retoday.core.domain.recap.dto.projection.UserTimelineProjection
@@ -26,7 +29,6 @@ import com.retoday.core.global.extension.transaction
 import org.springframework.stereotype.Service
 import org.springframework.transaction.PlatformTransactionManager
 import java.time.Duration
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -40,7 +42,9 @@ class RecapService(
     private val timelineRepository: TimelineRepository,
     private val historyRepository: HistoryRepository,
     private val profileRepository: ProfileRepository,
-    private val transactionManager: PlatformTransactionManager
+    private val transactionManager: PlatformTransactionManager,
+    private val historyService: HistoryService,
+    private val imagePolicyResolver: ImagePolicyResolver
 ) {
     private companion object {
         val TIMELINE_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
@@ -53,6 +57,14 @@ class RecapService(
         val targetDate = date ?: LocalDate.now().minusDays(1)
         createDailyRecap(userId, targetDate)
 
+        return getRecapDetail(userId, targetDate)
+    }
+
+    fun getDailyRecap(
+        userId: Long,
+        date: LocalDate?
+    ): RecapDetailResponse? {
+        val targetDate = date ?: LocalDate.now().minusDays(1)
         return getRecapDetail(userId, targetDate)
     }
 
@@ -73,19 +85,7 @@ class RecapService(
         if (activityProjections.isEmpty()) return
         val activityRequests = activityProjections.map { it.toRequest() }
         val name = profile.firstName
-
-        val firstHistory =
-            historyRepository.findFirstByUserIdAndVisitedAtGreaterThanEqualAndVisitedAtLessThanOrderByVisitedAtAsc(
-                userId,
-                startedAt,
-                endedAt
-            )
-        val lastHistory =
-            historyRepository.findFirstByUserIdAndVisitedAtGreaterThanEqualAndVisitedAtLessThanOrderByClosedAtDesc(
-                userId,
-                startedAt,
-                endedAt
-            )
+        val zoneId = profile.timeZone.id
 
         val recapResponse = generateRecap(name, activityRequests)
         val topicResponse = generateTopics(name, activityRequests)
@@ -97,6 +97,26 @@ class RecapService(
             val timelineRequests = timelineProjections.map { it.toRequest() }
             timelineResponse = generateTimeline(name, timelineRequests)
         }
+        val firstVisitedAt = timelineProjections.mapNotNull { it.visitedAt }.minOrNull() ?: startedAt
+        val lastClosedAt = timelineProjections.mapNotNull { it.closedAt }.maxOrNull() ?: endedAt
+        val categoryAnalyses =
+            historyService
+                .getMyCategoryAnalyses(
+                    userId = userId,
+                    query = GetMyCategoryAnalysisQuery(date = date)
+                ).categoryAnalyses
+        val topCategoryName = categoryAnalyses.firstOrNull()?.categoryName
+        val categoryCount = categoryAnalyses.count { it.stayDuration > 0L }
+
+        val imageUrl =
+            imagePolicyResolver.resolveImageUrl(
+                userId = userId,
+                firstVisitedAt = firstVisitedAt,
+                zoneId = zoneId,
+                topCategoryName = topCategoryName,
+                categoryCount = categoryCount,
+                activities = activityProjections
+            )
 
         transactionManager.transaction {
             val recap =
@@ -105,8 +125,9 @@ class RecapService(
                     recapDate = date,
                     title = recapResponse.title,
                     summary = recapResponse.dailySummary,
-                    startedAt = firstHistory?.visitedAt ?: Instant.now(),
-                    closedAt = lastHistory?.closedAt ?: Instant.now(),
+                    imageUrl = imageUrl,
+                    startedAt = firstVisitedAt,
+                    closedAt = lastClosedAt,
                     model = recapAIClient.modelName
                 ).let { recapRepository.save(it) }
 
@@ -167,8 +188,9 @@ class RecapService(
                     val sections = sectionRepository.findAllByRecapId(it.id!!)
                     val topics = topicRepository.findAllByRecapId(it.id!!)
                     val timelines = timelineRepository.findAllByRecapId(it.id!!)
+                    val zoneId = profileRepository.findByUserId(userId)!!.timeZone.id
 
-                    RecapDetailResponse.of(it, sections, timelines, topics)
+                    RecapDetailResponse.of(it, sections, timelines, topics, zoneId)
                 }
         }
 

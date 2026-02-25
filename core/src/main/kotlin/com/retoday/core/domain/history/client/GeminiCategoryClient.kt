@@ -19,9 +19,9 @@ class GeminiCategoryClient(
 ) : AICategoryClient {
     override fun classify(
         domain: String,
-        categoryNames: List<String>
+        categoryCodes: List<String>
     ): String {
-        val instruction = loadInstruction(categoryNames)
+        val instruction = loadInstruction(categoryCodes)
 
         val response =
             geminiSdkClient.models.generateContent(
@@ -46,14 +46,14 @@ class GeminiCategoryClient(
         return node.get("category")?.asText() ?: ""
     }
 
-    // 프롬프트와 카테고리 전달
-    private fun loadInstruction(categoryNames: List<String>): String {
+    // 프롬프트와 카테고리 코드 전달
+    private fun loadInstruction(categoryCodes: List<String>): String {
         val rawPrompt =
             promptResource.inputStream.use {
                 String(it.readAllBytes(), StandardCharsets.UTF_8)
             }
 
-        val categoriesString = categoryNames.joinToString(", ")
+        val categoriesString = categoryCodes.joinToString(", ")
 
         return rawPrompt.replace("{categories}", "[$categoriesString]")
     }

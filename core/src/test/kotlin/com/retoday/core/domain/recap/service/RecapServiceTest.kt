@@ -1,8 +1,11 @@
 package com.retoday.core.domain.recap.service
 
 import com.retoday.core.common.ServiceTest
+import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
 import com.retoday.core.domain.history.repository.HistoryRepository
+import com.retoday.core.domain.history.service.HistoryService
 import com.retoday.core.domain.recap.client.RecapAIClient
+import com.retoday.core.domain.recap.component.ImagePolicyResolver
 import com.retoday.core.domain.recap.component.RecapType
 import com.retoday.core.domain.recap.dto.request.GenerateRecapRequest
 import com.retoday.core.domain.recap.dto.request.RecapPayload
@@ -31,7 +34,9 @@ class RecapServiceTest : ServiceTest() {
     private val topicRepository = mockk<TopicRepository>()
     private val timelineRepository = mockk<TimelineRepository>()
     private val historyRepository = mockk<HistoryRepository>()
+    private val historyService = mockk<HistoryService>()
     private val profileRepository = mockk<ProfileRepository>()
+    private val imagePolicyResolver = mockk<ImagePolicyResolver>()
 
     private val recapService =
         RecapService(
@@ -41,7 +46,9 @@ class RecapServiceTest : ServiceTest() {
             topicRepository = topicRepository,
             timelineRepository = timelineRepository,
             historyRepository = historyRepository,
+            historyService = historyService,
             profileRepository = profileRepository,
+            imagePolicyResolver = imagePolicyResolver,
             transactionManager = transactionManager
         )
 
@@ -65,21 +72,17 @@ class RecapServiceTest : ServiceTest() {
             every { recapRepository.existsByUserIdAndRecapDate(userId, date) } returns false
             every { historyRepository.findUserActivitiesForRecap(userId, startedAt, endedAt) } returns activities
             every { historyRepository.findUserTimelinesForRecap(userId, startedAt, endedAt) } returns timelineActivities
-            every {
-                historyRepository.findFirstByUserIdAndVisitedAtGreaterThanEqualAndVisitedAtLessThanOrderByVisitedAtAsc(
-                    userId,
-                    startedAt,
-                    endedAt
+            every { profileRepository.findByUserId(userId) } returns
+                createProfile(
+                    userId = userId,
+                    firstName = profile.firstName
                 )
-            } returns null
             every {
-                historyRepository.findFirstByUserIdAndVisitedAtGreaterThanEqualAndVisitedAtLessThanOrderByClosedAtDesc(
-                    userId,
-                    startedAt,
-                    endedAt
+                historyService.getMyCategoryAnalyses(
+                    userId = userId,
+                    query = GetMyCategoryAnalysisQuery(date = date)
                 )
-            } returns null
-            every { profileRepository.findByUserId(userId) } returns profile
+            } returns createGetMyCategoryAnalysisResult(date)
 
             // AI 응답 Mocking
             val recapResponse = createGeminiRecapResponse()
@@ -87,6 +90,16 @@ class RecapServiceTest : ServiceTest() {
             val timelineResponse = createGeminiTimelineResponse()
 
             every { recapAIClient.modelName } returns "gemini-pro"
+            every {
+                imagePolicyResolver.resolveImageUrl(
+                    userId = userId,
+                    firstVisitedAt = any(),
+                    zoneId = any(),
+                    topCategoryName = any(),
+                    categoryCount = any(),
+                    activities = activities
+                )
+            } returns "images/11.png"
             every {
                 recapAIClient.generate(
                     GenerateRecapRequest(
