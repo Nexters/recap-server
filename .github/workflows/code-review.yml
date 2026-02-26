@@ -2,6 +2,7 @@ name: Gemini Code Review
 
 on:
   pull_request:
+    branches: [dev]
     types: [opened]
   workflow_dispatch:
 
