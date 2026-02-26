@@ -9,13 +9,13 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 class WebConfiguration(
     @Value("\${web.uris}")
     private val webUris: Array<String>,
-    @Value("\${extension.uri}")
-    private val extensionUri: String
+    @Value("\${extension.uris}")
+    private val extensionUris: Array<String>
 ) : WebMvcConfigurer {
     override fun addCorsMappings(registry: CorsRegistry) {
         registry
             .addMapping("/api/**")
-            .allowedOrigins(*webUris, extensionUri)
+            .allowedOrigins(*webUris, *extensionUris)
             .allowedMethods("*")
             .allowedHeaders("*")
             .allowCredentials(true)
