@@ -210,20 +210,12 @@ class RecapServiceTest : ServiceTest() {
             every { recapRepository.save(any()) } answers { firstArg() }
 
             When("createDailyRecap을 호출하면") {
-                Then("FAILED 상태의 리캡이 저장되고 예외가 전파된다") {
+                Then("리캡 저장 없이 예외가 전파된다") {
                     shouldThrow<RuntimeException> {
                         recapService.createDailyRecap(userId, date)
                     }
 
-                    verify(exactly = 1) {
-                        recapRepository.save(
-                            match {
-                                it.userId == userId &&
-                                    it.recapDate == date &&
-                                    it.status == RecapStatus.FAILED
-                            }
-                        )
-                    }
+                    verify(exactly = 0) { recapRepository.save(any()) }
                 }
             }
         }
