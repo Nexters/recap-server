@@ -19,7 +19,7 @@ fun createUserActivities(): List<UserActivityProjection> =
             description = "멀티 모듈 구조 정리", // p.description
             domain = "velog.io", // w.domain
             categoryName = "개발", // c.name
-            stayDuration = 1800 // h.stayDuration
+            stayDuration = 1800L // h.stayDuration
         )
     )
 
@@ -30,7 +30,7 @@ fun createUserActivityRequests(activities: List<UserActivityProjection>): List<U
             description = it.description,
             domain = it.domain,
             categoryName = it.categoryName,
-            stayDuration = it.stayDuration
+            stayDuration = it.stayDuration.toInt()
         )
     }
 

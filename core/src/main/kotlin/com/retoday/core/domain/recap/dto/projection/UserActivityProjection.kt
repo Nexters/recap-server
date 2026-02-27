@@ -5,5 +5,5 @@ data class UserActivityProjection(
     val description: String?,
     val domain: String,
     val categoryName: String?,
-    val stayDuration: Int
+    val stayDuration: Long
 )
