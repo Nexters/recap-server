@@ -193,22 +193,22 @@ interface HistoryRepository : JpaRepository<History, Long> {
 
     @Query(
         """
-            SELECT
-                p.title AS title,
-                p.description AS description,
-                wc.name AS categoryName,
-                h.visited_at AS visitedAt,
-                h.closed_at AS closedAt
-            FROM history h
-            JOIN page p ON p.id = h.page_id
-            JOIN website w ON w.id = h.website_id
-            LEFT JOIN website_category wc ON wc.id = w.category_id
-            WHERE h.user_id = :userId
-              AND h.visited_at >= :startedAt
-              AND h.visited_at < :endedAt
-            ORDER BY h.visited_at
-        """,
-        nativeQuery = true
+            SELECT new com.retoday.core.domain.recap.dto.projection.UserTimelineProjection(
+                p.title,
+                p.description,
+                wc.name,
+                h.visitedAt,
+                h.closedAt
+            )
+            FROM History h
+            JOIN Page p ON p.id = h.pageId
+            JOIN Website w ON w.id = h.websiteId
+            LEFT JOIN WebsiteCategory wc ON wc.id = w.categoryId
+            WHERE h.userId = :userId
+              AND h.visitedAt >= :startedAt
+              AND h.visitedAt < :endedAt
+            ORDER BY h.visitedAt
+        """
     )
     fun findUserTimelinesForRecap(
         @Param("userId")
