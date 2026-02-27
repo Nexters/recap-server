@@ -146,7 +146,7 @@ jobs:
           envsubst '${DOMAIN}' < nginx/nginx.conf.template > nginx/nginx.conf
           [ -f nginx/nginx.conf ] && [ -s nginx/nginx.conf ] || { echo "❌ Failed to create nginx.conf"; exit 1; }
 
-          docker pull ${DOCKER_USER}/retoday-api:${SHA} || true
+          docker pull ${DOCKER_USER}/retoday-api:${SHA}
           docker tag ${DOCKER_USER}/retoday-api:${SHA} retoday-api:latest
           COMPOSE_PROFILES=dev docker compose up -d --force-recreate api
 
@@ -154,12 +154,12 @@ jobs:
           sleep 3
 
           HEALTH_OK=false
-          for i in {1..10}; do
+          for i in {1..20}; do
             if curl -sf http://localhost/actuator/health | grep -q '"status":"UP"'; then
               HEALTH_OK=true
               break
             fi
-            sleep 2
+            sleep 3
           done
 
           if [ "$HEALTH_OK" != "true" ]; then
