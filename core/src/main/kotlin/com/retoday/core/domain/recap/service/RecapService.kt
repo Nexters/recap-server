@@ -17,6 +17,7 @@ import com.retoday.core.domain.recap.dto.response.GeminiTimelineResponse
 import com.retoday.core.domain.recap.dto.response.GeminiTopicResponse
 import com.retoday.core.domain.recap.dto.response.RecapDetailResponse
 import com.retoday.core.domain.recap.entity.Recap
+import com.retoday.core.domain.recap.entity.RecapStatus
 import com.retoday.core.domain.recap.entity.Section
 import com.retoday.core.domain.recap.entity.Timeline
 import com.retoday.core.domain.recap.entity.Topic
@@ -48,6 +49,8 @@ class RecapService(
 ) {
     private companion object {
         val TIMELINE_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
+        const val FAILED_RECAP_TITLE: String = ""
+        const val FAILED_RECAP_SUMMARY: String = ""
     }
 
     fun generateDailyRecap(
@@ -87,93 +90,112 @@ class RecapService(
         val name = profile.firstName
         val zoneId = profile.timeZone.id
 
-        val recapResponse = generateRecap(name, activityRequests)
-        val topicResponse = generateTopics(name, activityRequests)
-
-        // 타임라인 전용 데이터 조회 및 저장
-        var timelineResponse = GeminiTimelineResponse()
         val timelineProjections = historyRepository.findUserTimelinesForRecap(userId, startedAt, endedAt)
-        if (timelineProjections.isNotEmpty()) {
-            val timelineRequests = timelineProjections.map { it.toRequest() }
-            timelineResponse = generateTimeline(name, timelineRequests)
-        }
         val firstVisitedAt = timelineProjections.mapNotNull { it.visitedAt }.minOrNull() ?: startedAt
         val lastClosedAt = timelineProjections.mapNotNull { it.closedAt }.maxOrNull() ?: endedAt
-        val categoryAnalyses =
-            historyService
-                .getMyCategoryAnalyses(
+
+        runCatching {
+            val recapResponse = generateRecap(name, activityRequests)
+            val topicResponse = generateTopics(name, activityRequests)
+
+            var timelineResponse = GeminiTimelineResponse()
+            if (timelineProjections.isNotEmpty()) {
+                val timelineRequests = timelineProjections.map { it.toRequest() }
+                timelineResponse = generateTimeline(name, timelineRequests)
+            }
+
+            val categoryAnalyses =
+                historyService
+                    .getMyCategoryAnalyses(
+                        userId = userId,
+                        query = GetMyCategoryAnalysisQuery(date = date)
+                    ).categoryAnalyses
+            val topCategoryName = categoryAnalyses.firstOrNull()?.categoryName
+            val categoryCount = categoryAnalyses.count { it.stayDuration > 0L }
+
+            val imageUrl =
+                imagePolicyResolver.resolveImageUrl(
                     userId = userId,
-                    query = GetMyCategoryAnalysisQuery(date = date)
-                ).categoryAnalyses
-        val topCategoryName = categoryAnalyses.firstOrNull()?.categoryName
-        val categoryCount = categoryAnalyses.count { it.stayDuration > 0L }
+                    firstVisitedAt = firstVisitedAt,
+                    zoneId = zoneId,
+                    topCategoryName = topCategoryName,
+                    categoryCount = categoryCount,
+                    activities = activityProjections
+                )
 
-        val imageUrl =
-            imagePolicyResolver.resolveImageUrl(
-                userId = userId,
-                firstVisitedAt = firstVisitedAt,
-                zoneId = zoneId,
-                topCategoryName = topCategoryName,
-                categoryCount = categoryCount,
-                activities = activityProjections
-            )
+            transactionManager.transaction {
+                val recap =
+                    Recap(
+                        userId = userId,
+                        recapDate = date,
+                        title = recapResponse.title,
+                        summary = recapResponse.dailySummary,
+                        imageUrl = imageUrl,
+                        startedAt = firstVisitedAt,
+                        closedAt = lastClosedAt,
+                        model = recapAIClient.modelName,
+                        status = RecapStatus.COMPLETED
+                    ).let { recapRepository.save(it) }
 
-        transactionManager.transaction {
-            val recap =
-                Recap(
-                    userId = userId,
-                    recapDate = date,
-                    title = recapResponse.title,
-                    summary = recapResponse.dailySummary,
-                    imageUrl = imageUrl,
-                    startedAt = firstVisitedAt,
-                    closedAt = lastClosedAt,
-                    model = recapAIClient.modelName
-                ).let { recapRepository.save(it) }
+                val sections =
+                    recapResponse.sections
+                        .map {
+                            Section(
+                                recapId = recap.id!!,
+                                title = it.title,
+                                content = it.content
+                            )
+                        }.let { sectionRepository.saveAll(it) }
 
-            val sections =
-                recapResponse.sections
-                    .map {
-                        Section(
-                            recapId = recap.id!!,
-                            title = it.title,
-                            content = it.content
-                        )
-                    }.let { sectionRepository.saveAll(it) }
+                val topics =
+                    topicResponse.topics
+                        .map {
+                            Topic(
+                                recapId = recap.id!!,
+                                keyword = it.keyword,
+                                title = it.title,
+                                content = it.content
+                            )
+                        }.let { topicRepository.saveAll(it) }
 
-            val topics =
-                topicResponse.topics
-                    .map {
-                        Topic(
-                            recapId = recap.id!!,
-                            keyword = it.keyword,
-                            title = it.title,
-                            content = it.content
-                        )
-                    }.let { topicRepository.saveAll(it) }
+                if (timelineResponse.timelines.isEmpty()) return@transaction
 
-            if (timelineResponse.timelines.isEmpty()) return@transaction
+                val timelines =
+                    timelineResponse.timelines
+                        .map { item ->
+                            val startedAt = LocalTime.parse(item.startedAt, TIMELINE_TIME_FORMATTER)
+                            val endedAt = LocalTime.parse(item.endedAt, TIMELINE_TIME_FORMATTER)
+                            val duration =
+                                Duration
+                                    .between(startedAt, endedAt)
+                                    .toMinutes()
+                                    .toInt()
 
-            val timelines =
-                timelineResponse.timelines
-                    .map { item ->
-                        val startedAt = LocalTime.parse(item.startedAt, TIMELINE_TIME_FORMATTER)
-                        val endedAt = LocalTime.parse(item.endedAt, TIMELINE_TIME_FORMATTER)
-                        val duration =
-                            Duration
-                                .between(startedAt, endedAt)
-                                .toMinutes()
-                                .toInt()
-
-                        Timeline(
-                            recapId = recap.id!!,
-                            startedAt = startedAt,
-                            endedAt = endedAt,
-                            title = item.title,
-                            durationMinutes = duration
-                        )
-                    }.let { timelineRepository.saveAll(it) }
-        }
+                            Timeline(
+                                recapId = recap.id!!,
+                                startedAt = startedAt,
+                                endedAt = endedAt,
+                                title = item.title,
+                                durationMinutes = duration
+                            )
+                        }.let { timelineRepository.saveAll(it) }
+            }
+        }.onFailure {
+            transactionManager.transaction {
+                recapRepository.save(
+                    Recap(
+                        userId = userId,
+                        recapDate = date,
+                        title = FAILED_RECAP_TITLE,
+                        summary = FAILED_RECAP_SUMMARY,
+                        startedAt = firstVisitedAt,
+                        closedAt = lastClosedAt,
+                        model = recapAIClient.modelName,
+                        status = RecapStatus.FAILED
+                    )
+                )
+            }
+        }.getOrThrow()
     }
 
     // api 호출용 조회 로직
