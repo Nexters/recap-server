@@ -237,7 +237,7 @@ class RecapService(
             description = description,
             domain = domain,
             categoryName = categoryName,
-            stayDuration = stayDuration
+            stayDuration = stayDuration.toInt()
         )
 
     private fun UserTimelineProjection.toRequest(): UserTimelineRequest =
