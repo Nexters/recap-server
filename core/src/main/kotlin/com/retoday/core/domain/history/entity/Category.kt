@@ -13,6 +13,7 @@ enum class Category(
     LIFE("생활/편의"),
     SURFING("웹서핑"),
     DESIGN("디자인"),
+    AI("AI"),
     DEVELOPMENT("개발"),
     ETC("기타");
 

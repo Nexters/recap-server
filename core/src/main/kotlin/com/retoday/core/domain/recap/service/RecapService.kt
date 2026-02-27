@@ -17,6 +17,7 @@ import com.retoday.core.domain.recap.dto.response.GeminiTimelineResponse
 import com.retoday.core.domain.recap.dto.response.GeminiTopicResponse
 import com.retoday.core.domain.recap.dto.response.RecapDetailResponse
 import com.retoday.core.domain.recap.entity.Recap
+import com.retoday.core.domain.recap.entity.RecapStatus
 import com.retoday.core.domain.recap.entity.Section
 import com.retoday.core.domain.recap.entity.Timeline
 import com.retoday.core.domain.recap.entity.Topic
@@ -48,6 +49,8 @@ class RecapService(
 ) {
     private companion object {
         val TIMELINE_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
+        const val FAILED_RECAP_TITLE: String = ""
+        const val FAILED_RECAP_SUMMARY: String = ""
     }
 
     fun generateDailyRecap(
@@ -87,18 +90,19 @@ class RecapService(
         val name = profile.firstName
         val zoneId = profile.timeZone.id
 
+        val timelineProjections = historyRepository.findUserTimelinesForRecap(userId, startedAt, endedAt)
+        val firstVisitedAt = timelineProjections.mapNotNull { it.visitedAt }.minOrNull() ?: startedAt
+        val lastClosedAt = timelineProjections.mapNotNull { it.closedAt }.maxOrNull() ?: endedAt
+
         val recapResponse = generateRecap(name, activityRequests)
         val topicResponse = generateTopics(name, activityRequests)
 
-        // 타임라인 전용 데이터 조회 및 저장
         var timelineResponse = GeminiTimelineResponse()
-        val timelineProjections = historyRepository.findUserTimelinesForRecap(userId, startedAt, endedAt)
         if (timelineProjections.isNotEmpty()) {
             val timelineRequests = timelineProjections.map { it.toRequest() }
             timelineResponse = generateTimeline(name, timelineRequests)
         }
-        val firstVisitedAt = timelineProjections.mapNotNull { it.visitedAt }.minOrNull() ?: startedAt
-        val lastClosedAt = timelineProjections.mapNotNull { it.closedAt }.maxOrNull() ?: endedAt
+
         val categoryAnalyses =
             historyService
                 .getMyCategoryAnalyses(
@@ -128,7 +132,8 @@ class RecapService(
                     imageUrl = imageUrl,
                     startedAt = firstVisitedAt,
                     closedAt = lastClosedAt,
-                    model = recapAIClient.modelName
+                    model = recapAIClient.modelName,
+                    status = RecapStatus.COMPLETED
                 ).let { recapRepository.save(it) }
 
             val sections =
@@ -173,6 +178,32 @@ class RecapService(
                             durationMinutes = duration
                         )
                     }.let { timelineRepository.saveAll(it) }
+        }
+    }
+
+    fun saveFailedRecap(
+        userId: Long,
+        date: LocalDate
+    ) {
+        if (recapRepository.existsByUserIdAndRecapDate(userId, date)) return
+
+        val profile = profileRepository.findByUserId(userId) ?: return
+        val startedAt = date.atStartOfDay(profile.timeZone.id).toInstant()
+        val closedAt = startedAt.plus(Duration.ofDays(1))
+
+        transactionManager.transaction {
+            recapRepository.save(
+                Recap(
+                    userId = userId,
+                    recapDate = date,
+                    title = FAILED_RECAP_TITLE,
+                    summary = FAILED_RECAP_SUMMARY,
+                    startedAt = startedAt,
+                    closedAt = closedAt,
+                    model = recapAIClient.modelName,
+                    status = RecapStatus.FAILED
+                )
+            )
         }
     }
 

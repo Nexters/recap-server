@@ -12,6 +12,7 @@ import com.retoday.core.domain.recap.dto.request.RecapPayload
 import com.retoday.core.domain.recap.dto.response.GeminiRecapResponse
 import com.retoday.core.domain.recap.dto.response.GeminiTimelineResponse
 import com.retoday.core.domain.recap.dto.response.GeminiTopicResponse
+import com.retoday.core.domain.recap.entity.RecapStatus
 import com.retoday.core.domain.recap.entity.Section
 import com.retoday.core.domain.recap.entity.Timeline
 import com.retoday.core.domain.recap.entity.Topic
@@ -21,6 +22,7 @@ import com.retoday.core.domain.recap.repository.TimelineRepository
 import com.retoday.core.domain.recap.repository.TopicRepository
 import com.retoday.core.domain.user.repository.ProfileRepository
 import com.retoday.core.fixture.*
+import io.kotest.assertions.throwables.shouldThrow
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -143,7 +145,11 @@ class RecapServiceTest : ServiceTest() {
 
                 Then("부모 Recap이 저장되고, 파생되는 모든 엔티티들이 recapId(100L)를 가지고 저장된다") {
                     // 1. 부모 리캡 저장 확인
-                    verify(exactly = 1) { recapRepository.save(any()) }
+                    verify(exactly = 1) {
+                        recapRepository.save(
+                            match { it.status == RecapStatus.COMPLETED }
+                        )
+                    }
 
                     // 2. 섹션 저장 확인
                     verify(exactly = 1) {
@@ -174,6 +180,42 @@ class RecapServiceTest : ServiceTest() {
                             }
                         )
                     }
+                }
+            }
+        }
+
+        Given("리캡 생성 중 예외가 발생할 때") {
+            val userId = ID
+            val date = LocalDate.parse("2026-02-24")
+            val profile =
+                createProfile(
+                    userId = userId,
+                    firstName = "민주"
+                )
+            val startedAt = date.atStartOfDay(profile.timeZone.id).toInstant()
+            val endedAt = startedAt.plus(Duration.ofDays(1))
+            val activities = createUserActivities()
+
+            every { recapRepository.existsByUserIdAndRecapDate(userId, date) } returns false
+            every { historyRepository.findUserActivitiesForRecap(userId, startedAt, endedAt) } returns activities
+            every { historyRepository.findUserTimelinesForRecap(userId, startedAt, endedAt) } returns emptyList()
+            every { profileRepository.findByUserId(userId) } returns profile
+            every { recapAIClient.modelName } returns "gemini-pro"
+            every {
+                recapAIClient.generate(
+                    any<GenerateRecapRequest>(),
+                    GeminiRecapResponse::class.java
+                )
+            } throws RuntimeException("AI unavailable")
+            every { recapRepository.save(any()) } answers { firstArg() }
+
+            When("createDailyRecap을 호출하면") {
+                Then("리캡 저장 없이 예외가 전파된다") {
+                    shouldThrow<RuntimeException> {
+                        recapService.createDailyRecap(userId, date)
+                    }
+
+                    verify(exactly = 0) { recapRepository.save(any()) }
                 }
             }
         }
