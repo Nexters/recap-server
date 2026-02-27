@@ -1,6 +1,7 @@
 package com.retoday.core.domain.recap.dto.response
 
 import com.retoday.core.domain.recap.entity.Recap
+import com.retoday.core.domain.recap.entity.RecapStatus
 import com.retoday.core.domain.recap.entity.Section
 import com.retoday.core.domain.recap.entity.Timeline
 import com.retoday.core.domain.recap.entity.Topic
@@ -13,6 +14,7 @@ data class RecapDetailResponse(
     val id: Long,
     val userId: Long,
     val recapDate: LocalDate,
+    val status: RecapStatus,
     val title: String,
     val summary: String,
     val imageUrl: String? = null,
@@ -54,6 +56,7 @@ data class RecapDetailResponse(
                 id = recap.id!!,
                 userId = recap.userId,
                 recapDate = recap.recapDate,
+                status = recap.status,
                 title = recap.title,
                 summary = recap.summary,
                 imageUrl = recap.imageUrl,

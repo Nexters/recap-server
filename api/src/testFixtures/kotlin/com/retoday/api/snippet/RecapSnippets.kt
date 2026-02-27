@@ -15,6 +15,7 @@ val recapDetailResponseFields =
         RecapDetailResponse::id desc "리캡 식별자",
         RecapDetailResponse::userId desc "사용자 식별자",
         RecapDetailResponse::recapDate desc "리캡 대상 일자",
+        RecapDetailResponse::status desc "리캡 상태(COMPLETED, FAILED)",
         RecapDetailResponse::title desc "리캡 제목",
         RecapDetailResponse::summary desc "리캡 요약",
         RecapDetailResponse::imageUrl desc "리캡 이미지 URL",

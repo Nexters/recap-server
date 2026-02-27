@@ -10,6 +10,7 @@ import com.retoday.api.extension.withAuthentication
 import com.retoday.api.snippet.generateRecapQueryFields
 import com.retoday.api.snippet.recapDetailResponseFields
 import com.retoday.core.domain.recap.dto.response.RecapDetailResponse
+import com.retoday.core.domain.recap.entity.RecapStatus
 import com.retoday.core.domain.recap.service.RecapService
 import io.mockk.every
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -104,6 +105,7 @@ class RecapControllerTest : ControllerTest() {
             id = 100L,
             userId = 1L,
             recapDate = date,
+            status = RecapStatus.COMPLETED,
             title = "집중적인 연구의 하루",
             summary = "취업준비와 개발공부를 병행하며 열심히 앞으로 나아갔어요. 앞으로도 꾸준히 작업하다보면 원하는 결과를 얻을 수 있을거에요!",
             startedAt = LocalDateTime.parse("2026-02-21T09:00:00"),
