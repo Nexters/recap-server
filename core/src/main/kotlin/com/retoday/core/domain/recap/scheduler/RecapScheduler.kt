@@ -38,6 +38,13 @@ class RecapScheduler(
             runCatching {
                 recapService.createDailyRecap(profile.userId, recapDate)
             }.onFailure { e ->
+                runCatching {
+                    recapService.saveFailedRecap(profile.userId, recapDate)
+                }.onFailure { saveFailure ->
+                    logger.error(saveFailure) {
+                        "Failed to persist failed recap. userId=${profile.userId}, recapDate=$recapDate"
+                    }
+                }
                 logger.error(e) {
                     "Failed to create daily recap. userId=${profile.userId}, recapDate=$recapDate, timeZone=${profile.timeZone}"
                 }
