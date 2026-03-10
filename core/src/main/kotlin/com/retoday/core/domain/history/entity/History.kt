@@ -11,7 +11,8 @@ import java.time.Instant
 @Entity
 @Table(
     indexes = [
-        Index(name = "idx_user_id_visited_at", columnList = "user_id, visited_at")
+        Index(name = "idx_user_id_visited_at", columnList = "user_id, visited_at"),
+        Index(name = "idx_user_id_closed_at", columnList = "user_id, closed_at")
     ]
 )
 class History(
