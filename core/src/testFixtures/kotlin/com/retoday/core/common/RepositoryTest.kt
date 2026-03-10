@@ -37,9 +37,9 @@ abstract class RepositoryTest : StringSpec() {
     override suspend fun beforeEach(testCase: TestCase) {
         withContext(Dispatchers.IO) {
             jdbcTemplate.batchUpdate(
-                "DELETE FROM topic",
-                "DELETE FROM timeline",
-                "DELETE FROM section",
+                "DELETE FROM recap_topic",
+                "DELETE FROM recap_timeline",
+                "DELETE FROM recap_section",
                 "DELETE FROM recap",
                 "DELETE FROM user_excluded_website_domain",
                 "DELETE FROM history",

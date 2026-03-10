@@ -11,18 +11,14 @@ import java.time.Instant
 abstract class BaseEntity : Persistable<Long> {
     @Id
     var id: Long = createTsid()
-        set
 
     @CreatedDate
     var createdAt: Instant? = null
-        set
 
     @LastModifiedDate
     var updatedAt: Instant? = null
-        set
 
     var deletedAt: Instant? = null
-        set
 
     override fun getId(): Long = id
 

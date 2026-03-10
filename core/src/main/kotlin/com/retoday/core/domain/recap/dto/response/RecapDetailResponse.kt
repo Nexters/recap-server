@@ -2,9 +2,9 @@ package com.retoday.core.domain.recap.dto.response
 
 import com.retoday.core.domain.recap.entity.Recap
 import com.retoday.core.domain.recap.entity.RecapStatus
-import com.retoday.core.domain.recap.entity.Section
-import com.retoday.core.domain.recap.entity.Timeline
-import com.retoday.core.domain.recap.entity.Topic
+import com.retoday.core.domain.recap.entity.RecapSection
+import com.retoday.core.domain.recap.entity.RecapTimeline
+import com.retoday.core.domain.recap.entity.RecapTopic
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -47,9 +47,9 @@ data class RecapDetailResponse(
 
         fun of(
             recap: Recap,
-            sections: List<Section>,
-            timelines: List<Timeline>,
-            topics: List<Topic>,
+            sections: List<RecapSection>,
+            timelines: List<RecapTimeline>,
+            topics: List<RecapTopic>,
             zoneId: ZoneId
         ): RecapDetailResponse =
             RecapDetailResponse(

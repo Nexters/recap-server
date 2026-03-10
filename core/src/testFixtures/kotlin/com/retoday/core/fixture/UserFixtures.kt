@@ -10,7 +10,7 @@ import java.time.temporal.ChronoUnit
 
 const val SOCIAL_ID = "1232342423"
 const val EMAIL = "earlgrey02@re-today.com"
-val PROVIDER = Provider.GOOGLE
+val PROVIDER = SocialProvider.GOOGLE
 val ROLES = setOf(Role.MEMBER)
 const val IS_ACTIVE = true
 const val FIRST_NAME = "Sangyoon"
@@ -23,7 +23,7 @@ fun createUser(
     id: Long? = ID,
     socialId: String = SOCIAL_ID,
     email: String = EMAIL,
-    provider: Provider = PROVIDER,
+    provider: SocialProvider = PROVIDER,
     roles: Set<Role> = ROLES,
     isActive: Boolean = IS_ACTIVE,
     createdAt: Instant? = if (id == null) null else Instant.now()

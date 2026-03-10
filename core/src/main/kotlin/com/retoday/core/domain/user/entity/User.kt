@@ -8,7 +8,7 @@ import org.springframework.data.relational.core.mapping.Table
 data class User(
     val socialId: String,
     var email: String,
-    val provider: Provider,
+    val provider: SocialProvider,
     val roles: String = Role.MEMBER.name,
     val isActive: Boolean = true
 ) : BaseEntity() {

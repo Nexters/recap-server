@@ -120,7 +120,7 @@ CREATE TABLE recap
     CONSTRAINT uk_recap_user_date UNIQUE (user_id, recap_date)
 );
 
-CREATE TABLE section
+CREATE TABLE recap_section
 (
     id         BIGINT PRIMARY KEY,
     recap_id   BIGINT       NOT NULL,
@@ -131,7 +131,7 @@ CREATE TABLE section
     deleted_at TIMESTAMP(6)
 );
 
-CREATE TABLE timeline
+CREATE TABLE recap_timeline
 (
     id               BIGINT PRIMARY KEY,
     recap_id         BIGINT       NOT NULL,
@@ -144,7 +144,7 @@ CREATE TABLE timeline
     deleted_at       TIMESTAMP(6)
 );
 
-CREATE TABLE topic
+CREATE TABLE recap_topic
 (
     id         BIGINT PRIMARY KEY,
     recap_id   BIGINT       NOT NULL,
