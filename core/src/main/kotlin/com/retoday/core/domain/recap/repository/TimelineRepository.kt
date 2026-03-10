@@ -1,8 +1,8 @@
 package com.retoday.core.domain.recap.repository
 
 import com.retoday.core.domain.recap.entity.Timeline
-import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.repository.ListCrudRepository
 
-interface TimelineRepository : JpaRepository<Timeline, Long> {
+interface TimelineRepository : ListCrudRepository<Timeline, Long> {
     fun findAllByRecapId(recapId: Long): List<Timeline>
 }

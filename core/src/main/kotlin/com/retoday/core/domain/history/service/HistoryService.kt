@@ -2,16 +2,8 @@ package com.retoday.core.domain.history.service
 
 import com.retoday.core.domain.history.client.AICategoryClient
 import com.retoday.core.domain.history.dto.command.HistoryRecordCommand
-import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
-import com.retoday.core.domain.history.dto.query.GetMyFrequentlyVisitedWebsitesQuery
-import com.retoday.core.domain.history.dto.query.GetMyLongestStayedWebsiteQuery
-import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
-import com.retoday.core.domain.history.dto.query.GetMyWorkPatternQuery
+import com.retoday.core.domain.history.dto.query.*
 import com.retoday.core.domain.history.dto.result.*
-import com.retoday.core.domain.history.dto.result.GetMyCategoryAnalysesResult
-import com.retoday.core.domain.history.dto.result.GetMyLongestStayedWebsiteResult
-import com.retoday.core.domain.history.dto.result.GetMyScreenTimesResult
-import com.retoday.core.domain.history.dto.result.HistoryRecordResult
 import com.retoday.core.domain.history.entity.History
 import com.retoday.core.domain.history.entity.Website
 import com.retoday.core.domain.history.entity.WebsiteCategoryCode
@@ -72,22 +64,22 @@ class HistoryService(
                 val website = websiteService.findOrCreate(command.domain, command.faviconUrl)
                 val page =
                     pageService.findOrCreate(
-                        websiteId = website.id!!,
+                        websiteId = website.id,
                         url = command.normalizedUrl,
                         title = command.title,
                         description = command.description
                     )
 
-                checkDuplicateHistory(userId, page.id!!, command.visitedAt, command.tabId, command.normalizedUrl)
+                checkDuplicateHistory(userId, page.id, command.visitedAt, command.tabId, command.normalizedUrl)
 
                 historyRepository
-                    .save(createHistory(userId, website.id!!, page.id!!, command))
+                    .save(createHistory(userId, website.id, page.id, command))
                     .let {
                         HistoryRecordResult(
-                            historyId = it.id!!,
-                            pageId = page.id!!,
-                            websiteId = website.id!!,
-                            recordedAt = it.createdAt
+                            historyId = it.id,
+                            pageId = page.id,
+                            websiteId = website.id,
+                            recordedAt = it.createdAt!!
                         )
                     }
             }
@@ -387,7 +379,8 @@ class HistoryService(
                 .findByCode(predictedCode.toCategoryCodeOrNull() ?: throw InvalidCategoryException())
                 ?: throw InvalidCategoryException()
 
-        website.updateCategory(category.id!!)
+        website.updateCategory(category.id)
+        websiteService.save(website)
     }
 
     private fun String.toCategoryCodeOrNull(): WebsiteCategoryCode? =

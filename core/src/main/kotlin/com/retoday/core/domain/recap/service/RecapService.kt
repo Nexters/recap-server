@@ -140,7 +140,7 @@ class RecapService(
                 recapResponse.sections
                     .map {
                         Section(
-                            recapId = recap.id!!,
+                            recapId = recap.id,
                             title = it.title,
                             content = it.content
                         )
@@ -150,7 +150,7 @@ class RecapService(
                 topicResponse.topics
                     .map {
                         Topic(
-                            recapId = recap.id!!,
+                            recapId = recap.id,
                             keyword = it.keyword,
                             title = it.title,
                             content = it.content
@@ -171,7 +171,7 @@ class RecapService(
                                 .toInt()
 
                         Timeline(
-                            recapId = recap.id!!,
+                            recapId = recap.id,
                             startedAt = startedAt,
                             endedAt = endedAt,
                             title = item.title,
@@ -216,9 +216,9 @@ class RecapService(
             recapRepository
                 .findByUserIdAndRecapDate(userId, date)
                 ?.let {
-                    val sections = sectionRepository.findAllByRecapId(it.id!!)
-                    val topics = topicRepository.findAllByRecapId(it.id!!)
-                    val timelines = timelineRepository.findAllByRecapId(it.id!!)
+                    val sections = sectionRepository.findAllByRecapId(it.id)
+                    val topics = topicRepository.findAllByRecapId(it.id)
+                    val timelines = timelineRepository.findAllByRecapId(it.id)
                     val zoneId = profileRepository.findByUserId(userId)!!.timeZone.id
 
                     RecapDetailResponse.of(it, sections, timelines, topics, zoneId)

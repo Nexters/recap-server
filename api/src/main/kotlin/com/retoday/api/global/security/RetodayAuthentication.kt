@@ -1,7 +1,7 @@
 package com.retoday.api.global.security
 
 import com.retoday.core.domain.user.entity.Role
-import com.retoday.core.domain.user.entity.User
+import com.retoday.core.global.jwt.JwtProvider
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -16,9 +16,9 @@ data class RetodayAuthentication(
         fun from(payload: Map<String, *>): RetodayAuthentication =
             with(payload) {
                 RetodayAuthentication(
-                    id = (get(User::id.name) as String).toLong(),
+                    id = (get(JwtProvider.USER_ID_CLAIM) as String).toLong(),
                     roles =
-                        (get(User::roles.name) as String)
+                        (get(JwtProvider.USER_ROLES_CLAIM) as String)
                             .split(',')
                             .map { Role.valueOf(it) }
                             .toSet()

@@ -8,6 +8,7 @@ import com.retoday.core.domain.recap.dto.response.GeminiRecapResponse
 import com.retoday.core.domain.recap.dto.response.GeminiTimelineResponse
 import com.retoday.core.domain.recap.dto.response.GeminiTopicResponse
 import com.retoday.core.domain.recap.entity.Recap
+import com.retoday.core.global.extension.createTsid
 import java.time.Instant
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -84,10 +85,10 @@ fun createRecap(
     summary: String = "오늘은 주로 개발 업무와 기술 블로그 탐독을 하며 시간을 보냈습니다.",
     startedAt: Instant = Instant.now().minus(9, ChronoUnit.HOURS),
     closedAt: Instant = Instant.now(),
-    model: String = "gemini-2.5-flash"
+    model: String = "gemini-2.5-flash",
+    createdAt: Instant? = if (id == null) null else Instant.now()
 ): Recap =
     Recap(
-        id = id,
         userId = userId,
         recapDate = recapDate,
         title = title,
@@ -95,7 +96,10 @@ fun createRecap(
         startedAt = startedAt,
         closedAt = closedAt,
         model = model
-    )
+    ).apply {
+        this.id = id ?: createTsid()
+        this.createdAt = createdAt
+    }
 
 fun createUserTimelineActivities(): List<UserTimelineProjection> {
     // 기준 시간을 UTC Instant로 설정

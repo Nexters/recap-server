@@ -1,15 +1,10 @@
 package com.retoday.core.domain.recap.entity
 
 import com.retoday.core.global.entity.BaseEntity
-import io.hypersistence.utils.hibernate.id.Tsid
-import jakarta.persistence.*
+import org.springframework.data.relational.core.mapping.Table
 
-@Entity
-@Table(name = "recap_section")
-class Section(
-    @Id
-    @Tsid
-    val id: Long? = null,
+@Table("section")
+data class Section(
     val recapId: Long,
     val title: String,
     val content: String

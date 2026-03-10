@@ -2,23 +2,15 @@ package com.retoday.core.domain.user.entity
 
 import com.retoday.core.domain.auth.dto.response.GetOAuthUserResponse
 import com.retoday.core.global.entity.BaseEntity
-import io.hypersistence.utils.hibernate.id.Tsid
-import jakarta.persistence.*
+import org.springframework.data.relational.core.mapping.Table
 
-@Entity
-@Table(uniqueConstraints = [UniqueConstraint(columnNames = ["provider", "social_id"])])
-class User(
-    @Id
-    @Tsid
-    val id: Long? = null,
+@Table("user")
+data class User(
     val socialId: String,
     var email: String,
-    @Enumerated(EnumType.STRING)
     val provider: Provider,
-    @ElementCollection
-    @Enumerated(EnumType.STRING)
-    val roles: Set<Role> = setOf(Role.MEMBER),
-    var isActive: Boolean = true
+    val roles: String = Role.MEMBER.name,
+    val isActive: Boolean = true
 ) : BaseEntity() {
     fun synchronizeOAuthUser(getOAuthUserResponse: GetOAuthUserResponse) {
         email = getOAuthUserResponse.email

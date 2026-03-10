@@ -13,6 +13,8 @@ class WebsiteService(
     private val websiteRepository: WebsiteRepository,
     private val eventPublisher: ApplicationEventPublisher
 ) {
+    fun save(website: Website): Website = websiteRepository.save(website)
+
     @Transactional
     fun findOrCreate(
         domain: String,
@@ -20,14 +22,17 @@ class WebsiteService(
     ): Website =
         websiteRepository
             .findByDomain(domain)
-            ?.also { website ->
+            ?.let { website ->
                 if (website.faviconUrl == null && faviconUrl != null) {
                     website.updateFaviconUrl(faviconUrl)
+                    websiteRepository.save(website)
+                } else {
+                    website
                 }
             } ?: try {
             websiteRepository
                 .save(Website(domain = domain, faviconUrl = faviconUrl))
-                .also { eventPublisher.publishEvent(WebsiteCategoryClassificationEvent(it.id!!, domain)) }
+                .also { eventPublisher.publishEvent(WebsiteCategoryClassificationEvent(it.id, domain)) }
         } catch (e: DataIntegrityViolationException) {
             websiteRepository.findByDomain(domain)!!
         }

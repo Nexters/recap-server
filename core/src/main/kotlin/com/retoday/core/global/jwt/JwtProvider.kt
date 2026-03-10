@@ -15,6 +15,8 @@ class JwtProvider(
 ) {
     companion object {
         private const val TOKEN_ISSUER = "retoday"
+        const val USER_ID_CLAIM = "id"
+        const val USER_ROLES_CLAIM = "roles"
     }
 
     fun createToken(
@@ -25,8 +27,8 @@ class JwtProvider(
             createToken(
                 expiration,
                 mapOf(
-                    ::id.name to id.toString(),
-                    ::roles.name to roles.joinToString(",")
+                    USER_ID_CLAIM to id.toString(),
+                    USER_ROLES_CLAIM to roles
                 )
             )
         }
@@ -34,7 +36,7 @@ class JwtProvider(
     fun extractUserId(token: String): Long =
         try {
             extractPayload(token)
-                .run { get(User::id.name) as String }
+                .run { get(USER_ID_CLAIM) as String }
                 .toLong()
         } catch (exception: JwtException) {
             throw InvalidAuthenticationException()

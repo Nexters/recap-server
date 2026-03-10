@@ -2,6 +2,8 @@ package com.retoday.core.domain.history.repository
 
 import com.retoday.core.common.RepositoryTest
 import com.retoday.core.domain.history.dto.projection.WorkPatternHourlyCountProjection
+import com.retoday.core.domain.history.repository.WebsiteCategoryRepository
+import com.retoday.core.domain.history.repository.WebsiteRepository
 import com.retoday.core.fixture.*
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -12,16 +14,22 @@ class HistoryRepositoryTest : RepositoryTest() {
     @Autowired
     private lateinit var historyRepository: HistoryRepository
 
+    @Autowired
+    private lateinit var websiteRepository: WebsiteRepository
+
+    @Autowired
+    private lateinit var websiteCategoryRepository: WebsiteCategoryRepository
+
     init {
         "findTopWebsiteStatByUserId()" {
             val userId = 1L
             val periodStartedAt = Instant.parse("2026-02-13T00:00:00Z")
             val periodEndedAt = Instant.parse("2026-02-14T00:00:00Z")
 
-            val github = createWebsite(id = null, domain = DOMAIN, faviconUrl = FAVICON_URL).save()
-            val news = createWebsite(id = null, domain = USER_EX_DOMAIN, faviconUrl = null).save()
-            val githubId = github.id!!
-            val newsId = news.id!!
+            val github = websiteRepository.save(createWebsite(id = null, domain = DOMAIN, faviconUrl = FAVICON_URL))
+            val news = websiteRepository.save(createWebsite(id = null, domain = USER_EX_DOMAIN, faviconUrl = null))
+            val githubId = github.id
+            val newsId = news.id
 
             createHistory(
                 id = null,
@@ -30,7 +38,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 11L,
                 visitedAt = Instant.parse("2026-02-13T01:00:00Z"),
                 closedAt = Instant.parse("2026-02-13T02:00:00Z")
-            ).save()
+            ).let(historyRepository::save)
             createHistory(
                 id = null,
                 userId = userId,
@@ -38,7 +46,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 12L,
                 visitedAt = Instant.parse("2026-02-13T10:00:00Z"),
                 closedAt = Instant.parse("2026-02-13T10:30:00Z")
-            ).save()
+            ).let(historyRepository::save)
             createHistory(
                 id = null,
                 userId = userId,
@@ -46,10 +54,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 13L,
                 visitedAt = Instant.parse("2026-02-13T23:30:00Z"),
                 closedAt = Instant.parse("2026-02-14T00:30:00Z")
-            ).save()
-
-            entityManager.flush()
-            entityManager.clear()
+            ).let(historyRepository::save)
 
             val topWebsite =
                 historyRepository.findTopWebsiteStatByUserId(
@@ -74,7 +79,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 201L,
                 visitedAt = Instant.parse("2026-02-13T00:10:00Z"),
                 closedAt = Instant.parse("2026-02-13T00:20:00Z")
-            ).save()
+            ).let(historyRepository::save)
             createHistory(
                 id = null,
                 userId = userId,
@@ -82,7 +87,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 202L,
                 visitedAt = Instant.parse("2026-02-13T00:59:00Z"),
                 closedAt = Instant.parse("2026-02-13T01:10:00Z")
-            ).save()
+            ).let(historyRepository::save)
             createHistory(
                 id = null,
                 userId = userId,
@@ -90,7 +95,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 203L,
                 visitedAt = Instant.parse("2026-02-13T06:01:00Z"),
                 closedAt = Instant.parse("2026-02-13T06:20:00Z")
-            ).save()
+            ).let(historyRepository::save)
             createHistory(
                 id = null,
                 userId = userId,
@@ -98,7 +103,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 204L,
                 visitedAt = Instant.parse("2026-02-13T11:59:00Z"),
                 closedAt = Instant.parse("2026-02-13T12:30:00Z")
-            ).save()
+            ).let(historyRepository::save)
             createHistory(
                 id = null,
                 userId = userId,
@@ -106,7 +111,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 205L,
                 visitedAt = Instant.parse("2026-02-13T12:00:00Z"),
                 closedAt = Instant.parse("2026-02-13T12:10:00Z")
-            ).save()
+            ).let(historyRepository::save)
             createHistory(
                 id = null,
                 userId = userId,
@@ -114,7 +119,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 206L,
                 visitedAt = Instant.parse("2026-02-13T23:30:00Z"),
                 closedAt = Instant.parse("2026-02-13T23:40:00Z")
-            ).save()
+            ).let(historyRepository::save)
 
             // 집계 시작 이전 데이터는 제외된다.
             createHistory(
@@ -124,7 +129,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 207L,
                 visitedAt = Instant.parse("2026-02-12T23:59:00Z"),
                 closedAt = Instant.parse("2026-02-13T00:10:00Z")
-            ).save()
+            ).let(historyRepository::save)
             // 집계 종료(다음날 00:00) 시각과 같은 데이터는 제외된다.
             createHistory(
                 id = null,
@@ -133,7 +138,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 208L,
                 visitedAt = Instant.parse("2026-02-14T00:00:00Z"),
                 closedAt = Instant.parse("2026-02-14T00:10:00Z")
-            ).save()
+            ).let(historyRepository::save)
             // 다른 사용자의 데이터는 제외된다.
             createHistory(
                 id = null,
@@ -142,10 +147,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 209L,
                 visitedAt = Instant.parse("2026-02-13T00:30:00Z"),
                 closedAt = Instant.parse("2026-02-13T00:40:00Z")
-            ).save()
-
-            entityManager.flush()
-            entityManager.clear()
+            ).let(historyRepository::save)
 
             val counts =
                 historyRepository.findHourlyHistoryCountsByUserId(
@@ -168,11 +170,11 @@ class HistoryRepositoryTest : RepositoryTest() {
             val periodStartedAt = Instant.parse("2026-02-13T00:00:00Z")
             val periodEndedAt = Instant.parse("2026-02-14T00:00:00Z")
 
-            val category = createWebsiteCategory(id = null, name = "개발").save()
-            val github = createWebsite(id = null, domain = DOMAIN, categoryId = category.id).save()
-            val news = createWebsite(id = null, domain = USER_EX_DOMAIN, faviconUrl = null).save()
-            val githubId = github.id!!
-            val newsId = news.id!!
+            val category = websiteCategoryRepository.save(createWebsiteCategory(id = null, name = "개발"))
+            val github = websiteRepository.save(createWebsite(id = null, domain = DOMAIN, categoryId = category.id))
+            val news = websiteRepository.save(createWebsite(id = null, domain = USER_EX_DOMAIN, faviconUrl = null))
+            val githubId = github.id
+            val newsId = news.id
 
             createHistory(
                 id = null,
@@ -181,7 +183,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 11L,
                 visitedAt = Instant.parse("2026-02-12T23:30:00Z"),
                 closedAt = Instant.parse("2026-02-13T00:30:00Z")
-            ).save()
+            ).let(historyRepository::save)
             createHistory(
                 id = null,
                 userId = userId,
@@ -189,7 +191,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 12L,
                 visitedAt = Instant.parse("2026-02-13T01:00:00Z"),
                 closedAt = Instant.parse("2026-02-13T01:30:00Z")
-            ).save()
+            ).let(historyRepository::save)
             createHistory(
                 id = null,
                 userId = userId,
@@ -197,7 +199,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 13L,
                 visitedAt = Instant.parse("2026-02-13T23:30:00Z"),
                 closedAt = Instant.parse("2026-02-14T00:30:00Z")
-            ).save()
+            ).let(historyRepository::save)
             createHistory(
                 id = null,
                 userId = userId,
@@ -205,7 +207,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 14L,
                 visitedAt = Instant.parse("2026-02-14T01:00:00Z"),
                 closedAt = Instant.parse("2026-02-14T02:00:00Z")
-            ).save()
+            ).let(historyRepository::save)
             createHistory(
                 id = null,
                 userId = 2L,
@@ -213,10 +215,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 15L,
                 visitedAt = Instant.parse("2026-02-13T02:00:00Z"),
                 closedAt = Instant.parse("2026-02-13T03:00:00Z")
-            ).save()
-
-            entityManager.flush()
-            entityManager.clear()
+            ).let(historyRepository::save)
 
             val analyses =
                 historyRepository.findWebsiteStatsWithCategoryByUserId(
@@ -244,12 +243,12 @@ class HistoryRepositoryTest : RepositoryTest() {
             val periodEndedAt = Instant.parse("2026-02-14T00:00:00Z")
             val limit = 2
 
-            val github = createWebsite(id = null, domain = DOMAIN).save()
-            val youtube = createWebsite(id = null, domain = "youtube.com").save()
-            val news = createWebsite(id = null, domain = USER_EX_DOMAIN).save()
-            val githubId = github.id!!
-            val youtubeId = youtube.id!!
-            val newsId = news.id!!
+            val github = websiteRepository.save(createWebsite(id = null, domain = DOMAIN))
+            val youtube = websiteRepository.save(createWebsite(id = null, domain = "youtube.com"))
+            val news = websiteRepository.save(createWebsite(id = null, domain = USER_EX_DOMAIN))
+            val githubId = github.id
+            val youtubeId = youtube.id
+            val newsId = news.id
 
             createHistory(
                 id = null,
@@ -258,7 +257,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 21L,
                 visitedAt = Instant.parse("2026-02-13T00:10:00Z"),
                 closedAt = Instant.parse("2026-02-13T00:40:00Z")
-            ).save()
+            ).let(historyRepository::save)
             createHistory(
                 id = null,
                 userId = userId,
@@ -266,7 +265,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 22L,
                 visitedAt = Instant.parse("2026-02-13T01:00:00Z"),
                 closedAt = Instant.parse("2026-02-13T01:20:00Z")
-            ).save()
+            ).let(historyRepository::save)
             createHistory(
                 id = null,
                 userId = userId,
@@ -274,7 +273,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 23L,
                 visitedAt = Instant.parse("2026-02-13T02:00:00Z"),
                 closedAt = Instant.parse("2026-02-13T03:00:00Z")
-            ).save()
+            ).let(historyRepository::save)
             createHistory(
                 id = null,
                 userId = userId,
@@ -282,7 +281,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 24L,
                 visitedAt = Instant.parse("2026-02-13T23:50:00Z"),
                 closedAt = Instant.parse("2026-02-14T00:10:00Z")
-            ).save()
+            ).let(historyRepository::save)
             createHistory(
                 id = null,
                 userId = userId,
@@ -290,7 +289,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 25L,
                 visitedAt = Instant.parse("2026-02-12T23:50:00Z"),
                 closedAt = Instant.parse("2026-02-13T00:20:00Z")
-            ).save()
+            ).let(historyRepository::save)
             createHistory(
                 id = null,
                 userId = userId,
@@ -298,7 +297,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 26L,
                 visitedAt = Instant.parse("2026-02-13T05:00:00Z"),
                 closedAt = Instant.parse("2026-02-13T05:10:00Z")
-            ).save()
+            ).let(historyRepository::save)
             createHistory(
                 id = null,
                 userId = 2L,
@@ -306,10 +305,7 @@ class HistoryRepositoryTest : RepositoryTest() {
                 pageId = 27L,
                 visitedAt = Instant.parse("2026-02-13T08:00:00Z"),
                 closedAt = Instant.parse("2026-02-13T09:00:00Z")
-            ).save()
-
-            entityManager.flush()
-            entityManager.clear()
+            ).let(historyRepository::save)
 
             val analyses =
                 historyRepository.findWebsiteStatsWithVisitCountByUserId(
