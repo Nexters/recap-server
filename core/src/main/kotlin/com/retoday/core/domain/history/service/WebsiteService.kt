@@ -34,6 +34,7 @@ class WebsiteService(
                 .save(Website(domain = domain, faviconUrl = faviconUrl))
                 .also { eventPublisher.publishEvent(WebsiteCategoryClassificationEvent(it.id, domain)) }
         } catch (e: DataIntegrityViolationException) {
-            websiteRepository.findByDomain(domain)!!
+            websiteRepository.findByDomain(domain)
+                ?: throw IllegalStateException("Website not found after duplicate key violation: $domain")
         }
 }
