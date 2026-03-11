@@ -1,8 +1,8 @@
 package com.retoday.core.domain.history.repository
 
 import com.retoday.core.domain.history.entity.Page
-import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.repository.ListCrudRepository
 
-interface PageRepository : JpaRepository<Page, Long> {
+interface PageRepository : ListCrudRepository<Page, Long> {
     fun findByUrl(url: String): Page?
 }

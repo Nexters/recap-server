@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.spring) apply false
     alias(libs.plugins.kotlin.lint) apply false
     alias(libs.plugins.spring.boot) apply false
-    alias(libs.plugins.spring.dependency.management)
+    alias(libs.plugins.spring.dependency.management) apply false
 }
 
 allprojects {
@@ -51,8 +51,6 @@ subprojects {
     }
 
     dependencies {
-        implementation(rootProject.libs.kotlin.logging)
-        implementation(rootProject.libs.kotlin.reflect)
         testImplementation(rootProject.libs.bundles.test)
     }
 

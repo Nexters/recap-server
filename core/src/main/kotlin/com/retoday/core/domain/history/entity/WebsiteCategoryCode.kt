@@ -15,5 +15,11 @@ enum class WebsiteCategoryCode(
     DESIGN("디자인"),
     DEVELOPMENT("개발"),
     AI("AI"),
-    OTHER("기타")
+    ETC("기타");
+
+    companion object {
+        private val byLabel: Map<String, WebsiteCategoryCode> = entries.associateBy { it.defaultName }
+
+        fun fromLabel(label: String?): WebsiteCategoryCode? = label?.trim()?.let { byLabel[it] }
+    }
 }

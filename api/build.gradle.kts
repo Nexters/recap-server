@@ -6,6 +6,7 @@ plugins {
 
 dependencies {
     implementation(project(":core"))
+    implementation(libs.kotlin.logging)
     implementation(libs.spring.web)
     implementation(libs.spring.security)
     implementation(libs.spring.validation)

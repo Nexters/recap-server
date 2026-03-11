@@ -13,9 +13,9 @@ import com.retoday.core.domain.recap.dto.response.GeminiRecapResponse
 import com.retoday.core.domain.recap.dto.response.GeminiTimelineResponse
 import com.retoday.core.domain.recap.dto.response.GeminiTopicResponse
 import com.retoday.core.domain.recap.entity.RecapStatus
-import com.retoday.core.domain.recap.entity.Section
-import com.retoday.core.domain.recap.entity.Timeline
-import com.retoday.core.domain.recap.entity.Topic
+import com.retoday.core.domain.recap.entity.RecapSection
+import com.retoday.core.domain.recap.entity.RecapTimeline
+import com.retoday.core.domain.recap.entity.RecapTopic
 import com.retoday.core.domain.recap.repository.RecapRepository
 import com.retoday.core.domain.recap.repository.SectionRepository
 import com.retoday.core.domain.recap.repository.TimelineRepository
@@ -136,9 +136,9 @@ class RecapServiceTest : ServiceTest() {
             // Entity 저장 Mocking
             val savedRecap = createRecap(id = 100L)
             every { recapRepository.save(any()) } returns savedRecap
-            every { sectionRepository.saveAll(any<List<Section>>()) } returns emptyList()
-            every { topicRepository.saveAll(any<List<Topic>>()) } returns emptyList()
-            every { timelineRepository.saveAll(any<List<Timeline>>()) } returns emptyList()
+            every { sectionRepository.saveAll(any<List<RecapSection>>()) } returns emptyList()
+            every { topicRepository.saveAll(any<List<RecapTopic>>()) } returns emptyList()
+            every { timelineRepository.saveAll(any<List<RecapTimeline>>()) } returns emptyList()
 
             When("createDailyRecap을 호출하여 리캡 생성을 수행하면") {
                 recapService.createDailyRecap(userId, date)
@@ -154,7 +154,7 @@ class RecapServiceTest : ServiceTest() {
                     // 2. 섹션 저장 확인
                     verify(exactly = 1) {
                         sectionRepository.saveAll(
-                            match<List<Section>> { sections ->
+                            match<List<RecapSection>> { sections ->
                                 // 타입을 명시적으로 지정
                                 sections.all { it.recapId == 100L }
                             }
@@ -164,7 +164,7 @@ class RecapServiceTest : ServiceTest() {
                     // 3. 토픽 저장 확인
                     verify(exactly = 1) {
                         topicRepository.saveAll(
-                            match<List<Topic>> { topics ->
+                            match<List<RecapTopic>> { topics ->
                                 // 타입을 명시적으로 지정
                                 topics.all { it.recapId == 100L }
                             }
@@ -174,7 +174,7 @@ class RecapServiceTest : ServiceTest() {
                     // 4. 타임라인 저장 확인
                     verify(exactly = 1) {
                         timelineRepository.saveAll(
-                            match<List<Timeline>> { timelines ->
+                            match<List<RecapTimeline>> { timelines ->
                                 // 타입을 명시적으로 지정
                                 timelines.all { it.recapId == 100L }
                             }

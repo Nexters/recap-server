@@ -50,11 +50,11 @@ class AuthService(
                 }.let { userRepository.save(it) }
 
         profileRepository
-            .findByUserId(user.id!!)
+            .findByUserId(user.id)
             ?.apply { synchronizeOAuthUser(getOAuthUserResponse) }
             .orElse {
                 Profile(
-                    userId = user.id!!,
+                    userId = user.id,
                     firstName = getOAuthUserResponse.firstName,
                     lastName = getOAuthUserResponse.lastName,
                     imageUrl = getOAuthUserResponse.imageUrl
@@ -106,7 +106,7 @@ class AuthService(
                 .also {
                     refreshTokenRepository.save(
                         RefreshToken(
-                            userId = id!!,
+                            userId = id,
                             content = it,
                             expiration = jwtProperties.refreshTokenExpiration.seconds
                         )

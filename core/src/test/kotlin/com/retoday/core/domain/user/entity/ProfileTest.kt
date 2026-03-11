@@ -28,6 +28,7 @@ class ProfileTest : BehaviorSpec() {
                         with(profile) {
                             firstName shouldBe changedFirstName
                             lastName shouldBe changedLastName
+                            imageUrl shouldBe changedImageUrl
                         }
                     }
                 }

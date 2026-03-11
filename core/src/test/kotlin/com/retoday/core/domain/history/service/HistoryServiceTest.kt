@@ -499,26 +499,44 @@ class HistoryServiceTest : ServiceTest() {
 
         Given("웹사이트 도메인 카테고리 분류가 필요할 때") {
             val domain = "hackers.com"
-            val studyCategory = WebsiteCategory(id = 10L, code = WebsiteCategoryCode.STUDY, name = "학습")
+            val studyCategory =
+                WebsiteCategory(code = WebsiteCategoryCode.STUDY, name = "학습").apply {
+                    id = 10L
+                }
             val categoryList = listOf(studyCategory)
             val categoryCodes = listOf("STUDY")
 
             When("카테고리가 할당되지 않은 도메인인 경우") {
-                val targetWebsite = Website(id = 1L, domain = domain, categoryId = null)
+                val targetWebsite =
+                    Website(domain = domain, categoryId = null).apply {
+                        id = 1L
+                    }
                 every { categoryRepository.findAll() } returns categoryList
                 every { aiClient.classify(domain, categoryCodes) } returns "STUDY"
                 every { categoryRepository.findByCode(WebsiteCategoryCode.STUDY) } returns studyCategory
+                every { websiteService.save(any()) } answers { firstArg() }
 
                 historyService.classifyCategory(targetWebsite, domain)
 
                 Then("AI 결과에 따라 웹사이트의 카테고리가 업데이트되어야 한다") {
-                    targetWebsite.categoryId shouldBe 10L
+                    verify(exactly = 1) {
+                        websiteService.save(
+                            withArg {
+                                it.id shouldBe targetWebsite.id
+                                it.domain shouldBe targetWebsite.domain
+                                it.categoryId shouldBe 10L
+                            }
+                        )
+                    }
                     verify(exactly = 1) { aiClient.classify(domain, any()) }
                 }
             }
 
             When("AI가 분류한 카테고리가 DB에 존재하지 않는 이름이라면") {
-                val freshWebsite = Website(id = 2L, domain = domain, categoryId = null)
+                val freshWebsite =
+                    Website(domain = domain, categoryId = null).apply {
+                        id = 2L
+                    }
                 every { categoryRepository.findAll() } returns categoryList
                 every { aiClient.classify(domain, categoryCodes) } returns "INVALID_CODE"
 

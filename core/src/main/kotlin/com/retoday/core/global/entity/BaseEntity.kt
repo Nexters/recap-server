@@ -1,31 +1,31 @@
 package com.retoday.core.global.entity
 
-import jakarta.persistence.Column
-import jakarta.persistence.EntityListeners
-import jakarta.persistence.MappedSuperclass
+import com.retoday.core.global.extension.createTsid
 import org.springframework.data.annotation.CreatedDate
+import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.LastModifiedDate
-import org.springframework.data.jpa.domain.support.AuditingEntityListener
+import org.springframework.data.annotation.Transient
+import org.springframework.data.domain.Persistable
 import java.time.Instant
 
-@MappedSuperclass
-@EntityListeners(AuditingEntityListener::class)
-abstract class BaseEntity {
+abstract class BaseEntity : Persistable<Long> {
+    @Id
+    var id: Long = createTsid()
+
     @CreatedDate
-    @Column(nullable = false, updatable = false)
-    var createdAt: Instant = Instant.EPOCH
-        protected set
+    var createdAt: Instant? = null
 
     @LastModifiedDate
     var updatedAt: Instant? = null
-        protected set
 
     var deletedAt: Instant? = null
-        protected set
+
+    override fun getId(): Long = id
+
+    @Transient
+    override fun isNew(): Boolean = createdAt == null
 
     fun softDelete() {
-        this.deletedAt = Instant.now()
+        deletedAt = Instant.now()
     }
-
-    fun isDeleted(): Boolean = deletedAt != null
 }
