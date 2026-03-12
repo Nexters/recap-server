@@ -6,7 +6,7 @@ import com.retoday.core.domain.auth.dto.response.GetOAuthUserResponse
 import com.retoday.core.domain.auth.dto.result.LoginResult
 import com.retoday.core.domain.auth.dto.result.RefreshResult
 import com.retoday.core.domain.auth.entity.RefreshToken
-import com.retoday.core.domain.user.entity.Provider
+import com.retoday.core.domain.user.entity.SocialProvider
 import java.time.Duration
 
 const val TOKEN = "eyJhbGciOiJub25lIn0.eyJpZCI6MSwiaWF0IjoxNTE2MjM5MDIyfQ."
@@ -25,7 +25,7 @@ fun createRefreshToken(
 
 fun createGetOAuthUserResponse(
     id: String = SOCIAL_ID,
-    provider: Provider = PROVIDER,
+    provider: SocialProvider = PROVIDER,
     email: String = EMAIL,
     firstName: String = FIRST_NAME,
     lastName: String = LAST_NAME,
@@ -42,7 +42,7 @@ fun createGetOAuthUserResponse(
 
 fun createLoginCommand(
     oAuthToken: String = TOKEN,
-    provider: Provider = PROVIDER
+    provider: SocialProvider = PROVIDER
 ): LoginCommand =
     LoginCommand(
         oAuthToken = oAuthToken,

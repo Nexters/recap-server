@@ -1,6 +1,6 @@
 package com.retoday.core.domain.recap.component
 
-import com.retoday.core.domain.history.entity.Category
+import com.retoday.core.domain.history.entity.WebsiteCategoryCode
 import com.retoday.core.domain.recap.dto.projection.UserActivityProjection
 import com.retoday.core.domain.recap.entity.RecapImage
 import com.retoday.core.domain.recap.properties.RecapImageProperties
@@ -42,8 +42,7 @@ class ImagePolicyResolver(
         activities: List<UserActivityProjection>
     ): RecapImage {
         normalizeCategory(topCategoryName)?.let { topCategory ->
-            if (topCategory == Category.ETC) return@let
-            return RecapImage.valueOf(topCategory.name)
+            mapRecapImage(topCategory)?.let { return it }
         }
 
         val totalDurationMinutes = activities.sumOf { it.stayDuration.coerceAtLeast(0) }
@@ -64,5 +63,22 @@ class ImagePolicyResolver(
         )[Random(userId xor firstVisitedAt.epochSecond).nextInt(3)]
     }
 
-    private fun normalizeCategory(raw: String?): Category? = Category.fromLabel(raw)
+    private fun normalizeCategory(raw: String?): WebsiteCategoryCode? = WebsiteCategoryCode.fromLabel(raw)
+
+    private fun mapRecapImage(category: WebsiteCategoryCode): RecapImage? =
+        when (category) {
+            WebsiteCategoryCode.STUDY -> RecapImage.STUDY
+            WebsiteCategoryCode.SHOPPING -> RecapImage.SHOPPING
+            WebsiteCategoryCode.GAMING -> RecapImage.GAME
+            WebsiteCategoryCode.CONTENT -> RecapImage.CONTENT
+            WebsiteCategoryCode.COMMUNITY -> RecapImage.COMMUNITY
+            WebsiteCategoryCode.NEWS -> RecapImage.NEWS
+            WebsiteCategoryCode.FINANCE -> RecapImage.FINANCE
+            WebsiteCategoryCode.LIFESTYLE -> RecapImage.LIFE
+            WebsiteCategoryCode.BROWSING -> RecapImage.SURFING
+            WebsiteCategoryCode.DESIGN -> RecapImage.DESIGN
+            WebsiteCategoryCode.AI -> RecapImage.AI
+            WebsiteCategoryCode.DEVELOPMENT -> RecapImage.DEVELOPMENT
+            WebsiteCategoryCode.ETC -> null
+        }
 }

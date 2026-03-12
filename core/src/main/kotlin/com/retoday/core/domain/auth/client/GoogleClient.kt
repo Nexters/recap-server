@@ -2,7 +2,7 @@ package com.retoday.core.domain.auth.client
 
 import com.retoday.core.domain.auth.dto.response.GetOAuthUserResponse
 import com.retoday.core.domain.auth.exception.InvalidOAuthTokenException
-import com.retoday.core.domain.user.entity.Provider
+import com.retoday.core.domain.user.entity.SocialProvider
 import com.retoday.core.global.annotation.Client
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -12,7 +12,7 @@ import org.springframework.web.client.requiredBody
 @Client
 class GoogleClient(
     private val restClient: RestClient
-) : OAuthClient(provider = Provider.GOOGLE) {
+) : OAuthClient(provider = SocialProvider.GOOGLE) {
     private companion object {
         const val USERINFO_ENDPOINT = "https://openidconnect.googleapis.com/v1/userinfo"
         const val ID_FIELD = "sub"

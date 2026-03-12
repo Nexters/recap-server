@@ -18,9 +18,9 @@ import com.retoday.core.domain.recap.dto.response.GeminiTopicResponse
 import com.retoday.core.domain.recap.dto.response.RecapDetailResponse
 import com.retoday.core.domain.recap.entity.Recap
 import com.retoday.core.domain.recap.entity.RecapStatus
-import com.retoday.core.domain.recap.entity.Section
-import com.retoday.core.domain.recap.entity.Timeline
-import com.retoday.core.domain.recap.entity.Topic
+import com.retoday.core.domain.recap.entity.RecapSection
+import com.retoday.core.domain.recap.entity.RecapTimeline
+import com.retoday.core.domain.recap.entity.RecapTopic
 import com.retoday.core.domain.recap.repository.RecapRepository
 import com.retoday.core.domain.recap.repository.SectionRepository
 import com.retoday.core.domain.recap.repository.TimelineRepository
@@ -100,7 +100,7 @@ class RecapService(
         var timelineResponse = GeminiTimelineResponse()
         if (timelineProjections.isNotEmpty()) {
             val timelineRequests = timelineProjections.map { it.toRequest() }
-            timelineResponse = generateTimeline(name, timelineRequests)
+            timelineResponse = generateRecapTimeline(name, timelineRequests)
         }
 
         val categoryAnalyses =
@@ -139,8 +139,8 @@ class RecapService(
             val sections =
                 recapResponse.sections
                     .map {
-                        Section(
-                            recapId = recap.id!!,
+                        RecapSection(
+                            recapId = recap.id,
                             title = it.title,
                             content = it.content
                         )
@@ -149,8 +149,8 @@ class RecapService(
             val topics =
                 topicResponse.topics
                     .map {
-                        Topic(
-                            recapId = recap.id!!,
+                        RecapTopic(
+                            recapId = recap.id,
                             keyword = it.keyword,
                             title = it.title,
                             content = it.content
@@ -170,8 +170,8 @@ class RecapService(
                                 .toMinutes()
                                 .toInt()
 
-                        Timeline(
-                            recapId = recap.id!!,
+                        RecapTimeline(
+                            recapId = recap.id,
                             startedAt = startedAt,
                             endedAt = endedAt,
                             title = item.title,
@@ -216,9 +216,9 @@ class RecapService(
             recapRepository
                 .findByUserIdAndRecapDate(userId, date)
                 ?.let {
-                    val sections = sectionRepository.findAllByRecapId(it.id!!)
-                    val topics = topicRepository.findAllByRecapId(it.id!!)
-                    val timelines = timelineRepository.findAllByRecapId(it.id!!)
+                    val sections = sectionRepository.findAllByRecapId(it.id)
+                    val topics = topicRepository.findAllByRecapId(it.id)
+                    val timelines = timelineRepository.findAllByRecapId(it.id)
                     val zoneId = profileRepository.findByUserId(userId)!!.timeZone.id
 
                     RecapDetailResponse.of(it, sections, timelines, topics, zoneId)
@@ -238,7 +238,7 @@ class RecapService(
         GeminiRecapResponse::class.java
     )
 
-    fun generateTimeline(
+    fun generateRecapTimeline(
         name: String,
         activities: List<UserTimelineRequest>
     ) = recapAIClient.generate(

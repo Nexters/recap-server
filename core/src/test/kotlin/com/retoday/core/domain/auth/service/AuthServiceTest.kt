@@ -94,8 +94,8 @@ class AuthServiceTest : BehaviorSpec() {
                 val result = authService.login(command)
 
                 Then("회원가입과 함께 로그인 처리가 된다.") {
-                    userSlot.captured.id shouldBe null
-                    profileSlot.captured.id shouldBe null
+                    (userSlot.captured.id > 0L) shouldBe true
+                    (profileSlot.captured.id > 0L) shouldBe true
                     result shouldBe createLoginResult()
                 }
             }

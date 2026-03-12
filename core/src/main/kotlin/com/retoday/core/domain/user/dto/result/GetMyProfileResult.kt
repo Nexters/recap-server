@@ -19,17 +19,15 @@ data class GetMyProfileResult(
             profileWithEmail: ProfileWithEmailProjection,
             excludedDomains: List<String>
         ): GetMyProfileResult =
-            with(profileWithEmail.profile) {
-                GetMyProfileResult(
-                    id = id!!,
-                    email = profileWithEmail.email,
-                    firstName = firstName,
-                    lastName = lastName,
-                    imageUrl = imageUrl,
-                    timeZone = timeZone,
-                    recapPeriod = recapPeriod,
-                    excludedDomains = excludedDomains
-                )
-            }
+            GetMyProfileResult(
+                id = profileWithEmail.id,
+                email = profileWithEmail.email,
+                firstName = profileWithEmail.firstName,
+                lastName = profileWithEmail.lastName,
+                imageUrl = profileWithEmail.imageUrl,
+                timeZone = profileWithEmail.timeZone,
+                recapPeriod = profileWithEmail.recapPeriod,
+                excludedDomains = excludedDomains
+            )
     }
 }

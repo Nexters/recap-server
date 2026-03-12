@@ -3,8 +3,8 @@ package com.retoday.api.fixture
 import com.retoday.api.domain.auth.dto.request.LoginRequest
 import com.retoday.api.domain.auth.dto.request.RefreshRequest
 import com.retoday.api.global.security.RetodayAuthentication
-import com.retoday.core.domain.user.entity.Provider
 import com.retoday.core.domain.user.entity.Role
+import com.retoday.core.domain.user.entity.SocialProvider
 import com.retoday.core.fixture.ID
 import com.retoday.core.fixture.PROVIDER
 import com.retoday.core.fixture.ROLES
@@ -21,7 +21,7 @@ fun createRetodayAuthentication(
 
 fun createLoginRequest(
     oAuthToken: String = TOKEN,
-    provider: Provider = PROVIDER
+    provider: SocialProvider = PROVIDER
 ): LoginRequest =
     LoginRequest(
         oAuthToken = oAuthToken,

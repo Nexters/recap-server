@@ -16,6 +16,7 @@ import com.retoday.core.domain.history.entity.Page
 import com.retoday.core.domain.history.entity.Website
 import com.retoday.core.domain.history.entity.WebsiteCategory
 import com.retoday.core.domain.history.entity.WebsiteCategoryCode
+import com.retoday.core.global.extension.createTsid
 import java.time.Instant
 import java.time.LocalDate
 
@@ -217,40 +218,49 @@ fun createWebsite(
     id: Long? = WEBSITE_ID,
     domain: String = DOMAIN,
     categoryId: Long? = null,
-    faviconUrl: String? = FAVICON_URL
+    faviconUrl: String? = FAVICON_URL,
+    createdAt: Instant? = if (id == null) null else Instant.now()
 ): Website =
     Website(
-        id = id,
         domain = domain,
         categoryId = categoryId,
         faviconUrl = faviconUrl
-    )
+    ).apply {
+        this.id = id ?: createTsid()
+        this.createdAt = createdAt
+    }
 
 fun createWebsiteCategory(
     id: Long? = ID,
     code: WebsiteCategoryCode = WebsiteCategoryCode.DEVELOPMENT,
-    name: String = "개발"
+    name: String = "개발",
+    createdAt: Instant? = if (id == null) null else Instant.now()
 ): WebsiteCategory =
     WebsiteCategory(
-        id = id,
         code = code,
         name = name
-    )
+    ).apply {
+        this.id = id ?: createTsid()
+        this.createdAt = createdAt
+    }
 
 fun createPage(
     id: Long? = PAGE_ID,
     websiteId: Long = WEBSITE_ID,
     url: String = PAGE_URL,
     title: String? = TITLE,
-    description: String? = DESCRIPTION
+    description: String? = DESCRIPTION,
+    createdAt: Instant? = if (id == null) null else Instant.now()
 ): Page =
     Page(
-        id = id,
         websiteId = websiteId,
         url = url,
         title = title,
         description = description
-    )
+    ).apply {
+        this.id = id ?: createTsid()
+        this.createdAt = createdAt
+    }
 
 fun createHistory(
     id: Long? = ID,
@@ -260,10 +270,10 @@ fun createHistory(
     visitedAt: Instant = Instant.now().minusSeconds(10),
     closedAt: Instant = Instant.now(),
     isClosed: Boolean = true,
-    scrollDepth: Int? = SCROLL_DEPTH
+    scrollDepth: Int? = SCROLL_DEPTH,
+    createdAt: Instant? = if (id == null) null else Instant.now()
 ): History =
     History(
-        id = id,
         userId = userId,
         websiteId = websiteId,
         pageId = pageId,
@@ -271,7 +281,10 @@ fun createHistory(
         closedAt = closedAt,
         isClosed = isClosed,
         scrollDepth = scrollDepth
-    )
+    ).apply {
+        this.id = id ?: createTsid()
+        this.createdAt = createdAt
+    }
 
 fun createHistoryRecordCommand(
     tabId: Int = TAB_ID,

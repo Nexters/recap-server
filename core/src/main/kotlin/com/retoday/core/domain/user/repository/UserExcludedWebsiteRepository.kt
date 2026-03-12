@@ -1,11 +1,11 @@
 package com.retoday.core.domain.user.repository
 
 import com.retoday.core.domain.user.entity.UserExcludedWebsiteDomain
-import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.repository.ListCrudRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface UserExcludedWebsiteRepository : JpaRepository<UserExcludedWebsiteDomain, Long> {
+interface UserExcludedWebsiteRepository : ListCrudRepository<UserExcludedWebsiteDomain, Long> {
     fun findAllByUserId(userId: Long): List<UserExcludedWebsiteDomain>
 
     fun existsByUserIdAndDomain(
