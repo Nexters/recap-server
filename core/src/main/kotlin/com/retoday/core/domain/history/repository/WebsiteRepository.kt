@@ -5,6 +5,6 @@ import org.springframework.data.repository.ListCrudRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface WebsiteRepository : ListCrudRepository<Website, Long> {
+interface WebsiteRepository : ListCrudRepository<Website, Long>, CustomWebsiteRepository {
     fun findByDomain(domain: String): Website?
 }
