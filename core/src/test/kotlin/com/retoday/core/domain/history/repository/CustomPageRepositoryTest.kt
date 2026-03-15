@@ -5,7 +5,6 @@ import com.retoday.core.fixture.createPage
 import com.retoday.core.fixture.createWebsite
 import io.kotest.matchers.shouldBe
 import org.springframework.beans.factory.annotation.Autowired
-import java.time.Instant
 
 class CustomPageRepositoryTest : RepositoryTest() {
     @Autowired
@@ -40,26 +39,22 @@ class CustomPageRepositoryTest : RepositoryTest() {
             val url = "https://custom-page-upsert.com/path"
 
             pageRepository.upsertByUrl(
-                page =
-                    createPage(
-                        id = null,
-                        websiteId = website.id,
-                        url = url,
-                        title = null,
-                        description = null
-                    ),
-                createdAt = Instant.now()
+                createPage(
+                    id = null,
+                    websiteId = website.id,
+                    url = url,
+                    title = null,
+                    description = null
+                )
             )
             pageRepository.upsertByUrl(
-                page =
-                    createPage(
-                        id = null,
-                        websiteId = website.id,
-                        url = url,
-                        title = "filled-title",
-                        description = "filled-description"
-                    ),
-                createdAt = Instant.now()
+                createPage(
+                    id = null,
+                    websiteId = website.id,
+                    url = url,
+                    title = "filled-title",
+                    description = "filled-description"
+                )
             )
 
             val found = pageRepository.getByUrlForShare(url)

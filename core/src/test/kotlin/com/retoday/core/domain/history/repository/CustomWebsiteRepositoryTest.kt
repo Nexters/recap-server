@@ -4,7 +4,6 @@ import com.retoday.core.common.RepositoryTest
 import com.retoday.core.fixture.createWebsite
 import io.kotest.matchers.shouldBe
 import org.springframework.beans.factory.annotation.Autowired
-import java.time.Instant
 
 class CustomWebsiteRepositoryTest : RepositoryTest() {
     @Autowired
@@ -24,13 +23,13 @@ class CustomWebsiteRepositoryTest : RepositoryTest() {
         "upsertByDomain()" {
             val domain = "custom-website-upsert.com"
 
+            websiteRepository.upsertByDomain(createWebsite(id = null, domain = domain, faviconUrl = null))
             websiteRepository.upsertByDomain(
-                website = createWebsite(id = null, domain = domain, faviconUrl = null),
-                createdAt = Instant.now()
-            )
-            websiteRepository.upsertByDomain(
-                website = createWebsite(id = null, domain = domain, faviconUrl = "https://custom-website-upsert.com/favicon.ico"),
-                createdAt = Instant.now()
+                createWebsite(
+                    id = null,
+                    domain = domain,
+                    faviconUrl = "https://custom-website-upsert.com/favicon.ico"
+                )
             )
 
             val found = websiteRepository.getByDomainForShare(domain)

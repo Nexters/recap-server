@@ -4,7 +4,6 @@ import com.retoday.core.domain.history.entity.Page
 import com.retoday.core.domain.history.repository.PageRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.Instant
 
 @Service
 class PageService(
@@ -18,14 +17,12 @@ class PageService(
         description: String?
     ): Page {
         pageRepository.upsertByUrl(
-            page =
-                Page(
-                    websiteId = websiteId,
-                    url = url,
-                    title = title,
-                    description = description
-                ),
-            createdAt = Instant.now()
+            Page(
+                websiteId = websiteId,
+                url = url,
+                title = title,
+                description = description
+            )
         )
         return pageRepository.getByUrlForShare(url)
     }

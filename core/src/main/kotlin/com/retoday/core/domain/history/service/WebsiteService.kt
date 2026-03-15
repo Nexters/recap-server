@@ -6,7 +6,6 @@ import com.retoday.core.domain.history.repository.WebsiteRepository
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.Instant
 
 @Service
 class WebsiteService(
@@ -20,11 +19,7 @@ class WebsiteService(
         domain: String,
         faviconUrl: String?
     ): Website {
-        val rows =
-            websiteRepository.upsertByDomain(
-                website = Website(domain = domain, faviconUrl = faviconUrl),
-                createdAt = Instant.now()
-            )
+        val rows = websiteRepository.upsertByDomain(Website(domain = domain, faviconUrl = faviconUrl))
         val website = websiteRepository.getByDomainForShare(domain)
         if (rows == 1) {
             eventPublisher.publishEvent(WebsiteCategoryClassificationEvent(website.id, domain))

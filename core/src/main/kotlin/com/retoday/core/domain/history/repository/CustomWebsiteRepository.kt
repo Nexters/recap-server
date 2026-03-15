@@ -3,7 +3,6 @@ package com.retoday.core.domain.history.repository
 import com.retoday.core.domain.history.entity.Website
 import org.springframework.data.jdbc.repository.query.Modifying
 import org.springframework.data.jdbc.repository.query.Query
-import java.time.Instant
 
 interface CustomWebsiteRepository {
     @Modifying
@@ -14,16 +13,13 @@ interface CustomWebsiteRepository {
                 :#{#website.id},
                 :#{#website.domain},
                 :#{#website.faviconUrl},
-                :createdAt
+                NOW()
             )
             ON DUPLICATE KEY UPDATE
                 favicon_url = COALESCE(favicon_url, VALUES(favicon_url))
         """
     )
-    fun upsertByDomain(
-        website: Website,
-        createdAt: Instant
-    ): Int
+    fun upsertByDomain(website: Website): Int
 
     @Query(
         """
