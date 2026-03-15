@@ -5,6 +5,7 @@ import com.retoday.core.fixture.createPage
 import com.retoday.core.fixture.createWebsite
 import io.kotest.matchers.shouldBe
 import org.springframework.beans.factory.annotation.Autowired
+import java.time.Instant
 
 class CustomPageRepositoryTest : RepositoryTest() {
     @Autowired
@@ -32,6 +33,41 @@ class CustomPageRepositoryTest : RepositoryTest() {
             found.url shouldBe "https://custom-page-test.com/path"
             found.title shouldBe saved.title
             found.description shouldBe saved.description
+        }
+
+        "upsertByUrl()" {
+            val website = websiteRepository.save(createWebsite(id = null, domain = "custom-page-upsert.com"))
+            val url = "https://custom-page-upsert.com/path"
+
+            pageRepository.upsertByUrl(
+                page =
+                    createPage(
+                        id = null,
+                        websiteId = website.id,
+                        url = url,
+                        title = null,
+                        description = null
+                    ),
+                createdAt = Instant.now()
+            )
+            pageRepository.upsertByUrl(
+                page =
+                    createPage(
+                        id = null,
+                        websiteId = website.id,
+                        url = url,
+                        title = "filled-title",
+                        description = "filled-description"
+                    ),
+                createdAt = Instant.now()
+            )
+
+            val found = pageRepository.getByUrlForShare(url)
+
+            found.websiteId shouldBe website.id
+            found.url shouldBe url
+            found.title shouldBe "filled-title"
+            found.description shouldBe "filled-description"
         }
     }
 }

@@ -4,9 +4,9 @@ import com.retoday.core.domain.history.entity.Website
 import com.retoday.core.domain.history.event.WebsiteCategoryClassificationEvent
 import com.retoday.core.domain.history.repository.WebsiteRepository
 import org.springframework.context.ApplicationEventPublisher
-import org.springframework.data.relational.core.conversion.DbActionExecutionException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 
 @Service
 class WebsiteService(
@@ -19,23 +19,16 @@ class WebsiteService(
     fun findOrCreate(
         domain: String,
         faviconUrl: String?
-    ): Website =
-        websiteRepository
-            .findByDomain(domain)
-            ?.let { website ->
-                if (website.faviconUrl == null && faviconUrl != null) {
-                    website.updateFaviconUrl(faviconUrl)
-                    websiteRepository.save(website)
-                } else {
-                    website
-                }
-            } ?: try {
-            websiteRepository
-                .save(Website(domain = domain, faviconUrl = faviconUrl))
-                .also { eventPublisher.publishEvent(WebsiteCategoryClassificationEvent(it.id, domain)) }
-        } catch (e: DbActionExecutionException) {
-            if (!e.isDuplicateKeyViolation()) throw e
-
-            websiteRepository.getByDomainForShare(domain)
+    ): Website {
+        val rows =
+            websiteRepository.upsertByDomain(
+                website = Website(domain = domain, faviconUrl = faviconUrl),
+                createdAt = Instant.now()
+            )
+        val website = websiteRepository.getByDomainForShare(domain)
+        if (rows == 1) {
+            eventPublisher.publishEvent(WebsiteCategoryClassificationEvent(website.id, domain))
         }
+        return website
+    }
 }
