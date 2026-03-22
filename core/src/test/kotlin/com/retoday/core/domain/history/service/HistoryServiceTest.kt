@@ -4,19 +4,11 @@ import com.retoday.core.common.ServiceTest
 import com.retoday.core.domain.history.client.AICategoryClient
 import com.retoday.core.domain.history.dto.projection.WebsiteStatProjection
 import com.retoday.core.domain.history.dto.projection.WorkPatternHourlyCountProjection
-import com.retoday.core.domain.history.dto.query.GetMyCategoryAnalysisQuery
-import com.retoday.core.domain.history.dto.query.GetMyFrequentlyVisitedWebsitesQuery
-import com.retoday.core.domain.history.dto.query.GetMyLongestStayedWebsiteQuery
-import com.retoday.core.domain.history.dto.query.GetMyScreenTimesQuery
-import com.retoday.core.domain.history.dto.query.GetMyWorkPatternQuery
+import com.retoday.core.domain.history.dto.query.*
 import com.retoday.core.domain.history.entity.Website
 import com.retoday.core.domain.history.entity.WebsiteCategory
 import com.retoday.core.domain.history.entity.WebsiteCategoryCode
-import com.retoday.core.domain.history.exception.DuplicateHistoryException
-import com.retoday.core.domain.history.exception.InvalidCategoryException
-import com.retoday.core.domain.history.exception.InvalidTimeRangeException
-import com.retoday.core.domain.history.exception.InvalidUrlException
-import com.retoday.core.domain.history.exception.WebsiteExcludedByUserException
+import com.retoday.core.domain.history.exception.*
 import com.retoday.core.domain.history.repository.HistoryRepository
 import com.retoday.core.domain.history.repository.WebsiteCategoryRepository
 import com.retoday.core.domain.user.repository.ProfileRepository
@@ -54,8 +46,7 @@ class HistoryServiceTest : ServiceTest() {
                 aiClient = aiClient,
                 userService = userService,
                 rateLimiter = rateLimiter,
-                alertService = alertService,
-                transactionManager = transactionManager
+                alertService = alertService
             )
 
         val userId = ID
@@ -63,7 +54,7 @@ class HistoryServiceTest : ServiceTest() {
         val page = createPage()
         val history = createHistory()
 
-        fun setupSuccessfulRecordMocks(faviconUrl: String? = FAVICON_URL) {
+        fun setupSuccessfulRecordMocks() {
             every { userService.getExcludedDomains(any()) } returns emptyList()
             every { websiteService.findOrCreate(any(), any()) } returns website
             every { pageService.findOrCreate(any(), any(), any(), any()) } returns page
