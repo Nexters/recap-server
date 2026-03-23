@@ -4,7 +4,6 @@ import com.retoday.core.domain.history.entity.Website
 import com.retoday.core.domain.history.event.WebsiteCategoryClassificationEvent
 import com.retoday.core.domain.history.repository.WebsiteRepository
 import org.springframework.context.ApplicationEventPublisher
-import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -19,22 +18,12 @@ class WebsiteService(
     fun findOrCreate(
         domain: String,
         faviconUrl: String?
-    ): Website =
-        websiteRepository
-            .findByDomain(domain)
-            ?.let { website ->
-                if (website.faviconUrl == null && faviconUrl != null) {
-                    website.updateFaviconUrl(faviconUrl)
-                    websiteRepository.save(website)
-                } else {
-                    website
-                }
-            } ?: try {
-            websiteRepository
-                .save(Website(domain = domain, faviconUrl = faviconUrl))
-                .also { eventPublisher.publishEvent(WebsiteCategoryClassificationEvent(it.id, domain)) }
-        } catch (e: DataIntegrityViolationException) {
-            websiteRepository.findByDomain(domain)
-                ?: throw IllegalStateException("Website not found after duplicate key violation: $domain")
+    ): Website {
+        val rows = websiteRepository.upsertByDomain(Website(domain = domain, faviconUrl = faviconUrl))
+        val website = websiteRepository.getByDomainForShare(domain)
+        if (rows == 1) {
+            eventPublisher.publishEvent(WebsiteCategoryClassificationEvent(website.id, domain))
         }
+        return website
+    }
 }

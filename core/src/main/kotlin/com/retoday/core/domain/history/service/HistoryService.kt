@@ -17,10 +17,8 @@ import com.retoday.core.domain.user.repository.ProfileRepository
 import com.retoday.core.domain.user.service.UserService
 import com.retoday.core.global.alert.DiscordAlertService
 import com.retoday.core.global.extension.getLogger
-import com.retoday.core.global.extension.transaction
 import com.retoday.core.global.ratelimit.RateLimiter
 import org.springframework.stereotype.Service
-import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -35,8 +33,7 @@ class HistoryService(
     private val aiClient: AICategoryClient,
     private val userService: UserService,
     private val rateLimiter: RateLimiter,
-    private val alertService: DiscordAlertService,
-    private val transactionManager: PlatformTransactionManager
+    private val alertService: DiscordAlertService
 ) {
     private companion object {
         private const val DEFAULT_CATEGORY_NAME = "기타"
@@ -48,41 +45,39 @@ class HistoryService(
         command: HistoryRecordCommand
     ): HistoryRecordResult =
         runCatching {
-            transactionManager.transaction {
-                require(command.closedAt.isAfter(command.visitedAt)) {
-                    throw InvalidTimeRangeException("closedAt은 visitedAt보다 이후여야 합니다")
-                }
-
-                val domain = command.domain
-                if (userService.getExcludedDomains(userId).any { excluded ->
-                        domain == excluded || domain.endsWith(".$excluded")
-                    }
-                ) {
-                    throw WebsiteExcludedByUserException(domain)
-                }
-
-                val website = websiteService.findOrCreate(command.domain, command.faviconUrl)
-                val page =
-                    pageService.findOrCreate(
-                        websiteId = website.id,
-                        url = command.normalizedUrl,
-                        title = command.title,
-                        description = command.description
-                    )
-
-                checkDuplicateHistory(userId, page.id, command.visitedAt, command.tabId, command.normalizedUrl)
-
-                historyRepository
-                    .save(createHistory(userId, website.id, page.id, command))
-                    .let {
-                        HistoryRecordResult(
-                            historyId = it.id,
-                            pageId = page.id,
-                            websiteId = website.id,
-                            recordedAt = it.createdAt!!
-                        )
-                    }
+            require(command.closedAt.isAfter(command.visitedAt)) {
+                throw InvalidTimeRangeException("closedAt은 visitedAt보다 이후여야 합니다")
             }
+
+            val domain = command.domain
+            if (userService.getExcludedDomains(userId).any { excluded ->
+                    domain == excluded || domain.endsWith(".$excluded")
+                }
+            ) {
+                throw WebsiteExcludedByUserException(domain)
+            }
+
+            val website = websiteService.findOrCreate(command.domain, command.faviconUrl)
+            val page =
+                pageService.findOrCreate(
+                    websiteId = website.id,
+                    url = command.normalizedUrl,
+                    title = command.title,
+                    description = command.description
+                )
+
+            checkDuplicateHistory(userId, page.id, command.visitedAt, command.tabId, command.normalizedUrl)
+
+            historyRepository
+                .save(createHistory(userId, website.id, page.id, command))
+                .let {
+                    HistoryRecordResult(
+                        historyId = it.id,
+                        pageId = page.id,
+                        websiteId = website.id,
+                        recordedAt = it.createdAt!!
+                    )
+                }
         }.onFailure { e ->
             logger.error(e) { "Failed to save history. userId=$userId, domain=${command.domain}" }
             if (rateLimiter.shouldAlertHistoryFailure()) {
