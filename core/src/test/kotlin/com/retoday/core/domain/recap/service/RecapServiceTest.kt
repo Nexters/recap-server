@@ -107,6 +107,7 @@ class RecapServiceTest : ServiceTest() {
                     GenerateRecapRequest(
                         type = RecapType.TODAY_RECAP,
                         nickname = profile.firstName,
+                        language = profile.language,
                         payload = RecapPayload.Activities(activityRequests)
                     ),
                     GeminiRecapResponse::class.java
@@ -117,6 +118,7 @@ class RecapServiceTest : ServiceTest() {
                     GenerateRecapRequest(
                         type = RecapType.TOPIC,
                         nickname = profile.firstName,
+                        language = profile.language,
                         payload = RecapPayload.Activities(activityRequests)
                     ),
                     GeminiTopicResponse::class.java
@@ -127,6 +129,7 @@ class RecapServiceTest : ServiceTest() {
                     GenerateRecapRequest(
                         type = RecapType.TIMELINE,
                         nickname = profile.firstName,
+                        language = profile.language,
                         payload = RecapPayload.Timelines(timelineRequests)
                     ),
                     GeminiTimelineResponse::class.java

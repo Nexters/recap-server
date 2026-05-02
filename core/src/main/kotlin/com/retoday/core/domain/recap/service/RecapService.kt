@@ -25,6 +25,7 @@ import com.retoday.core.domain.recap.repository.RecapRepository
 import com.retoday.core.domain.recap.repository.SectionRepository
 import com.retoday.core.domain.recap.repository.TimelineRepository
 import com.retoday.core.domain.recap.repository.TopicRepository
+import com.retoday.core.domain.user.entity.Language
 import com.retoday.core.domain.user.repository.ProfileRepository
 import com.retoday.core.global.extension.transaction
 import org.springframework.stereotype.Service
@@ -88,19 +89,20 @@ class RecapService(
         if (activityProjections.isEmpty()) return
         val activityRequests = activityProjections.map { it.toRequest() }
         val name = profile.firstName
+        val language = profile.language
         val zoneId = profile.timeZone.id
 
         val timelineProjections = historyRepository.findUserTimelinesForRecap(userId, startedAt, endedAt)
         val firstVisitedAt = timelineProjections.mapNotNull { it.visitedAt }.minOrNull() ?: startedAt
         val lastClosedAt = timelineProjections.mapNotNull { it.closedAt }.maxOrNull() ?: endedAt
 
-        val recapResponse = generateRecap(name, activityRequests)
-        val topicResponse = generateTopics(name, activityRequests)
+        val recapResponse = generateRecap(name, language, activityRequests)
+        val topicResponse = generateTopics(name, language, activityRequests)
 
         var timelineResponse = GeminiTimelineResponse()
         if (timelineProjections.isNotEmpty()) {
             val timelineRequests = timelineProjections.map { it.toRequest() }
-            timelineResponse = generateRecapTimeline(name, timelineRequests)
+            timelineResponse = generateRecapTimeline(name, language, timelineRequests)
         }
 
         val categoryAnalyses =
@@ -228,11 +230,13 @@ class RecapService(
     // AI Generation Methods
     fun generateRecap(
         name: String,
+        language: Language,
         activities: List<UserActivityRequest>
     ) = recapAIClient.generate(
         GenerateRecapRequest(
             type = RecapType.TODAY_RECAP,
             nickname = name,
+            language = language,
             payload = RecapPayload.Activities(activities)
         ),
         GeminiRecapResponse::class.java
@@ -240,11 +244,13 @@ class RecapService(
 
     fun generateRecapTimeline(
         name: String,
+        language: Language,
         activities: List<UserTimelineRequest>
     ) = recapAIClient.generate(
         GenerateRecapRequest(
             type = RecapType.TIMELINE,
             nickname = name,
+            language = language,
             payload = RecapPayload.Timelines(activities)
         ),
         GeminiTimelineResponse::class.java
@@ -252,11 +258,13 @@ class RecapService(
 
     fun generateTopics(
         name: String,
+        language: Language,
         activities: List<UserActivityRequest>
     ) = recapAIClient.generate(
         GenerateRecapRequest(
             type = RecapType.TOPIC,
             nickname = name,
+            language = language,
             payload = RecapPayload.Activities(activities)
         ),
         GeminiTopicResponse::class.java
