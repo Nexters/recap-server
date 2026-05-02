@@ -1,5 +1,6 @@
 package com.retoday.core.domain.user.service
 
+import com.retoday.core.domain.user.entity.Language
 import com.retoday.core.domain.user.exception.ExcludedDomainAlreadyExistsException
 import com.retoday.core.domain.user.repository.ProfileRepository
 import com.retoday.core.domain.user.repository.UserExcludedWebsiteRepository
@@ -95,6 +96,27 @@ class UserServiceTest : BehaviorSpec() {
                 Then("정규화된 도메인으로 삭제가 수행된다.") {
                     verify(exactly = 1) {
                         userExcludedWebsiteRepository.deleteByUserIdAndDomain(ID, normalizedDomain)
+                    }
+                }
+            }
+        }
+
+        Given("사용자가 언어 변경을 요청하면") {
+            val profile = createProfile()
+            every { profileRepository.findByUserId(ID) } returns profile
+            every { profileRepository.save(any()) } returns profile
+
+            When("유효한 언어로 변경을 요청하면") {
+                userService.updateMyLanguage(ID, Language.JA)
+
+                Then("프로필 language가 변경되어 저장된다.") {
+                    verify(exactly = 1) {
+                        profileRepository.save(
+                            match {
+                                it.userId == ID &&
+                                    it.language == Language.JA
+                            }
+                        )
                     }
                 }
             }

@@ -1,8 +1,10 @@
 package com.retoday.core.domain.user.service
 
 import com.retoday.core.domain.user.dto.result.GetMyProfileResult
+import com.retoday.core.domain.user.entity.Language
 import com.retoday.core.domain.user.entity.UserExcludedWebsiteDomain
 import com.retoday.core.domain.user.exception.ExcludedDomainAlreadyExistsException
+import com.retoday.core.domain.user.exception.UserNotFoundException
 import com.retoday.core.domain.user.repository.ProfileRepository
 import com.retoday.core.domain.user.repository.UserExcludedWebsiteRepository
 import org.springframework.cache.annotation.CacheEvict
@@ -63,5 +65,15 @@ class UserService(
         val normalizedDomain = domain.trim().lowercase()
 
         userExcludedWebsiteRepository.deleteByUserIdAndDomain(userId, normalizedDomain)
+    }
+
+    @Transactional
+    fun updateMyLanguage(
+        userId: Long,
+        language: Language
+    ) {
+        val profile = profileRepository.findByUserId(userId) ?: throw UserNotFoundException()
+        profile.language = language
+        profileRepository.save(profile)
     }
 }

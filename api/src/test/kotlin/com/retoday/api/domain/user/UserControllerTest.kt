@@ -5,6 +5,7 @@ import com.retoday.api.common.ControllerTest
 import com.retoday.api.domain.user.controller.UserController
 import com.retoday.api.domain.user.dto.request.AddMyExcludedDomainRequest
 import com.retoday.api.domain.user.dto.request.DeleteMyExcludedDomainRequest
+import com.retoday.api.domain.user.dto.request.UpdateMyLanguageRequest
 import com.retoday.api.domain.user.dto.response.GetMyProfileResponse
 import com.retoday.api.extension.document
 import com.retoday.api.extension.expectBody
@@ -15,6 +16,8 @@ import com.retoday.api.snippet.addMyExcludedDomainRequestFields
 import com.retoday.api.snippet.deleteMyExcludedDomainRequestFields
 import com.retoday.api.snippet.errorResponseFields
 import com.retoday.api.snippet.getMyProfileResponseFields
+import com.retoday.api.snippet.updateMyLanguageRequestFields
+import com.retoday.core.domain.user.entity.Language
 import com.retoday.core.domain.user.exception.ExcludedDomainAlreadyExistsException
 import com.retoday.core.domain.user.service.UserService
 import com.retoday.core.fixture.createGetMyProfileResult
@@ -152,6 +155,50 @@ class UserControllerTest : ControllerTest() {
                         .expectBody(GetMyProfileResponse.from(result))
                         .document("내 프로필 조회 성공(200)") {
                             responseBody(getMyProfileResponseFields)
+                        }
+                }
+            }
+        }
+
+        describe("updateMyLanguage()은") {
+            val requestBody = UpdateMyLanguageRequest(language = Language.EN)
+            val request =
+                webClient
+                    .patch()
+                    .uri("/users/me/profiles/language")
+                    .bodyValue(requestBody)
+                    .withAuthentication()
+
+            context("유효한 요청이 주어진 경우") {
+                every { userService.updateMyLanguage(any(), any()) } returns Unit
+
+                it("상태 코드 200을 반환한다.") {
+                    request
+                        .exchange()
+                        .expectStatus(200)
+                        .expectBody<Void>()
+                        .document("내 리캡 언어 변경 성공(200)") {
+                            requestBody(updateMyLanguageRequestFields)
+                        }
+                }
+            }
+
+            context("리캡 언어 값이 올바르지 않은 경우") {
+                val invalidRequest =
+                    webClient
+                        .patch()
+                        .uri("/users/me/profiles/language")
+                        .bodyValue(mapOf("language" to "FR"))
+                        .withAuthentication()
+
+                it("상태 코드 400과 ErrorResponse를 반환한다.") {
+                    invalidRequest
+                        .exchange()
+                        .expectStatus(400)
+                        .expectError()
+                        .document("내 리캡 언어 변경 실패 - 유효하지 않은 리캡 언어(400)") {
+                            requestBody(updateMyLanguageRequestFields)
+                            responseBody(errorResponseFields)
                         }
                 }
             }
