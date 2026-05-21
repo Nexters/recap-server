@@ -12,7 +12,8 @@ data class Profile(
     var lastName: String,
     var imageUrl: String,
     val timeZone: TimeZone = TimeZone.SEOUL,
-    val recapPeriod: LocalTime? = null
+    val recapPeriod: LocalTime? = null,
+    var language: Language = Language.KO
 ) : BaseEntity() {
     fun synchronizeOAuthUser(getOAuthUserResponse: GetOAuthUserResponse) {
         firstName = getOAuthUserResponse.firstName

@@ -41,6 +41,7 @@ class CustomProfileRepositoryTest : RepositoryTest() {
             profileWithEmail.imageUrl shouldBe profile.imageUrl
             profileWithEmail.timeZone shouldBe profile.timeZone
             profileWithEmail.recapPeriod shouldBe profile.recapPeriod
+            profileWithEmail.language shouldBe profile.language
             profileWithEmail.email shouldBe user.email
             profileWithEmail.deletedAt shouldBe null
         }

@@ -1,6 +1,7 @@
 package com.retoday.core.domain.user.dto.result
 
 import com.retoday.core.domain.user.dto.projection.ProfileWithEmailProjection
+import com.retoday.core.domain.user.entity.Language
 import com.retoday.core.domain.user.entity.TimeZone
 import java.time.LocalTime
 
@@ -12,6 +13,7 @@ data class GetMyProfileResult(
     val imageUrl: String,
     val timeZone: TimeZone,
     val recapPeriod: LocalTime?,
+    val language: Language,
     val excludedDomains: List<String>
 ) {
     companion object {
@@ -27,6 +29,7 @@ data class GetMyProfileResult(
                 imageUrl = profileWithEmail.imageUrl,
                 timeZone = profileWithEmail.timeZone,
                 recapPeriod = profileWithEmail.recapPeriod,
+                language = profileWithEmail.language,
                 excludedDomains = excludedDomains
             )
     }

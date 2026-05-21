@@ -9,6 +9,7 @@ import com.retoday.core.domain.recap.component.RecapType
 import com.retoday.core.domain.recap.dto.request.GenerateRecapRequest
 import com.retoday.core.domain.recap.dto.request.RecapPayload
 import com.retoday.core.domain.recap.exception.RecapResponseEmptyException
+import com.retoday.core.domain.user.entity.Language
 import com.retoday.core.global.annotation.Client
 import org.springframework.beans.factory.annotation.Value
 import com.google.genai.Client as GeminiClient
@@ -37,7 +38,14 @@ class GeminiClient(
         responseClass: Class<T>
     ): T {
         request.validatePayloadType()
-        val instruction = promptManager.getDailyRecapPrompt(request.type, mapOf("nickname" to request.nickname))
+        val instruction =
+            promptManager.getDailyRecapPrompt(
+                request.type,
+                mapOf(
+                    "nickname" to request.nickname,
+                    "language" to request.language.toPromptLanguage()
+                )
+            )
         val userDataJson =
             objectMapper.writeValueAsString(
                 when (val payload = request.payload) {
@@ -73,4 +81,11 @@ class GeminiClient(
             RecapType.TOPIC -> require(payload is RecapPayload.Activities)
         }
     }
+
+    private fun Language.toPromptLanguage(): String =
+        when (this) {
+            Language.KO -> "Korean"
+            Language.EN -> "English"
+            Language.JA -> "Japanese"
+        }
 }

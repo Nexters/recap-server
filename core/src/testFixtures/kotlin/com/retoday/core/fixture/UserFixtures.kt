@@ -18,6 +18,7 @@ const val LAST_NAME = "Jeong"
 const val IMAGE_URL = "https://re-today.com/profile.png"
 val TIME_ZONE = TimeZone.SEOUL
 val RECAP_PERIOD: LocalTime = LocalTime.now().truncatedTo(ChronoUnit.SECONDS)
+val RECAP_LANGUAGE = Language.KO
 
 fun createUser(
     id: Long? = ID,
@@ -47,6 +48,7 @@ fun createProfile(
     imageUrl: String = IMAGE_URL,
     timeZone: TimeZone = TIME_ZONE,
     recapPeriod: LocalTime = RECAP_PERIOD,
+    language: Language = RECAP_LANGUAGE,
     createdAt: Instant? = if (id == null) null else Instant.now()
 ): Profile =
     Profile(
@@ -55,7 +57,8 @@ fun createProfile(
         lastName = lastName,
         imageUrl = imageUrl,
         timeZone = timeZone,
-        recapPeriod = recapPeriod
+        recapPeriod = recapPeriod,
+        language = language
     ).apply {
         this.id = id ?: createTsid()
         this.createdAt = createdAt
@@ -87,6 +90,7 @@ fun createProfileWithEmailProjection(
         imageUrl = profile.imageUrl,
         timeZone = profile.timeZone,
         recapPeriod = profile.recapPeriod,
+        language = profile.language,
         createdAt = profile.createdAt ?: Instant.now(),
         updatedAt = profile.updatedAt,
         deletedAt = profile.deletedAt,
@@ -101,6 +105,7 @@ fun createGetMyProfileResult(
     imageUrl: String = IMAGE_URL,
     timeZone: TimeZone = TIME_ZONE,
     recapPeriod: LocalTime? = RECAP_PERIOD,
+    language: Language = RECAP_LANGUAGE,
     excludedDomains: List<String> = listOf(USER_EX_DOMAIN)
 ): GetMyProfileResult =
     GetMyProfileResult(
@@ -111,5 +116,6 @@ fun createGetMyProfileResult(
         imageUrl = imageUrl,
         timeZone = timeZone,
         recapPeriod = recapPeriod,
+        language = language,
         excludedDomains = excludedDomains
     )
